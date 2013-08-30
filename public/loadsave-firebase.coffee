@@ -4,22 +4,23 @@ machineListRef = firebaseRootRef.child 'machines'
 getMachineRef = (name, cb) ->
   machineListRef.startAt(name).endAt(name)
 
+# This replaces the function in loadsave.js
 @loadWires = (name) ->
   getMachineRef(name).on 'value', (snapshot) ->
     snapshot.forEach (child) ->
-      str = child.val().wiring
-      array = str.replace(/(\n|\\n)$/, '').split(/\n|\\n/)
-      array[i] = line.split(' ') for line, i in array
-      parseInts(line) for line in array
-      window.wires = array
+      wiring_string = child.val().wiring.replace(/\\n/g, "\n")
+      wire_strings = wiring_string.split(/\n/)
+      wire_strings.pop() if wire_strings[wire_strings.length - 1] == ''
+      window.wires = wire_strings.map (wire) -> wire.split ' '
       redraw()
 
+# This replaces the function in loadsave.js
 @saveWires = (name, wiring) ->
   machineRef = getMachineRef(name)
+  wiring = wiring.replace(/\r\n/g, "\n")
   machineRef.on 'child_added', (snapshot) ->
     snapshot.ref().child('wiring').set(wiring)
   machineRef.on 'value', (snapshot) ->
     return if snapshot.val()
-    console.info 'insert'
     machineRef = machineListRef.push {name, wiring}
     machineRef.setPriority name

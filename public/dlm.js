@@ -4,7 +4,7 @@ var sync;
 var wirebuffer, ctx;
 var ffholes;
 var wires = [];
-var moved, startx, starty, knoboffset;
+var moved, startpin, knoboffset;
 var knobs = [[100, 252, 288, '#f0f0f0'],
 						 [100, 382, 0, '#f0f0f0'],
 						 [1700, 252, 292, '#202020'],
@@ -24,8 +24,6 @@ function setup(){
 	wirebuffer.onmousedown = function(e){mouseDown(e);}
 	window.onmouseup = function(e){mouseUp(e)};
 	window.onkeypress = function(e){handleKey(e);}
-	ffholes = holeImage('ffholes');
-	clkholes = holeImage('clkholes');
 	if(filename) loadWires(filename);
 	redraw();
 }
@@ -40,40 +38,31 @@ function mouseDown(e){
 	e.preventDefault();
 	moved = false; startx=-1, starty=-1;
 	var x=localx(e.clientX), y=localy(e.clientY);
-	var pos = holeSnap(x ,y);
-	var wn = dataPixel(x,y);
-	if(pos[1]>-1){
-		startx = pos[0];
-		starty = pos[1];
-		window.onmousemove = function(e){mouseMove(e)};
-	} else if (wn!=0) {
-		var w = wires[wn-1];
-		wires.splice(wn-1,1);
-		var d1 = Math.sqrt((w[0]-x)*(w[0]-x)+(w[1]-y)*(w[1]-y));
-		var d2 = Math.sqrt((w[2]-x)*(w[2]-x)+(w[3]-y)*(w[3]-y));
-		if(d1>d2) {startx = w[0]; starty = w[1];}
-		else {startx = w[2]; starty = w[3];}
-		wires.push([startx, starty, x, y]);
-		moved = true;
-		window.onmousemove = function(e){mouseMove(e)};
-	}
+	startpin = xyToPinout(x,y);
+	if(startpin) {window.onmousemove = function(e){mouseMove(e)}; return;}
+	var wn = bufferPixel(x,y);
+	if (wn!=0) {pickUpWire(wn, x, y); return;};
+}
+
+function pickUpWire(wn, x, y){
+	var w = wires[wn-1];
+	wires.splice(wn-1,1);
+	var d1 = dist([x,y], pinoutToXy(w[0]));
+	var d2 = dist([x,y], pinoutToXy(w[1]));
+	startpin = (d1>d2) ? w[0] : w[1];
 	redraw();
 	if(sync&&!readonly) submit(filename);
+	drawLine(pinoutToXy(startpin), [x, y], 0);
+	window.onmousemove = function(e){mouseMove(e)};
 }
 
 function mouseMove(e){
-	if(starty<0) return;
-	if(startx<0){dragKnob(e); return;}
-	if(!moved){
-		moved = true;
-		wires.push([startx, starty, 0, 0]);
-	}
-	var r = wires[wires.length-1];
-	r[2] = localx(e.clientX);
-	r[3] = localy(e.clientY);
+	moved = true;
 	redraw();
 	if(sync&&!readonly) submit(filename);
+	drawLine(pinoutToXy(startpin), [localx(e.clientX), localy(e.clientY)], 0);
 }
+
 
 function dragKnob(e){
 	var knob = knobs[starty];
@@ -90,14 +79,12 @@ function dragKnob(e){
 
 function mouseUp(e){
 	window.onmousemove = undefined;
-	if(!moved){mouseClicked(e); return;}
+//	if(!moved){mouseClicked(e); return;}
 	moved = false;
-	if(starty<0) return;
-	if(startx<0){releaseKnob(); return;}
-	var pos = holeSnap(localx(e.clientX), localy(e.clientY));
-	var r = wires[wires.length-1];
-	if(pos[0]!=-1){r[2] = pos[0]; r[3] = pos[1];}
-	else wires.pop();
+	var x=localx(e.clientX), y=localy(e.clientY);
+	endpin = xyToPinout(x,y);
+	if(endpin&&(endpin!=startpin)) wires.push([startpin, endpin]);
+	startpin = undefined;
 	redraw();
 	if(sync&&!readonly) submit(filename);
 }
@@ -117,11 +104,6 @@ function handleKey(e){
 	var c = e.charCode;
 	c = String.fromCharCode(c);
 	console.log(c);
-	if((c=='S')&&filename) {
-		if(readonly && !confirm("Opened in readonly mode. Switch to edit mode?")) return;
-		readonly = false;
-		submit(filename);
-	}
 }
 
 /////////////////////////
@@ -133,13 +115,17 @@ function handleKey(e){
 
 function redraw(){
 	ctx.clearRect(0,0,1800, 2000);
-	drawKnobs();
-	for(var i=0;i<wires.length;i++) drawLine(wires[i], i+1);
+//	drawKnobs();
+	for(var i=0;i<wires.length;i++) drawWireBetweenPins(wires[i][0], wires[i][1], i+1);
+}
+
+function drawWireBetweenPins(p1, p2, n){
+	drawLine(pinoutToXy(p1), pinoutToXy(p2), n);
 }
 
 
-function drawLine(r, n){
-	var x1=r[0], y1=r[1], x2=r[2], y2=r[3];
+function drawLine(p1, p2, n){
+	var x1=p1[0], y1=p1[1], x2=p2[0], y2=p2[1];
 	ctx.lineWidth =  12;
 	ctx.strokeStyle = cmerge('#808080', n);
 	curveLine(x1,y1,x2,y2);
@@ -177,69 +163,6 @@ function drawKnob(x, y, a, c){
 	ctx.arc(x+22*sin(a),y-22*cos(a),4,0,Math.PI*2,true);
 	ctx.closePath();
 	ctx.fill();
-}
-
-
-/////////////////////////
-//
-// Hole Positions
-//
-/////////////////////////
-
-function holeSnap(x, y){
-	var tx=Math.floor(x/200), ty=Math.floor(y/500);
-	if((tx<0)||(ty<0)||(tx>9)||(ty>4)) return undefined;
-	var ix=x%200, iy=y%500;
-	var pos
-	if((tx==0)&&(ty==0)) pos = clkholepos(0,ix,iy);
-	else if((tx==8)&&(ty==0)) pos = clkholepos(1,ix,iy);
-	else pos = ffholepos(ix,iy);
-	if(pos[0]==-1) return pos;
-	return [tx*200+pos[0], ty*500+pos[1]];
-}
-
-function ffholepos(x, y){
-	var holes = [[100, 166], [66, 190], [134, 190], [66, 252], [134, 252], [100, 266],
-               [66, 290], [134, 290], [66, 336], [134, 336], [40, 314], [160, 314],
-               [66, 372], [100, 372], [134, 372]];
-	var n = holePixel(ffholes, x, y)/10;
-	if(n>14) return [-1, -1];
-	return holes[n];
-}
-
-function clkholepos(t, x, y){
-	var holes = [[160, 98],[160, 144], [160, 190]];
-	var n = holePixel(clkholes, x, y)/10;
-	if(n>25) return [-1, -1];
-	if(n>9) return[-1, t*2+n-10];
-	return holes[n];
-}
-
-function holeImage(name){
-	var img = document.createElement('img');
-	img.src = name+'.png';
-	var cnv = document.createElement('canvas');
-	cnv.width = 200, cnv.height = 500;
-	cnv.style.width = 200, cnv.style.height = 500;
-	img.onload = function(){drawHoleImage(img, cnv);}
-	return cnv;
-}
-
-function drawHoleImage(img, cnv){
-	var ctx = cnv.getContext('2d');
-	ctx.drawImage(img,0,0);
-}
-
-function holePixel(cnv, x, y){
-	var ctx =cnv.getContext('2d');
-	var pixels = ctx.getImageData(x, y, 2, 2).data;
-	return pixels[0];
-}
-
-function dataPixel(x, y){
-	var pixels = ctx.getImageData(x, y, 2, 2).data;
-	if(pixels[3]!=255) return 0;
-	return ((pixels[0]&15)<<8)+((pixels[1]&15)<<4)+(pixels[2]&15);
 }
 
 
@@ -286,6 +209,13 @@ function mod360(n){
 	return n;
 }
 
+function bufferPixel(x, y){
+	var pixels = ctx.getImageData(x, y, 2, 2).data;
+	if(pixels[3]!=255) return 0;
+	return ((pixels[0]&15)<<8)+((pixels[1]&15)<<4)+(pixels[2]&15);
+}
+
+function dist(a,b){return Math.sqrt((b[0]-a[0])*(b[0]-a[0])+(b[1]-a[1])*(b[1]-a[1]));}
 function cos(n){return Math.cos(n*Math.PI/180);}
 function sin(n){return Math.sin(n*Math.PI/180);}
 function arctan2(x,y){return Math.atan2(x,y)*180/Math.PI;}
@@ -293,4 +223,3 @@ function hexd(n){return '0123456789abcdef'[n];}
 
 function localx(gx){return (gx-wirebuffer.getBoundingClientRect().left)*1800/900;}
 function localy(gy){return (gy-wirebuffer.getBoundingClientRect().top)*2000/1000;}
-

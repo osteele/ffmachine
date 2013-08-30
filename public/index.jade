@@ -1,11 +1,11 @@
 doctype 5
 html(lang="en", ng-app="FFMachine")
   head
-    title Flip Flop Machine Index
+    title Flip Flop Machines
 
     link(href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc2/css/bootstrap.min.css", rel="stylesheet", type="text/css")
     link(href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.1/css/font-awesome.min.css", rel="stylesheet")
-    link(href="ffmachine.css", rel="stylesheet")
+    link(href="dlm.css", rel="stylesheet")
 
     style(type="text/css").
       .icons a { padding: 0 10px; cursor: pointer; }
@@ -18,13 +18,13 @@ html(lang="en", ng-app="FFMachine")
     script(src="index.js")
 
   body(ng-controller="machines")
-    p.title Flip Flop Machine Index
+    p.title Flip Flop Machines
 
     table
       tr.machine(ng-repeat="machine in machines | orderBy:'name'")
         td.name {{machine.name}}
         td.icons
-          a.icon-eye-open(ng-href="ffmachine.html?name={{machine.name}}&readonly=true&sync=true", title="Open the machine “{{machine.name}}” for browsing")
-          a.icon-edit(ng-href="ffmachine.html?name={{machine.name}}&sync=true", title="Open the machine “{{machine.name}}” for editing")
+          a.icon-eye-open(ng-href="dlm.html?name={{machine.name}}&readonly=true&sync=true", title="Open the machine “{{machine.name}}” for browsing")
+          a.icon-edit(ng-href="dlm.html?name={{machine.name}}&sync=true", title="Open the machine “{{machine.name}}” for editing")
           a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of the machine “{{machine.name}}”")
           a.icon-trash(ng-click="delete_machine(machine)", title="Delete the machine “{{machine.name}}”")
