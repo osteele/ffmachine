@@ -1,5 +1,6 @@
 var filename;
 var readonly;
+var sync;
 var wirebuffer, ctx;
 var ffholes;
 var wires = [];
@@ -14,6 +15,7 @@ function setup(){
 	var urlvars = getUrlVars();
 	filename = urlvars['name'];
 	readonly = urlvars['readonly'];
+	sync = urlvars['sync'];
 	wirebuffer = document.getElementById('wirebuffer');
 	wirebuffer.width = 1800;
 	wirebuffer.height =2000;
@@ -56,6 +58,7 @@ function mouseDown(e){
 		window.onmousemove = function(e){mouseMove(e)};
 	}
 	redraw();
+	if(sync&&!readonly) submit(filename);
 }
 
 function mouseMove(e){
@@ -69,6 +72,7 @@ function mouseMove(e){
 	r[2] = localx(e.clientX);
 	r[3] = localy(e.clientY);
 	redraw();
+	if(sync&&!readonly) submit(filename);
 }
 
 function dragKnob(e){
@@ -80,6 +84,7 @@ function dragKnob(e){
 	}
 	knob[2] = mod360(a+knoboffset);
 	redraw();
+	if(sync&&!readonly) submit(filename);
 }
 
 
@@ -94,6 +99,7 @@ function mouseUp(e){
 	if(pos[0]!=-1){r[2] = pos[0]; r[3] = pos[1];}
 	else wires.pop();
 	redraw();
+	if(sync&&!readonly) submit(filename);
 }
 
 function releaseKnob(){
@@ -101,6 +107,7 @@ function releaseKnob(){
 	if(starty==0) knob[2]=findNearest(knob[2], [-72, -36, 0, 36, 72]);
 	if(starty==2) knob[2]=findNearest(knob[2], [-68, -23, 22, 67]);
 	redraw();
+	if(sync&&!readonly) submit(filename);
 }
 
 function mouseClicked(e){

@@ -24,7 +24,7 @@ html(lang="en", ng-app="FFMachine")
       tr.machine(ng-repeat="machine in machines | orderBy:'name'")
         td.name {{machine.name}}
         td.icons
-          a.icon-eye-open(ng-href="ffmachine.html?name={{machine.name}}&readonly=true", title="Open the machine “{{machine.name}}” for browsing")
-          a.icon-edit(ng-href="ffmachine.html?name={{machine.name}}", title="Open the machine “{{machine.name}}” for editing")
+          a.icon-eye-open(ng-href="ffmachine.html?name={{machine.name}}&readonly=true&sync=true", title="Open the machine “{{machine.name}}” for browsing")
+          a.icon-edit(ng-href="ffmachine.html?name={{machine.name}}&sync=true", title="Open the machine “{{machine.name}}” for editing")
           a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of the machine “{{machine.name}}”")
           a.icon-trash(ng-click="delete_machine(machine)", title="Delete the machine “{{machine.name}}”")
