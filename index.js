@@ -1,13 +1,25 @@
 (function() {
-  var module;
+  var module,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   module = angular.module('FFMachine', ['firebase']);
 
   module.controller('machines', function($scope, angularFire) {
-    var firebaseRootRef, machineListRef;
+    var auth, firebaseRootRef, machineListRef;
     firebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
     machineListRef = firebaseRootRef.child('machines');
     angularFire(machineListRef, $scope, 'machines', {});
+    auth = new FirebaseSimpleLogin(firebaseRootRef, function(error, user) {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      return setTimeout((function() {
+        return $scope.$apply(function() {
+          return $scope.user = user;
+        });
+      }), 10);
+    });
     $scope.machine_key = function(machine) {
       var k, m;
       return ((function() {
@@ -24,7 +36,12 @@
       })())[0];
     };
     $scope.duplicate_machine = function(machine) {
-      var k, m, message_prefix, name;
+      var k, m, message_prefix, name, user, user_key;
+      user = $scope.user;
+      if (!user) {
+        alert("You must sign in before making a machine.");
+        return;
+      }
       message_prefix = "";
       while (true) {
         name = prompt("" + message_prefix + "Name for the copy of machine '" + machine.name + "':", "Copy of " + machine.name);
@@ -44,9 +61,15 @@
         }
         message_prefix = "A machine named '" + name + "' already exists. Please choose another name.\n\n";
       }
+      user_key = {
+        id: user.id,
+        email: user.email
+      };
       return machineListRef.push({
         name: name,
-        wiring: machine.wiring
+        wiring: machine.wiring,
+        creator: user_key,
+        writers: [user_key]
       });
     };
     $scope.delete_machine = function(machine) {
@@ -71,8 +94,23 @@
     $scope.rename_machine = function(machine) {
       return machine.name = machine.name.replace(/^\s+/, '').replace(/\s+$/, '');
     };
-    return $scope.machine_stats = function(machine) {
+    $scope.machine_editable = function(machine) {
+      var user, _ref;
+      user = $scope.user;
+      return user && machine.writers && (_ref = user.id, __indexOf.call(machine.writers.map(function(user) {
+        return user.id;
+      }), _ref) >= 0);
+    };
+    $scope.machine_stats = function(machine) {
       return "" + (machine.wiring.split(/\s+/).length - 1) + " wires";
+    };
+    $scope.login = function(provider) {
+      return auth.login(provider, {
+        rememberMe: true
+      });
+    };
+    return $scope.logout = function() {
+      return auth.logout();
     };
   });
 
