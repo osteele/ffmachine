@@ -12,6 +12,8 @@ html(lang="en", ng-app="FFMachine")
       .icons a:hover { text-decoration: none }
       .machine .name { display:block; min-width: 350px; text-align: right; padding-right: 15px; }
       .machine .name input { text-align: right; }
+      .machine.protected .protect { color: gray; cursor: default; }
+      .machine.protected .name { cursor: default; }
 
     script(src="https://cdn.firebase.com/v0/firebase.js")
     script(src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.1.5/angular.min.js")
@@ -22,13 +24,13 @@ html(lang="en", ng-app="FFMachine")
     p.title Flip Flop Machines
 
     table
-      tr.machine(ng-repeat="machine in machines | orderBy:'name'")
+      tr.machine(ng-repeat="machine in machines", ng-class="{protected: machine.protected}")
         td.name(title="Click to rename")
-          span(ng-hide="editing", ng-click="editing=true") {{machine.name}}
-          form(ng-show="editing", ng-submit="editing=false; rename_machine(machine)")
+          span(ng-hide="!machine.protected && editing", ng-click="editing=true") {{machine.name}}
+          form(ng-show="!machine.protected && editing", ng-submit="editing=false; rename_machine(machine)")
             input(type="text", ng-model="machine.name", ui-keypress="{enter: 'foo()', escape: 'cancel()'}", placeholder="Name", ng-required, size=10)
         td.icons
           a.icon-eye-open(ng-href="dlm.html?name={{machine.name | encode}}&readonly=true&sync=true", title="View '{{machine.name}}' (changes won't be saved)")
-          a.icon-edit(ng-href="dlm.html?name={{machine.name | encode}}&sync=true", title="Edit '{{machine.name}}'")
+          a.icon-edit.protect(ng-href="dlm.html?name={{machine.name | encode}}&sync=true", title="Edit '{{machine.name}}'")
           a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
-          a.icon-trash(ng-click="delete_machine(machine)", title="Delete '{{machine.name}}'")
+          a.icon-trash.protect(ng-click="delete_machine(machine)", title="Delete '{{machine.name}}'")
