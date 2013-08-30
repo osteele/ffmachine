@@ -97,7 +97,7 @@
         id: user.id,
         email: user.email
       };
-      now = new Date;
+      now = Firebase.ServerValue.TIMESTAMP;
       return machineListRef.push({
         name: name,
         wiring: machine.wiring,
