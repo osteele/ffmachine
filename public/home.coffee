@@ -39,7 +39,7 @@ module.controller 'machines', ($scope, angularFire) ->
       break unless (m for k, m of $scope.machines when m.name.toLowerCase() == name.toLowerCase()).length
       message_prefix = "A machine named '#{name}' already exists. Please choose another name.\n\n"
     user_key = {id: user.id, email: user.email}
-    now = new Date
+    now = Firebase.ServerValue.TIMESTAMP
     machineListRef.push {name, wiring: machine.wiring, creator: user_key, writers: [user_key], created_at: now}
 
   $scope.delete_machine = (machine) ->
@@ -55,7 +55,7 @@ module.controller 'machines', ($scope, angularFire) ->
     user and machine.writers and user.id in machine.writers.map (user) -> user.id
 
   $scope.machine_stats = (machine) ->
-    "#{machine.wiring.split(/\s+/).length - 1} wires"
+    "#{(machine.wiring.split(/\s+/).length - 1) / 2} wires"
 
   $scope.login = (provider) ->
     auth.login provider, rememberMe: true
