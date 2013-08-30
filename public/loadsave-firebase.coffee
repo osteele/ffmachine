@@ -29,13 +29,13 @@ auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
     redraw()
 
     connectionListRef = machineRef.child('connected')
+    connectionListRef.off()
     connectionListRef.on 'value', (snapshot) ->
       user_emails = (v for k, v of snapshot?.val() || {})
       user_emails.sort()
       e = document.querySelector('#connected-users ul')
       e.innerHTML = ''
       for email in user_emails
-        console.info email
         user_view = document.createElement 'li'
         user_view.appendChild document.createTextNode(email)
         e.appendChild user_view
@@ -50,5 +50,7 @@ auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
   return if machine.wiring == wiring
   console.error "#{machine.name} is read-only" if machine.protected
   return if machine.protected
+  modified_at = Firebase.ServerValue.TIMESTAMP
   machineRef.child('wiring').set wiring
-  machineRef.child('modified_at').set Firebase.ServerValue.TIMESTAMP
+  machineRef.child('modified_at').set modified_at
+  machineRef.child('history').push {user: user?.email, wiring, modified_at}
