@@ -8,14 +8,18 @@ html(lang="en", ng-app="FFMachine")
     link(href="dlm.css", rel="stylesheet")
 
     style(type="text/css").
-      .icons a { padding: 0 10px; cursor: pointer; }
+      .icons a, .icons div { padding: 0 10px; cursor: pointer; }
       .icons a:hover { text-decoration: none }
       .machine .name { display:block; min-width: 350px; text-align: right; padding-right: 15px; }
       .machine .name input { text-align: right; }
       .machine.protected .protect { color: gray; cursor: default; }
       .machine.protected .name { cursor: default; }
+      #account { position: absolute; top: 5px; right: 5px; }
+      #account button { float: right; }
 
     script(src="https://cdn.firebase.com/v0/firebase.js")
+    script(src="https://cdn.firebase.com/v0/firebase-simple-login.js")
+    script(src="https://login.persona.org/include.js")
     script(src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.1.5/angular.min.js")
     script(src="http://cdnjs.cloudflare.com/ajax/libs/angularFire/0.2.0/angularfire.min.js")
     script(src="index.js")
@@ -23,15 +27,22 @@ html(lang="en", ng-app="FFMachine")
   body(ng-controller="machines")
     p.title Flip Flop Machines
 
+    #account
+      button(ng-hide="user", ng-click="login('persona')") Sign In
+      button(ng-show="user", ng-click="logout()") Sign Out
+      div(ng-show="user") {{user.email}}
+
     table
-      tr.machine(ng-repeat="machine in machines", ng-class="{protected: machine.protected}")
+      tr.machine(ng-repeat="machine in machines", ng-class="{protected: !machine_editable(machine)}")
         td.name(title="Click to rename")
-          span(ng-hide="!machine.protected && editing", ng-click="editing=true") {{machine.name}}
-          form(ng-show="!machine.protected && editing", ng-submit="editing=false; rename_machine(machine)")
+          span(ng-hide="machine_editable(machine) && editing", ng-click="editing=true") {{machine.name}}
+          form(ng-show="machine_editable(machine) && editing", ng-submit="editing=false; rename_machine(machine)")
             input(type="text", ng-model="machine.name", ui-keypress="{enter: 'foo()', escape: 'cancel()'}", placeholder="Name", ng-required, size=10)
         td.icons
           a.icon-eye-open(ng-href="dlm.html?name={{machine_key(machine) | encode}}&readonly=true&sync=true", title="View '{{machine.name}}' (changes won't be saved)")
-          a.icon-edit.protect(ng-href="dlm.html?name={{machine_key(machine) | encode}}&sync=true", title="Edit '{{machine.name}}'")
           a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
-          a.icon-trash.protect(ng-click="delete_machine(machine)", title="Delete '{{machine.name}}'")
+          .icon-edit.protect(ng-hide="machine_editable(machine)")
+          a.icon-edit.protect(ng-href="dlm.html?name={{machine_key(machine) | encode}}&sync=true", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
+          .icon-trash.protect(ng-hide="machine_editable(machine)")
+          a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
         td ({{machine_stats(machine)}})
