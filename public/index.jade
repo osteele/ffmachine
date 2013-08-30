@@ -37,3 +37,5 @@ html(lang="en", ng-app="FFMachine")
           a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
         td ({{machine_stats(machine)}})
         td(ng-show="machine.creator") Created by {{machine.creator.email}}
+        td
+          ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': '1 viewer.', 'other': '{} viewers.'}")

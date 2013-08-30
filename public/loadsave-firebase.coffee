@@ -3,11 +3,18 @@ machineListRef = firebaseRootRef.child 'machines'
 machineRef = null
 machine = null
 reload_key = null
+user = null
 
 firebaseRootRef.child('version').on 'value', (snapshot) ->
   key = snapshot.val()
   location.reload() if reload_key and key and reload_key != key
   reload_key = key
+
+auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
+  if error
+    console.error error
+    return
+  user = _user
 
 # This replaces the function in loadsave.js
 @loadWires = (name) ->
@@ -20,6 +27,11 @@ firebaseRootRef.child('version').on 'value', (snapshot) ->
     wire_strings.pop() if wire_strings[wire_strings.length - 1] == ''
     window.wires = wire_strings.map (wire) -> wire.split ' '
     redraw()
+
+    if user
+      onlineRef = machineRef.child('connected').child(user.id)
+      onlineRef.onDisconnect().remove()
+      onlineRef.set user.email
 
 # This replaces the function in loadsave.js
 @saveWires = (name, wiring) ->

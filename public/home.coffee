@@ -57,6 +57,10 @@ module.controller 'machines', ($scope, angularFire) ->
   $scope.machine_stats = (machine) ->
     "#{(machine.wiring.split(/\s+/).length - 1) / 2} wires"
 
+  $scope.machine_viewers = (machine) ->
+    return [] unless machine.connected
+    (k for k of machine.connected)
+
   $scope.login = (provider) ->
     auth.login provider, rememberMe: true
 
