@@ -12,18 +12,18 @@
   this.loadWires = function(name) {
     return getMachineRef(name).on('value', function(snapshot) {
       return snapshot.forEach(function(child) {
-        var array, i, line, str, _i, _j, _len, _len1;
-        str = child.val().wiring;
-        array = str.replace(/(\n|\\n)$/, '').split(/\n|\\n/);
-        for (i = _i = 0, _len = array.length; _i < _len; i = ++_i) {
-          line = array[i];
-          array[i] = line.split(' ');
-        }
-        for (_j = 0, _len1 = array.length; _j < _len1; _j++) {
-          line = array[_j];
-          parseInts(line);
-        }
-        window.wires = array;
+        var line, wiring;
+        wiring = child.val().wiring.replace(/\\n/g, "\n").replace(/\s+$/, '');
+        window.wires = (function() {
+          var _i, _len, _ref, _results;
+          _ref = wiring.split(/\n/);
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            line = _ref[_i];
+            _results.push(line.split(' '));
+          }
+          return _results;
+        })();
         return redraw();
       });
     });
@@ -32,6 +32,7 @@
   this.saveWires = function(name, wiring) {
     var machineRef;
     machineRef = getMachineRef(name);
+    wiring = wiring.replace(/\r\n/g, "\n");
     machineRef.on('child_added', function(snapshot) {
       return snapshot.ref().child('wiring').set(wiring);
     });
@@ -39,7 +40,6 @@
       if (snapshot.val()) {
         return;
       }
-      console.info('insert');
       machineRef = machineListRef.push({
         name: name,
         wiring: wiring
