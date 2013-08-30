@@ -1,11 +1,11 @@
-p.title Flip Flop Machines
+h1 Flip Flop Machines
 
 #account
   button(ng-hide="user", ng-click="login('persona')") Sign In
   button(ng-show="user", ng-click="logout()") Sign Out
   div(ng-show="user") {{user.email}}
 
-table
+table.machines
   tr.machine(ng-repeat="machine in machines", ng-class="{protected: !machine_editable(machine)}")
     td
       a(href="/#/machines/{{machine_key(machine) | encode}}")

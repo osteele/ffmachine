@@ -1,37 +1,37 @@
-h1(ng-show="machine") {{machine.name}} Machine
+div(ng-show="machine")
+  h1
+    wiring-diagram(wires="{{machine.wiring}}")
+    {{machine.name}} Machine
 
-wiring-diagram(wires="{{machine.wiring}}")
 
-table(ng-show="machine")
-  tr.machine
-    tr
-      td Name
-      td.name {{machine.name}}
+  table.machines
+    tr.machine
+      tr
+        th Name
+        td.name {{machine.name}}
 
-    tr(ng-show="machine.creator")
-      th Creator
-      td {{machine.creator.email}}
+      tr(ng-show="machine.creator")
+        th Creator
+        td {{machine.creator.email}}
 
-    tr(ng-show="machine.created_at")
-      th Created At
-      td {{machine.created_at | date}}
+      tr(ng-show="machine.created_at")
+        th Created At
+        td {{machine.created_at | date}}
 
-    tr
-      th
-      td
-        ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': '1 viewer.', 'other': '{} viewers.'}")
+      tr
+        th
+        td
+          ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': '1 viewer.', 'other': '{} viewers.'}")
 
-section(ng-show="machine.history")
-  h2 History
-  table
-    tr
-      th
-      th Edited by
-      th At
-    tr(ng-repeat="history in machine.history | orderBy:'modified_at':true | limitTo:50 ")
-      td
-        wiring-diagram(wires="{{history.wiring}}")
-      td {{history.user}}
-      td
-        {{history.modified_at | date:'mediumTime'}}
-        {{history.modified_at | date:'mediumDate'}}
+  section.history(ng-show="machine.history")
+    h2 History
+    table
+      tr
+      tr(ng-repeat="history in machine.history | orderBy:'modified_at':true | limitTo:50 ")
+        td
+          wiring-diagram(wires="{{history.wiring}}")
+        td edited by {{history.user}}
+        td
+          | at
+          | {{history.modified_at | date:'mediumTime'}},
+          | {{history.modified_at | date:'mediumDate'}}

@@ -1,10 +1,34 @@
+body {
+  font-size: x-large;
+  // font-family: "Open Sans", serif;
+  font-family: "Abel", Arial, sans-serif;
+}
+
+h1, h2 {
+  font-family: cursive;
+}
+
+#account {
+  position: absolute; top: 10px; right: 10px;
+  font-size: medium;
+  font-family: "Open Sans", serif;
+
+  button { float: right; }
+}
+
 .icons a, .icons div { padding: 0 10px; cursor: pointer; }
 .icons a:hover { text-decoration: none }
-.machine .name { display:block; min-width: 350px; text-align: right; padding-right: 15px; }
+.machine .name { display:block; min-width: 350px; text-align: right; padding-right: 15px; font-family: cursive; font-size: 120%; }
 .machine .name input { text-align: right; }
 .machine.protected .protect { color: gray; cursor: default; }
 .machine.protected .name { cursor: default; }
-#account { position: absolute; top: 5px; right: 5px; }
-#account button { float: right; }
-td { padding: 0 10px; }
+
 td { vertical-align: top; }
+
+.machines {
+  td { padding: 0 10px; }
+}
+
+.history {
+  td { padding: 0 5px; }
+}
