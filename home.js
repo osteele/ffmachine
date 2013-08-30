@@ -20,6 +20,7 @@
   module.controller('machines', function($scope, angularFire) {
     var auth, machineListRef;
     machineListRef = firebaseRootRef.child('machines');
+    $scope.machines = [];
     angularFire(machineListRef, $scope, 'machines', {});
     auth = new FirebaseSimpleLogin(firebaseRootRef, function(error, user) {
       if (error) {
@@ -161,6 +162,85 @@
 
   module.filter('encode', function() {
     return encodeURIComponent;
+  });
+
+  module.directive('wiringDiagram', function() {
+    return {
+      restrict: 'CE',
+      replace: true,
+      template: '<canvas width="75" height="50"></canvas>',
+      transclude: true,
+      scope: {
+        wires: '@wires'
+      },
+      link: function(scope, element, attrs) {
+        element = element[0];
+        return attrs.$observe('wires', function(wires) {
+          var color_index, colors, ctx, dx, dy, line, mx, my, round, s0, s1, sqr, sqrt, x0, x1, y0, y1, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+          wires = (function() {
+            var _i, _len, _ref, _results;
+            _ref = scope.wires.split(/\n/);
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              line = _ref[_i];
+              if (line.match(/\S/)) {
+                _results.push(line.split(/\s+/));
+              }
+            }
+            return _results;
+          })();
+          ctx = element.getContext('2d');
+          ctx.save();
+          ctx.scale(element.width / 1800, element.height / 2000);
+          (function() {
+            var cols, i, j, padding, rh, rows, rw, _i, _ref, _ref1, _results;
+            _ref = [5, 9], rows = _ref[0], cols = _ref[1];
+            _ref1 = [200, 400], rw = _ref1[0], rh = _ref1[1];
+            padding = 10;
+            ctx.fillStyle = '#301E17';
+            _results = [];
+            for (i = _i = 0; 0 <= rows ? _i < rows : _i > rows; i = 0 <= rows ? ++_i : --_i) {
+              _results.push((function() {
+                var _j, _results1;
+                _results1 = [];
+                for (j = _j = 0; 0 <= cols ? _j < cols : _j > cols; j = 0 <= cols ? ++_j : --_j) {
+                  _results1.push(ctx.fillRect(j * rw + padding, i * rh + padding, rw - 2 * padding, rh - 2 * padding));
+                }
+                return _results1;
+              })());
+            }
+            return _results;
+          })();
+          ctx.lineWidth = 60;
+          colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0'];
+          round = Math.round, sqrt = Math.sqrt;
+          sqr = function(x) {
+            return Math.pow(x, 2);
+          };
+          for (_i = 0, _len = wires.length; _i < _len; _i++) {
+            _ref = wires[_i], s0 = _ref[0], s1 = _ref[1];
+            _ref1 = pinoutToXy(s0), x0 = _ref1[0], y0 = _ref1[1];
+            _ref2 = pinoutToXy(s1), x1 = _ref2[0], y1 = _ref2[1];
+            color_index = round(sqrt(sqr(x1 - x0, 2) + sqr(y1 - y0, 2)) / 100);
+            ctx.strokeStyle = (_ref3 = colors[color_index]) != null ? _ref3 : '#d02090';
+            mx = x0 + (x1 - x0) / 2;
+            my = y0 + (y1 - y0) / 2;
+            _ref4 = [(x1 - x0) / 5, 0], dx = _ref4[0], dy = _ref4[1];
+            dx += 10 * (dx < 0 ? -1 : 1);
+            if (y0 === y1) {
+              _ref5 = [0, 10], dx = _ref5[0], dy = _ref5[1];
+            }
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.quadraticCurveTo(x0 + dx, y0 + dy, mx, my);
+            ctx.moveTo(x1, y1);
+            ctx.quadraticCurveTo(x1 - dx, y1 - dy, mx, my);
+            ctx.stroke();
+          }
+          return ctx.restore();
+        });
+      }
+    };
   });
 
 }).call(this);
