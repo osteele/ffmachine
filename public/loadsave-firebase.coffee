@@ -2,11 +2,13 @@ firebaseRootRef = new Firebase 'https://ffmachine.firebaseIO.com/'
 machineListRef = firebaseRootRef.child 'machines'
 
 getMachineRef = (name, cb) ->
-  machineListRef.startAt(name).endAt(name)
+  key = name.toLowerCase()
+  machineListRef.startAt(key).endAt(key)
 
 # This replaces the function in loadsave.js
 @loadWires = (name) ->
   getMachineRef(name).on 'value', (snapshot) ->
+    console.error "No document named #{name}" unless snapshot.val()
     snapshot.forEach (child) ->
       wiring_string = child.val().wiring.replace(/\\n/g, "\n")
       wire_strings = wiring_string.split(/\n/)
@@ -23,4 +25,4 @@ getMachineRef = (name, cb) ->
   machineRef.on 'value', (snapshot) ->
     return if snapshot.val()
     machineRef = machineListRef.push {name, wiring}
-    machineRef.setPriority name
+    machineRef.setPriority name.toLowerCase()

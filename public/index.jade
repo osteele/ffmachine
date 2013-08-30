@@ -10,7 +10,8 @@ html(lang="en", ng-app="FFMachine")
     style(type="text/css").
       .icons a { padding: 0 10px; cursor: pointer; }
       .icons a:hover { text-decoration: none }
-      .machine .name { display:block; min-width: 200px; text-align: right; padding-right: 15px; }
+      .machine .name { display:block; min-width: 350px; text-align: right; padding-right: 15px; }
+      .machine .name input { text-align: right; }
 
     script(src="https://cdn.firebase.com/v0/firebase.js")
     script(src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.1.5/angular.min.js")
@@ -22,9 +23,12 @@ html(lang="en", ng-app="FFMachine")
 
     table
       tr.machine(ng-repeat="machine in machines | orderBy:'name'")
-        td.name {{machine.name}}
+        td.name(title="Click to rename")
+          span(ng-hide="editing", ng-click="editing=true") {{machine.name}}
+          form(ng-show="editing", ng-submit="editing=false; rename_machine(machine)")
+            input(type="text", ng-model="machine.name", ui-keypress="{enter: 'foo()', escape: 'cancel()'}", placeholder="Name", ng-required, size=10)
         td.icons
-          a.icon-eye-open(ng-href="dlm.html?name={{machine.name}}&readonly=true&sync=true", title="Open the machine “{{machine.name}}” for browsing")
-          a.icon-edit(ng-href="dlm.html?name={{machine.name}}&sync=true", title="Open the machine “{{machine.name}}” for editing")
-          a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of the machine “{{machine.name}}”")
-          a.icon-trash(ng-click="delete_machine(machine)", title="Delete the machine “{{machine.name}}”")
+          a.icon-eye-open(ng-href="dlm.html?name={{machine.name | encode}}&readonly=true&sync=true", title="View '{{machine.name}}' (changes won't be saved)")
+          a.icon-edit(ng-href="dlm.html?name={{machine.name | encode}}&sync=true", title="Edit '{{machine.name}}'")
+          a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
+          a.icon-trash(ng-click="delete_machine(machine)", title="Delete '{{machine.name}}'")
