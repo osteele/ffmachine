@@ -18,6 +18,9 @@ The grunt server task runs a LiveReload server.
 Install and activate the [LiveReload extension (Safari, Chrome, or Firefox)][LiveReload extensions] to reload the web page when the sources are changed.
 (This is optional.)
 
+The sources are in the ./public directory. Change these and (if grunt is running) it will copy and transcode them
+to ./build directory, whence they're served.
+
 [npm]: https://npmjs.org/
 [npm download]: http://nodejs.org/download/
 [homebrew]: http://brew.sh/
