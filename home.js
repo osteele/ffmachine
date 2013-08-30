@@ -48,7 +48,7 @@
       })())[0];
     };
     $scope.duplicate_machine = function(machine) {
-      var k, m, message_prefix, name, user, user_key;
+      var k, m, message_prefix, name, name_index, now, user, user_key;
       user = $scope.user;
       if (!user) {
         alert("You must sign in before making a machine.");
@@ -56,7 +56,27 @@
       }
       message_prefix = "";
       while (true) {
-        name = prompt("" + message_prefix + "Name for the copy of machine '" + machine.name + "':", "Copy of " + machine.name);
+        name = "" + machine.name + " copy";
+        name_index = 1;
+        while (((function() {
+            var _ref, _results;
+            _ref = $scope.machines;
+            _results = [];
+            for (k in _ref) {
+              m = _ref[k];
+              if (m.name.toLowerCase() === name.toLowerCase()) {
+                _results.push(m);
+              }
+            }
+            return _results;
+          })()).length) {
+          name_index += 1;
+          name = "" + machine.name + " copy #" + name_index;
+        }
+        name = prompt("" + message_prefix + "Name for the copy of machine '" + machine.name + "':", name);
+        if (!name) {
+          return;
+        }
         if (!((function() {
           var _ref, _results;
           _ref = $scope.machines;
@@ -77,11 +97,13 @@
         id: user.id,
         email: user.email
       };
+      now = new Date;
       return machineListRef.push({
         name: name,
         wiring: machine.wiring,
         creator: user_key,
-        writers: [user_key]
+        writers: [user_key],
+        created_at: now
       });
     };
     $scope.delete_machine = function(machine) {

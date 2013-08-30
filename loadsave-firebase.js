@@ -51,7 +51,8 @@
     if (machine["protected"]) {
       return;
     }
-    return machineRef.child('wiring').set(wiring);
+    machineRef.child('wiring').set(wiring);
+    return machineRef.child('modified_at').set(new Date);
   };
 
 }).call(this);
