@@ -33,7 +33,7 @@
   this.loadWires = function(name) {
     machineRef = machineListRef.child(name);
     return machineRef.on('value', function(snapshot) {
-      var onlineRef, wire_strings, wiring_string;
+      var connectionListRef, onlineRef, wire_strings, wiring_string;
       machine = snapshot.val();
       if (!machine) {
         console.error("No machine named " + name);
@@ -47,8 +47,34 @@
         return wire.split(' ');
       });
       redraw();
+      connectionListRef = machineRef.child('connected');
+      connectionListRef.on('value', function(snapshot) {
+        var e, email, k, user_emails, user_view, v, _i, _len, _results;
+        user_emails = (function() {
+          var _ref, _results;
+          _ref = (snapshot != null ? snapshot.val() : void 0) || {};
+          _results = [];
+          for (k in _ref) {
+            v = _ref[k];
+            _results.push(v);
+          }
+          return _results;
+        })();
+        user_emails.sort();
+        e = document.querySelector('#connected-users ul');
+        e.innerHTML = '';
+        _results = [];
+        for (_i = 0, _len = user_emails.length; _i < _len; _i++) {
+          email = user_emails[_i];
+          console.info(email);
+          user_view = document.createElement('li');
+          user_view.appendChild(document.createTextNode(email));
+          _results.push(e.appendChild(user_view));
+        }
+        return _results;
+      });
       if (user) {
-        onlineRef = machineRef.child('connected').child(user.id);
+        onlineRef = connectionListRef.child(user.id);
         onlineRef.onDisconnect().remove();
         return onlineRef.set(user.email);
       }
