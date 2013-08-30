@@ -1,5 +1,5 @@
 (function() {
-  var firebaseRootRef, machine, machineListRef, machineRef, reload_key;
+  var auth, firebaseRootRef, machine, machineListRef, machineRef, reload_key, user;
 
   firebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
 
@@ -11,6 +11,8 @@
 
   reload_key = null;
 
+  user = null;
+
   firebaseRootRef.child('version').on('value', function(snapshot) {
     var key;
     key = snapshot.val();
@@ -20,10 +22,18 @@
     return reload_key = key;
   });
 
+  auth = new FirebaseSimpleLogin(firebaseRootRef, function(error, _user) {
+    if (error) {
+      console.error(error);
+      return;
+    }
+    return user = _user;
+  });
+
   this.loadWires = function(name) {
     machineRef = machineListRef.child(name);
     return machineRef.on('value', function(snapshot) {
-      var wire_strings, wiring_string;
+      var onlineRef, wire_strings, wiring_string;
       machine = snapshot.val();
       if (!machine) {
         console.error("No machine named " + name);
@@ -36,7 +46,12 @@
       window.wires = wire_strings.map(function(wire) {
         return wire.split(' ');
       });
-      return redraw();
+      redraw();
+      if (user) {
+        onlineRef = machineRef.child('connected').child(user.id);
+        onlineRef.onDisconnect().remove();
+        return onlineRef.set(user.email);
+      }
     });
   };
 

@@ -138,6 +138,17 @@
     $scope.machine_stats = function(machine) {
       return "" + ((machine.wiring.split(/\s+/).length - 1) / 2) + " wires";
     };
+    $scope.machine_viewers = function(machine) {
+      var k, _results;
+      if (!machine.connected) {
+        return [];
+      }
+      _results = [];
+      for (k in machine.connected) {
+        _results.push(k);
+      }
+      return _results;
+    };
     $scope.login = function(provider) {
       return auth.login(provider, {
         rememberMe: true
