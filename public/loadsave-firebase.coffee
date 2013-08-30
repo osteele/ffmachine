@@ -2,10 +2,12 @@ firebaseRootRef = new Firebase 'https://ffmachine.firebaseIO.com/'
 machineListRef = firebaseRootRef.child 'machines'
 machineRef = null
 machine = null
+reload_key = null
 
-getMachineRef = (name, cb) ->
-  key = name.toLowerCase()
-  machineListRef.startAt(key).endAt(key)
+firebaseRootRef.child('version').on 'value', (snapshot) ->
+  key = snapshot.val()
+  location.reload() if reload_key and key and reload_key != key
+  reload_key = key
 
 # This replaces the function in loadsave.js
 @loadWires = (name) ->

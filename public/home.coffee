@@ -1,7 +1,14 @@
+firebaseRootRef = new Firebase 'https://ffmachine.firebaseIO.com/'
+reload_key = null
+
+firebaseRootRef.child('version').on 'value', (snapshot) ->
+  key = snapshot.val()
+  location.reload() if reload_key and key and reload_key != key
+  reload_key = key
+
 module = angular.module('FFMachine', ['firebase'])
 
 module.controller 'machines', ($scope, angularFire) ->
-  firebaseRootRef = new Firebase 'https://ffmachine.firebaseIO.com/'
   machineListRef = firebaseRootRef.child 'machines'
 
   angularFire machineListRef, $scope, 'machines', {}
