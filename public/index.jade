@@ -14,6 +14,7 @@ html(lang="en", ng-app="FFMachine")
     script(src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.1.5/angular.min.js")
     script(src="http://cdnjs.cloudflare.com/ajax/libs/angularFire/0.2.0/angularfire.min.js")
     script(src="home.js")
+    script(src="modules.js")
 
   body(ng-controller="machines")
     p.title Flip Flop Machines
@@ -25,6 +26,8 @@ html(lang="en", ng-app="FFMachine")
 
     table
       tr.machine(ng-repeat="machine in machines", ng-class="{protected: !machine_editable(machine)}")
+        td
+          wiring-diagram(wires="{{machine.wiring}}")
         td.name(title="Click to rename")
           span(ng-hide="machine_editable(machine) && editing", ng-click="editing=true") {{machine.name}}
           form(ng-show="machine_editable(machine) && editing", ng-submit="editing=false; rename_machine(machine)")
