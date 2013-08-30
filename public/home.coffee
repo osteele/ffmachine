@@ -1,19 +1,21 @@
 firebaseRootRef = new Firebase 'https://ffmachine.firebaseIO.com/'
-reload_key = null
+machineListRef = firebaseRootRef.child 'machines'
 
+# Server-push reload
+reload_key = null
 firebaseRootRef.child('version').on 'value', (snapshot) ->
   key = snapshot.val()
   location.reload() if reload_key and key and reload_key != key
   reload_key = key
 
-module = angular.module('FFMachine', ['firebase'])
+module = angular.module 'FFMachine', ['firebase']
 
-module.controller 'machines', ($scope, angularFire) ->
-  machineListRef = firebaseRootRef.child 'machines'
-
+MachineListCtrl = ($scope, $location, angularFire) ->
   $scope.machines = []
+  # TODO is there a way to make this a list type?
   angularFire machineListRef, $scope, 'machines', {}
 
+  # TODO replace by angularfire 0.3.x auth
   auth = new FirebaseSimpleLogin firebaseRootRef, (error, user) ->
     if error
       console.error error
@@ -53,20 +55,37 @@ module.controller 'machines', ($scope, angularFire) ->
 
   $scope.machine_editable = (machine) ->
     user = $scope.user
-    user and machine.writers and user.id in machine.writers.map (user) -> user.id
+    return user and machine.writers and user.id in machine.writers.map (user) -> user.id
 
   $scope.machine_stats = (machine) ->
     "#{(machine.wiring.split(/\s+/).length - 1) / 2} wires"
 
   $scope.machine_viewers = (machine) ->
     return [] unless machine.connected
-    (k for k of machine.connected)
+    return (k for k of machine.connected)
+
+  # FIXME gets 'digest already in progress'
+  $scope.view_details = (machine) ->
+    $location.path '/machines/' + encodeURIComponent($scope.machine_key(machine))
 
   $scope.login = (provider) ->
     auth.login provider, rememberMe: true
 
   $scope.logout = ->
     auth.logout()
+
+MachineDetailCtrl = ($scope, $routeParams, angularFire) ->
+  $scope.machines = []
+  machineListRef.on 'value', (snapshot) ->
+    $scope.$apply ->
+      $scope.machine = (v for k, v of snapshot.val() when k == $routeParams.machineId)[0]
+
+module.config ($locationProvider, $routeProvider) ->
+  # $locationProvider.html5Mode true
+  $routeProvider
+    .when('/', templateUrl: 'partials/machine-list.html', controller: MachineListCtrl)
+    .when('/machines/:machineId', templateUrl: 'partials/machine-detail.html', controller: MachineDetailCtrl)
+    # .otherwise(redirectTo: '/')
 
 module.filter 'encode', -> encodeURIComponent
 
