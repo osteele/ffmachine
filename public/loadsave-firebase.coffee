@@ -24,6 +24,7 @@ firebaseRootRef.child('version').on 'value', (snapshot) ->
 # This replaces the function in loadsave.js
 @saveWires = (name, wiring) ->
   wiring = wiring.replace /\r\n/g, "\n"
-  console.error "#{machine.name} is read-only"
+  return if machine.wiring == wiring
+  console.error "#{machine.name} is read-only" if machine.protected
   return if machine.protected
   machineRef.child('wiring').set wiring
