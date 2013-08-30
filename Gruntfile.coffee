@@ -62,7 +62,7 @@ module.exports = (grunt) ->
       options:
         livereload: true
       copy:
-        files: ['public/assets/**/*']
+        files: ['public/**/*.js', 'public/**/*.html', 'public/**/*.css']
         tasks: ['copy:debug']
       gruntfile:
         files: 'Gruntfile.coffee'

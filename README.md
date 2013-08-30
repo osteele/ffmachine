@@ -12,14 +12,16 @@
 1. Run `grunt` on the command line. This starts a server at localhost:8000.
 2. Visit http://localhost:8000/ to see a list of documents.
 
-# Debugging
+# Development
+
+The sources are in the ./public directory. Change these and (if grunt is running) it will copy and transcode them
+to ./build directory, whence they're served.
+
+Run `grunt build` to force a re-build and copy of all files from ./public into the ./build directory.
 
 The grunt server task runs a LiveReload server.
 Install and activate the [LiveReload extension (Safari, Chrome, or Firefox)][LiveReload extensions] to reload the web page when the sources are changed.
 (This is optional.)
-
-The sources are in the ./public directory. Change these and (if grunt is running) it will copy and transcode them
-to ./build directory, whence they're served.
 
 [npm]: https://npmjs.org/
 [npm download]: http://nodejs.org/download/
