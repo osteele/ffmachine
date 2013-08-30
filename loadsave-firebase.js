@@ -12,18 +12,15 @@
   this.loadWires = function(name) {
     return getMachineRef(name).on('value', function(snapshot) {
       return snapshot.forEach(function(child) {
-        var line, wiring;
-        wiring = child.val().wiring.replace(/\\n/g, "\n").replace(/\s+$/, '');
-        window.wires = (function() {
-          var _i, _len, _ref, _results;
-          _ref = wiring.split(/\n/);
-          _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            line = _ref[_i];
-            _results.push(line.split(' '));
-          }
-          return _results;
-        })();
+        var wire_strings, wiring_string;
+        wiring_string = child.val().wiring.replace(/\\n/g, "\n");
+        wire_strings = wiring_string.split(/\n/);
+        if (wire_strings[wire_strings.length - 1] === '') {
+          wire_strings.pop();
+        }
+        window.wires = wire_strings.map(function(wire) {
+          return wire.split(' ');
+        });
         return redraw();
       });
     });
