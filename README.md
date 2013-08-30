@@ -10,7 +10,7 @@
 # Running
 
 1. Run `grunt` on the command line. This starts a server at localhost:8000.
-2. Visit http://localhost:8000/ffmachine.html.
+2. Visit http://localhost:8000/ to see a list of documents.
 
 # Debugging
 

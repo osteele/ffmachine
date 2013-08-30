@@ -1,0 +1,16 @@
+doctype 5
+html(lang="en", ng-app="FFMachine")
+  head
+    title Flip Flop Machine
+    //- link(href="#{cdn_scheme}//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc2/css/bootstrap.min.css", rel="stylesheet", type="text/css")
+    link(href="ffmachine.css", rel="stylesheet")
+    script(src="https://cdn.firebase.com/v0/firebase.js")
+    script(src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.1.5/angular.min.js")
+    script(src="http://cdnjs.cloudflare.com/ajax/libs/angularFire/0.2.0/angularfire.min.js")
+    script(src="index.js")
+  body(ng-controller="machines")
+    p.title Flip Flop Machine
+
+    ul
+      li(ng-repeat="machine in machines")
+        a(ng-href="ffmachine.html?name={{machine.name}}") {{machine.name}}
