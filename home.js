@@ -136,7 +136,7 @@
       }), _ref) >= 0);
     };
     $scope.machine_stats = function(machine) {
-      return "" + (machine.wiring.split(/\s+/).length - 1) + " wires";
+      return "" + ((machine.wiring.split(/\s+/).length - 1) / 2) + " wires";
     };
     $scope.login = function(provider) {
       return auth.login(provider, {
