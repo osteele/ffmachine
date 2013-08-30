@@ -1,5 +1,5 @@
 (function() {
-  var firebaseRootRef, getMachineRef, machine, machineListRef, machineRef;
+  var firebaseRootRef, machine, machineListRef, machineRef, reload_key;
 
   firebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
 
@@ -9,11 +9,16 @@
 
   machine = null;
 
-  getMachineRef = function(name, cb) {
+  reload_key = null;
+
+  firebaseRootRef.child('version').on('value', function(snapshot) {
     var key;
-    key = name.toLowerCase();
-    return machineListRef.startAt(key).endAt(key);
-  };
+    key = snapshot.val();
+    if (reload_key && key && reload_key !== key) {
+      location.reload();
+    }
+    return reload_key = key;
+  });
 
   this.loadWires = function(name) {
     machineRef = machineListRef.child(name);
