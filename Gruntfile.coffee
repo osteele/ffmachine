@@ -5,7 +5,7 @@ module.exports = (grunt) ->
       debug:
         expand: true
         cwd: 'public'
-        src: '**/*.coffee'
+        src: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
         dest: 'build'
         ext: '.js'
         options:
@@ -19,7 +19,8 @@ module.exports = (grunt) ->
         options:
           sourceMap: false
     coffeelint:
-      app: ['**/*.coffee', '!**/node_modules/**']
+      app: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
+      gruntfile: ['Gruntfile.coffee']
       options:
         max_line_length:
           value: 120
@@ -73,12 +74,17 @@ module.exports = (grunt) ->
     watch:
       options:
         livereload: true
+      coffeelint:
+        files: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
+        tasks: ['coffeelint:app']
+        options:
+          livereload: false
       copy:
         files: ['public/**/*.css', 'public/**/*.html', 'public/**/*.js', 'public/**/*.png']
         tasks: ['copy:debug']
       gruntfile:
         files: 'Gruntfile.coffee'
-        tasks: ['coffeelint']
+        tasks: ['coffeelint:gruntfile']
       jade:
         files: ['public/**/*.jade']
         tasks: ['jade:debug']
@@ -86,8 +92,8 @@ module.exports = (grunt) ->
         files: ['public/**/*.scss']
         tasks: ['sass:debug']
       scripts:
-        files: ['**/*.coffee', '!**/node_modules/**']
-        tasks: ['coffeelint', 'coffee:debug']
+        files: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
+        tasks: ['coffeelint:app', 'coffee:debug']
 
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
@@ -99,7 +105,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-github-pages'
   grunt.loadNpmTasks 'grunt-notify'
 
-  grunt.registerTask 'build', ['coffee:debug', 'copy:debug', 'jade:debug', 'sass:debug']
-  grunt.registerTask 'build:release', ['coffee:release', 'copy:release', 'jade:release', 'sass:release']
+  grunt.registerTask 'build', ['coffeelint', 'coffee:debug', 'copy:debug', 'jade:debug', 'sass:debug']
+  grunt.registerTask 'build:release', ['coffeelint', 'coffee:release', 'copy:release', 'jade:release', 'sass:release']
   grunt.registerTask 'deploy', ['build:release', 'githubPages:target']
   grunt.registerTask 'default', ['build', 'connect', 'watch']
