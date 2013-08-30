@@ -16,6 +16,7 @@ html(lang="en", ng-app="FFMachine")
       .machine.protected .name { cursor: default; }
       #account { position: absolute; top: 5px; right: 5px; }
       #account button { float: right; }
+      td { padding: 0 10px; }
 
     script(src="https://cdn.firebase.com/v0/firebase.js")
     script(src="https://cdn.firebase.com/v0/firebase-simple-login.js")
@@ -46,3 +47,4 @@ html(lang="en", ng-app="FFMachine")
           .icon-trash.protect(ng-hide="machine_editable(machine)")
           a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
         td ({{machine_stats(machine)}})
+        td(ng-show="machine.creator") Created by {{machine.creator.email}}
