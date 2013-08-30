@@ -25,4 +25,7 @@ module.controller 'machines', ($scope, angularFire) ->
   $scope.rename_machine = (machine) ->
     machine.name = machine.name.replace(/^\s+/, '').replace(/\s+$/, '')
 
+  $scope.machine_stats = (machine) ->
+    "#{machine.wiring.split(/\s+/).length - 1} wires"
+
 module.filter 'encode', -> encodeURIComponent
