@@ -48,6 +48,7 @@
       });
       redraw();
       connectionListRef = machineRef.child('connected');
+      connectionListRef.off();
       connectionListRef.on('value', function(snapshot) {
         var e, email, k, user_emails, user_view, v, _i, _len, _results;
         user_emails = (function() {
@@ -66,7 +67,6 @@
         _results = [];
         for (_i = 0, _len = user_emails.length; _i < _len; _i++) {
           email = user_emails[_i];
-          console.info(email);
           user_view = document.createElement('li');
           user_view.appendChild(document.createTextNode(email));
           _results.push(e.appendChild(user_view));
@@ -82,6 +82,7 @@
   };
 
   this.saveWires = function(name, wiring) {
+    var modified_at;
     wiring = wiring.replace(/\r\n/g, "\n");
     if (machine.wiring === wiring) {
       return;
@@ -92,8 +93,14 @@
     if (machine["protected"]) {
       return;
     }
+    modified_at = Firebase.ServerValue.TIMESTAMP;
     machineRef.child('wiring').set(wiring);
-    return machineRef.child('modified_at').set(Firebase.ServerValue.TIMESTAMP);
+    machineRef.child('modified_at').set(modified_at);
+    return machineRef.child('history').push({
+      user: user != null ? user.email : void 0,
+      wiring: wiring,
+      modified_at: modified_at
+    });
   };
 
 }).call(this);
