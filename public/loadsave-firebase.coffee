@@ -28,8 +28,19 @@ auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
     window.wires = wire_strings.map (wire) -> wire.split ' '
     redraw()
 
+    connectionListRef = machineRef.child('connected')
+    connectionListRef.on 'value', (snapshot) ->
+      user_emails = (v for k, v of snapshot?.val() || {})
+      user_emails.sort()
+      e = document.querySelector('#connected-users ul')
+      e.innerHTML = ''
+      for email in user_emails
+        console.info email
+        user_view = document.createElement 'li'
+        user_view.appendChild document.createTextNode(email)
+        e.appendChild user_view
     if user
-      onlineRef = machineRef.child('connected').child(user.id)
+      onlineRef = connectionListRef.child(user.id)
       onlineRef.onDisconnect().remove()
       onlineRef.set user.email
 
