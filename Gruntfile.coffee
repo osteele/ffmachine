@@ -35,13 +35,13 @@ module.exports = (grunt) ->
         expand: true
         cwd: 'public/'
         dest: 'build/'
-        src: '**'
+        src: ['**', '!**/*.coffee', '!**/*.jade']
         filter: 'isFile'
       release:
         expand: true
         cwd: 'public/'
         dest: 'release/'
-        src: '**'
+        src: ['**', '!**/*.coffee', '!**/*.jade']
         filter: 'isFile'
     jade:
       debug:
