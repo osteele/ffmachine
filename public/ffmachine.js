@@ -1,4 +1,5 @@
 var filename;
+var readonly;
 var wirebuffer, ctx;
 var ffholes;
 var wires = [];
@@ -12,6 +13,7 @@ var knobs = [[100, 252, 288, '#f0f0f0'],
 function setup(){
 	var urlvars = getUrlVars();
 	filename = urlvars['name'];
+	readonly = urlvars['readonly'];
 	wirebuffer = document.getElementById('wirebuffer');
 	wirebuffer.width = 1800;
 	wirebuffer.height =2000;
@@ -108,7 +110,11 @@ function handleKey(e){
 	var c = e.charCode;
 	c = String.fromCharCode(c);
 	console.log(c);
-	if((c=='S')&&filename) submit(filename); 
+	if((c=='S')&&filename) {
+		if(readonly && !confirm("Opened in readonly mode. Switch to edit mode?")) return;
+		readonly = false;
+		submit(filename);
+	}
 }
 
 /////////////////////////
@@ -148,7 +154,7 @@ function curveLine(x1, y1, x2, y2){
 	ctx.moveTo(x2, y2);
 	ctx.quadraticCurveTo(x2-dx, y2-dy, mx, my);
 	ctx.moveTo(x1, y1);
-	ctx.stroke();		
+	ctx.stroke();
 }
 
 function drawKnobs(){
@@ -221,13 +227,13 @@ function holePixel(cnv, x, y){
 	var ctx =cnv.getContext('2d');
 	var pixels = ctx.getImageData(x, y, 2, 2).data;
 	return pixels[0];
-} 
+}
 
 function dataPixel(x, y){
 	var pixels = ctx.getImageData(x, y, 2, 2).data;
 	if(pixels[3]!=255) return 0;
 	return ((pixels[0]&15)<<8)+((pixels[1]&15)<<4)+(pixels[2]&15);
-} 
+}
 
 
 
@@ -251,7 +257,7 @@ function cmerge(c, n){
 function pickColor(x1, y1, x2, y2){
 	var len = Math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
 	var i = Math.round(len/100);
-	var colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0']; 
+	var colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0'];
 	if(i>5) return '#d02090';
 	return colors[i];
 }
