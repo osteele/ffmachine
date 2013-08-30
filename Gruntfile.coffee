@@ -33,14 +33,14 @@ module.exports = (grunt) ->
     copy:
       debug:
         expand: true
-        cwd: 'public/'
-        dest: 'build/'
+        cwd: 'public'
+        dest: 'build'
         src: ['**', '!**/*.coffee', '!**/*.jade']
         filter: 'isFile'
       release:
         expand: true
-        cwd: 'public/'
-        dest: 'release/'
+        cwd: 'public'
+        dest: 'release'
         src: ['**', '!**/*.coffee', '!**/*.jade']
         filter: 'isFile'
     jade:
@@ -56,7 +56,7 @@ module.exports = (grunt) ->
         expand: true
         cwd: 'public'
         src: '**/*.jade'
-        dest: 'build'
+        dest: 'release'
         ext: '.html'
     watch:
       options:
@@ -80,6 +80,7 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-contrib-copy'
   grunt.loadNpmTasks 'grunt-contrib-jade'
   grunt.loadNpmTasks 'grunt-contrib-watch'
+  grunt.loadNpmTasks 'grunt-github-pages'
   grunt.loadNpmTasks 'grunt-notify'
 
   grunt.registerTask 'build', ['coffee:debug', 'copy:debug', 'jade:debug']

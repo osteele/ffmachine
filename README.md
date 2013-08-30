@@ -23,8 +23,15 @@ The grunt server task runs a LiveReload server.
 Install and activate the [LiveReload extension (Safari, Chrome, or Firefox)][LiveReload extensions] to reload the web page when the sources are changed.
 (This is optional.)
 
+# Deployment
+
+1. Create and configure the ./release directory as documented in the [grunt-github-pages readme][grunt-github-pages].
+2. Run `grunt deploy`.
+3. Visit http://osteele.github.io/ffmachine/.
+
 [npm]: https://npmjs.org/
 [npm download]: http://nodejs.org/download/
 [homebrew]: http://brew.sh/
 [LiveReload]: http://livereload.com/
 [LiveReload extensions]: http://feedback.livereload.com/knowledgebase/articles/86242-how-do-i-install-and-use-the-browser-extensions-
+[grunt-github-pages]: https://github.com/thanpolas/grunt-github-pages
