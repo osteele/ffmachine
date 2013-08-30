@@ -42,7 +42,12 @@
 
   this.saveWires = function(name, wiring) {
     wiring = wiring.replace(/\r\n/g, "\n");
-    console.error("" + machine.name + " is read-only");
+    if (machine.wiring === wiring) {
+      return;
+    }
+    if (machine["protected"]) {
+      console.error("" + machine.name + " is read-only");
+    }
     if (machine["protected"]) {
       return;
     }
