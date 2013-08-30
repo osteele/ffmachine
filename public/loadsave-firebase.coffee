@@ -28,3 +28,4 @@ firebaseRootRef.child('version').on 'value', (snapshot) ->
   console.error "#{machine.name} is read-only" if machine.protected
   return if machine.protected
   machineRef.child('wiring').set wiring
+  machineRef.child('modified_at').set new Date

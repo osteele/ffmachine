@@ -29,11 +29,18 @@ module.controller 'machines', ($scope, angularFire) ->
       return
     message_prefix = ""
     while true
-      name = prompt "#{message_prefix}Name for the copy of machine '#{machine.name}':", "Copy of #{machine.name}"
+      name = "#{machine.name} copy"
+      name_index = 1
+      while (m for k, m of $scope.machines when m.name.toLowerCase() == name.toLowerCase()).length
+        name_index += 1
+        name = "#{machine.name} copy ##{name_index}"
+      name = prompt "#{message_prefix}Name for the copy of machine '#{machine.name}':", name
+      return unless name
       break unless (m for k, m of $scope.machines when m.name.toLowerCase() == name.toLowerCase()).length
       message_prefix = "A machine named '#{name}' already exists. Please choose another name.\n\n"
     user_key = {id: user.id, email: user.email}
-    machineListRef.push {name, wiring: machine.wiring, creator: user_key, writers: [user_key]}
+    now = new Date
+    machineListRef.push {name, wiring: machine.wiring, creator: user_key, writers: [user_key], created_at: now}
 
   $scope.delete_machine = (machine) ->
     return unless confirm "Are you sure you want to delete the machine named '#{machine.name}'?"
