@@ -89,6 +89,10 @@ module.config ($locationProvider, $routeProvider) ->
 
 module.filter 'encode', -> encodeURIComponent
 
+module.filter 'objectToList', ->
+  (object) ->
+    return (v for k, v of object)
+
 module.directive 'wiringDiagram', ->
   restrict: 'CE'
   replace: true
@@ -145,10 +149,10 @@ module.directive 'wiringDiagram', ->
         [x1, y1] = pinoutToXy(s1)
         color_index = round(sqrt(sqr(x1 - x0, 2) + sqr(y1 - y0, 2)) / 100)
         ctx.strokeStyle = colors[color_index] ? '#d02090'
-        ctx.strokeStyle = 'green' if wire of added_wires
-        ctx.strokeStyle = 'gray' if wire of deleted_wires
         ctx.lineWidth = lineWidth
-        ctx.lineWidth *= 4 if wire of added_wires or wire of deleted_wires
+        ctx.lineWidth *= 5 if wire of added_wires or wire of deleted_wires
+        ctx.globalAlpha = 1
+        ctx.globalAlpha = 0.2 if wire of deleted_wires
         mx = x0 + (x1 - x0) / 2
         my = y0 + (y1 - y0) / 2
         [dx, dy] = [(x1 - x0) / 5, 0]

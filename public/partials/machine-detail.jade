@@ -2,7 +2,7 @@
   h1
     {{machine.name}} Machine
 
-  wiring-diagram.big-diagram(wires="{{machine.wiring}}", width="270", height="300")
+  wiring-diagram.big-diagram(wires="{{machine.wiring}}", width="360", height="400")
 
   table.machines
     tr.machine
@@ -25,11 +25,18 @@
 
   section.history(ng-show="machine.history")
     h2 History
+    //- p.legend
+    //-   | From most recent to oldest. Added wires are
+    //-   = ' '
+    //-   ins thicker
+    //-   | . Deleted wires are
+    //-   del translucent
+    //-   | .
     table
       tr
-      tr(ng-repeat="history in machine.history | orderBy:'modified_at':true | limitTo:1")
+      tr(ng-repeat="history in machine.history | objectToList | orderBy:'-modified_at' | limitTo:10")
         td
-          wiring-diagram(width="180", height="200", wires="{{history.wiring}}", previous_wires="{{history.previous_wiring}}")
+          wiring-diagram(width="162", height="180", wires="{{history.wiring}}", previous_wires="{{history.previous_wiring}}")
         td
           div edited by {{history.user}}
           div.

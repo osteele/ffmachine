@@ -43,3 +43,12 @@ td { vertical-align: top; }
     td { padding: 0 5px; }
   }
 }
+
+p { font-size: large; }
+.history .legend {
+  font-family: serif;
+
+  ins { text-decoration: none; font-weight: bold; font-size: x-large; }
+  del { text-decoration: none; font-weight: bold; font-size: x-large; filter: blur(1px); -webkit-filter: blur(0.77px) opacity(75%); }
+}
+
