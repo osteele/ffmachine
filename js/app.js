@@ -1,5 +1,6 @@
 (function() {
-  var app, firebaseRootRef, machineListRef, reload_key;
+  var app, controllers, directives, draw_wiring_thumbnail, filters, firebaseRootRef, machineListRef, reload_key,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   firebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
 
@@ -29,12 +30,6 @@
       redirectTo: '/'
     });
   });
-
-}).call(this);
-
-(function() {
-  var controllers,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   controllers = angular.module('FFMachine.controllers', []);
 
@@ -192,12 +187,6 @@
       });
     });
   });
-
-}).call(this);
-
-(function() {
-  var directives, draw_wiring_thumbnail,
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   directives = angular.module('FFMachine.directives', []);
 
@@ -418,11 +407,6 @@
     }
     return ctx.restore();
   };
-
-}).call(this);
-
-(function() {
-  var filters;
 
   filters = angular.module('FFMachine.filters', []);
 
