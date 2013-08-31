@@ -85,7 +85,7 @@
             _results = [];
             for (k in _ref) {
               m = _ref[k];
-              if (m.name.toLowerCase() === name.toLowerCase()) {
+              if (m.name.toLowerCase() === name.toLowerCase() && !m.deleted_at) {
                 _results.push(m);
               }
             }
@@ -98,21 +98,7 @@
         if (!name) {
           return;
         }
-        if (!((function() {
-          var _ref, _results;
-          _ref = $scope.machines;
-          _results = [];
-          for (k in _ref) {
-            m = _ref[k];
-            if (m.name.toLowerCase() === name.toLowerCase()) {
-              _results.push(m);
-            }
-          }
-          return _results;
-        })()).length) {
-          break;
-        }
-        message_prefix = "A machine named '" + name + "' already exists. Please choose another name.\n\n";
+        break;
       }
       user_key = {
         id: user.id,
@@ -144,7 +130,7 @@
         }
         return _results;
       })())[0];
-      return machineListRef.child(key).remove();
+      return machineListRef.child(key).child('deleted_at').set(Firebase.ServerValue.TIMESTAMP);
     };
     $scope.rename_machine = function(machine) {
       return machine.name = machine.name.replace(/^\s+/, '').replace(/\s+$/, '');
@@ -440,22 +426,33 @@
 
   filters = angular.module('FFMachine.filters', []);
 
-  filters.filter('encode', function() {
+  filters.filter('encodeURIComponent', function() {
     return encodeURIComponent;
+  });
+
+  filters.filter('propertyNot', function() {
+    return function(objects, propertyName) {
+      var object, _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = objects.length; _i < _len; _i++) {
+        object = objects[_i];
+        if (!object[propertyName]) {
+          _results.push(object);
+        }
+      }
+      return _results;
+    };
   });
 
   filters.filter('objectToList', function() {
     return function(object) {
-      var k, v;
-      return (function() {
-        var _results;
-        _results = [];
-        for (k in object) {
-          v = object[k];
-          _results.push(v);
-        }
-        return _results;
-      })();
+      var k, v, _results;
+      _results = [];
+      for (k in object) {
+        v = object[k];
+        _results.push(v);
+      }
+      return _results;
     };
   });
 
