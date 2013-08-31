@@ -238,18 +238,16 @@
   });
 
   draw_wiring_thumbnail = function(canvas, wires_string, previous_wires_string) {
-    var added_wires, color_index, colors, cols, ctx, deleted_wires, dx, dy, i, j, k, line, lineWidth, mx, my, padding, rh, round, rows, rw, s0, s1, sqr, sqrt, v, viewport_height, viewport_width, wire, wires, wiring_diff, x0, x1, y0, y1, _i, _j, _k, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
+    var added_wires, background_image_url, canvas_width_breakpoint, ctx, deleted_wires, draw_cross, draw_module_rects, draw_plus, draw_with_shadow, dx, dy, k, line, lineWidth, line_color, line_colors, line_length, module_cols, module_height, module_padding, module_rows, module_width, mx, my, round, s0, s1, sqrt, v, viewport_height, viewport_width, wire, wires, wiring_diff, x0, x1, y0, y1, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
     ctx = canvas.getContext('2d');
-    _ref = [1800, 2000], viewport_width = _ref[0], viewport_height = _ref[1];
-    previous_wires_string || (previous_wires_string = wires_string);
     wiring_diff = function(w1, w0) {
       var dict, line, w, ws, _i, _len;
       w1 = (function() {
-        var _i, _len, _ref1, _results;
-        _ref1 = w1.split(/\n/);
+        var _i, _len, _ref, _results;
+        _ref = w1.split(/\n/);
         _results = [];
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          line = _ref1[_i];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
           if (line.match(/\S/)) {
             _results.push(line);
           }
@@ -257,11 +255,11 @@
         return _results;
       })();
       w0 = (function() {
-        var _i, _len, _ref1, _results;
-        _ref1 = w0.split(/\n/);
+        var _i, _len, _ref, _results;
+        _ref = w0.split(/\n/);
         _results = [];
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          line = _ref1[_i];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
           if (line.match(/\S/)) {
             _results.push(line);
           }
@@ -286,12 +284,13 @@
       }
       return dict;
     };
+    previous_wires_string || (previous_wires_string = wires_string);
     wires = (function() {
-      var _i, _len, _ref1, _results;
-      _ref1 = wires_string.split(/\n/);
+      var _i, _len, _ref, _results;
+      _ref = wires_string.split(/\n/);
       _results = [];
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        line = _ref1[_i];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        line = _ref[_i];
         if (line.match(/\S/)) {
           _results.push(line.split(/\s+/));
         }
@@ -300,36 +299,78 @@
     })();
     added_wires = wiring_diff(wires_string, previous_wires_string);
     deleted_wires = wiring_diff(previous_wires_string, wires_string);
-    ctx.save();
-    ctx.scale(canvas.width / viewport_width, canvas.height / viewport_height);
-    ctx.lineCap = 'round';
-    if (canvas.width >= 200) {
-      canvas.style.background = 'url(ffmachine.png)';
-      canvas.style.backgroundSize = 'cover';
-      ctx.lineWidth = 8;
-    } else {
-      canvas.style.background = null;
-      ctx.lineWidth = 1.75 * viewport_width / canvas.width;
-      _ref1 = [5, 9], rows = _ref1[0], cols = _ref1[1];
-      _ref2 = [200, 400], rw = _ref2[0], rh = _ref2[1];
-      padding = 10;
+    _ref = [1800, 2000], viewport_width = _ref[0], viewport_height = _ref[1];
+    canvas_width_breakpoint = 200;
+    background_image_url = 'url(ffmachine.png)';
+    _ref1 = [5, 9], module_rows = _ref1[0], module_cols = _ref1[1];
+    _ref2 = [200, 400], module_width = _ref2[0], module_height = _ref2[1];
+    module_padding = 10;
+    round = Math.round, sqrt = Math.sqrt;
+    line_length = function(dx, dy) {
+      return sqrt(dx * dx + dy * dy);
+    };
+    line_colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0', '#d02090'];
+    line_color = function(x0, y0, x1, y1) {
+      var color_index, _ref3;
+      color_index = round(line_length(x1 - x0, y1 - y0) / 100);
+      return (_ref3 = line_colors[color_index]) != null ? _ref3 : line_colors[line_colors.length - 1];
+    };
+    draw_module_rects = function() {
+      var i, inner_height, inner_width, j, x, y, _i, _j, _ref3;
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, viewport_width, viewport_height);
       ctx.fillStyle = '#301E17';
       ctx.globalAlpha = 0.9;
-      for (i = _i = 0; 0 <= rows ? _i < rows : _i > rows; i = 0 <= rows ? ++_i : --_i) {
-        for (j = _j = 0; 0 <= cols ? _j < cols : _j > cols; j = 0 <= cols ? ++_j : --_j) {
-          ctx.fillRect(j * rw + padding, i * rh + padding, rw - 2 * padding, rh - 2 * padding);
+      inner_width = module_width - 2 * module_padding;
+      inner_height = module_height - 2 * module_padding;
+      for (i = _i = 0; 0 <= module_rows ? _i < module_rows : _i > module_rows; i = 0 <= module_rows ? ++_i : --_i) {
+        for (j = _j = 0; 0 <= module_cols ? _j < module_cols : _j > module_cols; j = 0 <= module_cols ? ++_j : --_j) {
+          _ref3 = [j * module_width, i * module_height], x = _ref3[0], y = _ref3[1];
+          ctx.fillRect(x + module_padding, y + module_padding, inner_width, inner_height);
         }
       }
-      ctx.globalAlpha = 1;
-    }
-    colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0'];
-    round = Math.round, sqrt = Math.sqrt;
-    sqr = function(x) {
-      return Math.pow(x, 2);
+      return ctx.globalAlpha = 1;
     };
-    lineWidth = ctx.lineWidth;
+    ctx.save();
+    ctx.scale(canvas.width / viewport_width, canvas.height / viewport_height);
+    if (canvas.width >= canvas_width_breakpoint) {
+      canvas.style.background = background_image_url;
+      canvas.style.backgroundSize = 'cover';
+      lineWidth = 8;
+    } else {
+      canvas.style.background = null;
+      lineWidth = 1.75 * viewport_width / canvas.width;
+      draw_module_rects();
+    }
+    draw_plus = function(x, y) {
+      var d;
+      d = 75;
+      ctx.beginPath();
+      ctx.moveTo(x - d, y);
+      ctx.lineTo(x + d, y);
+      ctx.moveTo(x, y - d);
+      ctx.lineTo(x, y + d);
+      return ctx.stroke();
+    };
+    draw_cross = function(x, y) {
+      var d;
+      d = 50;
+      ctx.beginPath();
+      ctx.moveTo(x - d, y - d);
+      ctx.lineTo(x + d, y + d);
+      ctx.moveTo(x + d, y - d);
+      ctx.lineTo(x - d, y + d);
+      return ctx.stroke();
+    };
+    draw_with_shadow = function(fn) {
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.lineWidth *= 1.5;
+      ctx.strokeStyle = 'white';
+      fn();
+      ctx.restore();
+      return fn();
+    };
     _ref3 = wires.concat((function() {
       var _results;
       _results = [];
@@ -339,27 +380,27 @@
       }
       return _results;
     })());
-    for (_k = 0, _len = _ref3.length; _k < _len; _k++) {
-      wire = _ref3[_k];
+    for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+      wire = _ref3[_i];
       s0 = wire[0], s1 = wire[1];
       _ref4 = pinoutToXy(s0), x0 = _ref4[0], y0 = _ref4[1];
       _ref5 = pinoutToXy(s1), x1 = _ref5[0], y1 = _ref5[1];
-      color_index = round(sqrt(sqr(x1 - x0, 2) + sqr(y1 - y0, 2)) / 100);
-      ctx.strokeStyle = (_ref6 = colors[color_index]) != null ? _ref6 : '#d02090';
+      ctx.strokeStyle = line_color(x0, y0, x1, y1);
+      ctx.lineCap = 'round';
       ctx.lineWidth = lineWidth;
       if (wire in added_wires || wire in deleted_wires) {
         ctx.lineWidth *= 5;
       }
       ctx.globalAlpha = 1;
       if (wire in deleted_wires) {
-        ctx.globalAlpha = 0.2;
+        ctx.globalAlpha = 0.3;
       }
       mx = x0 + (x1 - x0) / 2;
       my = y0 + (y1 - y0) / 2;
-      _ref7 = [(x1 - x0) / 5, 0], dx = _ref7[0], dy = _ref7[1];
+      _ref6 = [(x1 - x0) / 5, 0], dx = _ref6[0], dy = _ref6[1];
       dx += 10 * (dx < 0 ? -1 : 1);
       if (y0 === y1) {
-        _ref8 = [0, 10], dx = _ref8[0], dy = _ref8[1];
+        _ref7 = [0, 10], dx = _ref7[0], dy = _ref7[1];
       }
       ctx.beginPath();
       ctx.moveTo(x0, y0);
@@ -367,6 +408,27 @@
       ctx.moveTo(x1, y1);
       ctx.quadraticCurveTo(x1 - dx, y1 - dy, mx, my);
       ctx.stroke();
+      if (wire in added_wires) {
+        ctx.lineCap = 'square';
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 2 * lineWidth;
+        draw_with_shadow(function() {
+          return draw_plus(x0, y0);
+        });
+        draw_with_shadow(function() {
+          return draw_plus(x1, y1);
+        });
+      }
+      if (wire in deleted_wires) {
+        ctx.lineCap = 'square';
+        ctx.lineWidth = 2 * lineWidth;
+        draw_with_shadow(function() {
+          return draw_cross(x0, y0);
+        });
+        draw_with_shadow(function() {
+          return draw_cross(x1, y1);
+        });
+      }
     }
     return ctx.restore();
   };
