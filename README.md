@@ -14,18 +14,16 @@
 
 # Development
 
-The sources are in the ./public directory. Change these and (if grunt is running) it will copy and transcode them
-to ./build directory, whence they're served.
+`grunt` with no arguments copies / transcodes sources into the `build` directory, runs a server at port 8000,
+watches files, and copies / transcodes them again if they change.
 
-Run `grunt build` to force a re-build and copy of all files from ./public into the ./build directory.
+Run `grunt build` to force a re-build and copy of all files from `public` into the `build` directory.
 
-The grunt server task runs a LiveReload server.
-Install and activate the [LiveReload extension (Safari, Chrome, or Firefox)][LiveReload extensions] to reload the web page when the sources are changed.
-(This is optional.)
+Optional: `grunt server` runs a [LiveReload server][LiveRelad]. Install and activate the [LiveReload extension (Safari, Chrome, or Firefox)][LiveReload extensions] to reload the web page when the sources are changed.
 
 # Deployment
 
-1. Create and configure the ./release directory as documented in the [grunt-github-pages readme][grunt-github-pages].
+1. Create and configure the `release` directory: `git clone -b gh-pages git@github.com:osteele/ffmachine.git release`
 2. Run `grunt deploy`.
 3. Visit http://osteele.github.io/ffmachine/.
 
