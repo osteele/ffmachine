@@ -8,7 +8,11 @@
     div(ng-show="user") {{user.email}}
 
   table.machines
-    tbody.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at'", ng-class="{protected: !machine_editable(machine)}")
+    tr
+      td.pull-right
+        | Search:
+        input(ng-model="searchText")
+    tbody.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
       tr
         td.name(title="Click to rename")
           span(ng-hide="machine_editable(machine) && editing", ng-click="editing=true") {{machine.name}}
