@@ -1,8 +1,10 @@
 (function() {
-  var firebaseRootRef, module, reload_key,
+  var MachineDetailCtrl, MachineListCtrl, firebaseRootRef, machineListRef, module, reload_key,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   firebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
+
+  machineListRef = firebaseRootRef.child('machines');
 
   reload_key = null;
 
@@ -17,9 +19,8 @@
 
   module = angular.module('FFMachine', ['firebase']);
 
-  module.controller('machines', function($scope, angularFire) {
-    var auth, machineListRef;
-    machineListRef = firebaseRootRef.child('machines');
+  MachineListCtrl = function($scope, $location, angularFire) {
+    var auth;
     $scope.machines = [];
     angularFire(machineListRef, $scope, 'machines', {});
     auth = new FirebaseSimpleLogin(firebaseRootRef, function(error, user) {
@@ -140,15 +141,21 @@
       return "" + ((machine.wiring.split(/\s+/).length - 1) / 2) + " wires";
     };
     $scope.machine_viewers = function(machine) {
-      var k, _results;
+      var k;
       if (!machine.connected) {
         return [];
       }
-      _results = [];
-      for (k in machine.connected) {
-        _results.push(k);
-      }
-      return _results;
+      return (function() {
+        var _results;
+        _results = [];
+        for (k in machine.connected) {
+          _results.push(k);
+        }
+        return _results;
+      })();
+    };
+    $scope.view_details = function(machine) {
+      return $location.path('/machines/' + encodeURIComponent($scope.machine_key(machine)));
     };
     $scope.login = function(provider) {
       return auth.login(provider, {
@@ -158,28 +165,125 @@
     return $scope.logout = function() {
       return auth.logout();
     };
+  };
+
+  MachineDetailCtrl = function($scope, $routeParams, angularFire) {
+    $scope.machines = [];
+    return machineListRef.on('value', function(snapshot) {
+      return $scope.$apply(function() {
+        var k, v;
+        return $scope.machine = ((function() {
+          var _ref, _results;
+          _ref = snapshot.val();
+          _results = [];
+          for (k in _ref) {
+            v = _ref[k];
+            if (k === $routeParams.machineId) {
+              _results.push(v);
+            }
+          }
+          return _results;
+        })())[0];
+      });
+    });
+  };
+
+  module.config(function($locationProvider, $routeProvider) {
+    return $routeProvider.when('/', {
+      templateUrl: 'partials/machine-list.html',
+      controller: MachineListCtrl
+    }).when('/machines/:machineId', {
+      templateUrl: 'partials/machine-detail.html',
+      controller: MachineDetailCtrl
+    });
   });
 
   module.filter('encode', function() {
     return encodeURIComponent;
   });
 
+  module.filter('objectToList', function() {
+    return function(object) {
+      var k, v;
+      return (function() {
+        var _results;
+        _results = [];
+        for (k in object) {
+          v = object[k];
+          _results.push(v);
+        }
+        return _results;
+      })();
+    };
+  });
+
   module.directive('wiringDiagram', function() {
     return {
       restrict: 'CE',
       replace: true,
-      template: '<canvas width="75" height="50"></canvas>',
+      template: '<canvas width="90" height="100"/>',
       transclude: true,
       scope: {
-        wires: '@wires'
+        wires: '@wires',
+        previous_wires: '@previousWires',
+        width: '@',
+        height: '@'
       },
       link: function(scope, element, attrs) {
-        element = element[0];
+        var canvas;
+        canvas = element[0];
         return attrs.$observe('wires', function(wires) {
-          var color_index, colors, ctx, dx, dy, line, mx, my, round, s0, s1, sqr, sqrt, x0, x1, y0, y1, _i, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+          var added_wires, color_index, colors, cols, ctx, deleted_wires, dx, dy, i, j, k, line, lineWidth, mx, my, padding, previous_wires_string, rh, round, rows, rw, s0, s1, sqr, sqrt, v, viewport_height, viewport_width, wire, wires_string, wiring_diff, x0, x1, y0, y1, _i, _j, _k, _len, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
+          wires_string = wires;
+          previous_wires_string = scope.previous_wires;
+          previous_wires_string || (previous_wires_string = wires_string);
+          wiring_diff = function(w1, w0) {
+            var dict, line, w, ws, _i, _len;
+            w1 = (function() {
+              var _i, _len, _ref, _results;
+              _ref = w1.split(/\n/);
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                line = _ref[_i];
+                if (line.match(/\S/)) {
+                  _results.push(line);
+                }
+              }
+              return _results;
+            })();
+            w0 = (function() {
+              var _i, _len, _ref, _results;
+              _ref = w0.split(/\n/);
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                line = _ref[_i];
+                if (line.match(/\S/)) {
+                  _results.push(line);
+                }
+              }
+              return _results;
+            })();
+            ws = (function() {
+              var _i, _len, _results;
+              _results = [];
+              for (_i = 0, _len = w1.length; _i < _len; _i++) {
+                w = w1[_i];
+                if (__indexOf.call(w0, w) < 0) {
+                  _results.push(w.split(/\s+/));
+                }
+              }
+              return _results;
+            })();
+            dict = {};
+            for (_i = 0, _len = ws.length; _i < _len; _i++) {
+              w = ws[_i];
+              dict[w] = w;
+            }
+            return dict;
+          };
           wires = (function() {
             var _i, _len, _ref, _results;
-            _ref = scope.wires.split(/\n/);
+            _ref = wires.split(/\n/);
             _results = [];
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               line = _ref[_i];
@@ -189,46 +293,70 @@
             }
             return _results;
           })();
-          ctx = element.getContext('2d');
+          added_wires = wiring_diff(wires_string, previous_wires_string);
+          deleted_wires = wiring_diff(previous_wires_string, wires_string);
+          ctx = canvas.getContext('2d');
+          _ref = [1800, 2000], viewport_width = _ref[0], viewport_height = _ref[1];
           ctx.save();
-          ctx.scale(element.width / 1800, element.height / 2000);
-          (function() {
-            var cols, i, j, padding, rh, rows, rw, _i, _ref, _ref1, _results;
-            _ref = [5, 9], rows = _ref[0], cols = _ref[1];
-            _ref1 = [200, 400], rw = _ref1[0], rh = _ref1[1];
+          ctx.scale(canvas.width / viewport_width, canvas.height / viewport_height);
+          ctx.lineCap = 'round';
+          if (canvas.width >= 200) {
+            canvas.style.background = 'url(ffmachine.png)';
+            canvas.style.backgroundSize = 'cover';
+            ctx.lineWidth = 8;
+          } else {
+            canvas.style.background = null;
+            ctx.lineWidth = 1.75 * viewport_width / canvas.width;
+            _ref1 = [5, 9], rows = _ref1[0], cols = _ref1[1];
+            _ref2 = [200, 400], rw = _ref2[0], rh = _ref2[1];
             padding = 10;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, viewport_width, viewport_height);
             ctx.fillStyle = '#301E17';
-            _results = [];
+            ctx.globalAlpha = 0.9;
             for (i = _i = 0; 0 <= rows ? _i < rows : _i > rows; i = 0 <= rows ? ++_i : --_i) {
-              _results.push((function() {
-                var _j, _results1;
-                _results1 = [];
-                for (j = _j = 0; 0 <= cols ? _j < cols : _j > cols; j = 0 <= cols ? ++_j : --_j) {
-                  _results1.push(ctx.fillRect(j * rw + padding, i * rh + padding, rw - 2 * padding, rh - 2 * padding));
-                }
-                return _results1;
-              })());
+              for (j = _j = 0; 0 <= cols ? _j < cols : _j > cols; j = 0 <= cols ? ++_j : --_j) {
+                ctx.fillRect(j * rw + padding, i * rh + padding, rw - 2 * padding, rh - 2 * padding);
+              }
             }
-            return _results;
-          })();
-          ctx.lineWidth = 60;
+            ctx.globalAlpha = 1;
+          }
           colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0'];
           round = Math.round, sqrt = Math.sqrt;
           sqr = function(x) {
             return Math.pow(x, 2);
           };
-          for (_i = 0, _len = wires.length; _i < _len; _i++) {
-            _ref = wires[_i], s0 = _ref[0], s1 = _ref[1];
-            _ref1 = pinoutToXy(s0), x0 = _ref1[0], y0 = _ref1[1];
-            _ref2 = pinoutToXy(s1), x1 = _ref2[0], y1 = _ref2[1];
+          lineWidth = ctx.lineWidth;
+          _ref3 = wires.concat((function() {
+            var _results;
+            _results = [];
+            for (k in deleted_wires) {
+              v = deleted_wires[k];
+              _results.push(v);
+            }
+            return _results;
+          })());
+          for (_k = 0, _len = _ref3.length; _k < _len; _k++) {
+            wire = _ref3[_k];
+            s0 = wire[0], s1 = wire[1];
+            _ref4 = pinoutToXy(s0), x0 = _ref4[0], y0 = _ref4[1];
+            _ref5 = pinoutToXy(s1), x1 = _ref5[0], y1 = _ref5[1];
             color_index = round(sqrt(sqr(x1 - x0, 2) + sqr(y1 - y0, 2)) / 100);
-            ctx.strokeStyle = (_ref3 = colors[color_index]) != null ? _ref3 : '#d02090';
+            ctx.strokeStyle = (_ref6 = colors[color_index]) != null ? _ref6 : '#d02090';
+            ctx.lineWidth = lineWidth;
+            if (wire in added_wires || wire in deleted_wires) {
+              ctx.lineWidth *= 5;
+            }
+            ctx.globalAlpha = 1;
+            if (wire in deleted_wires) {
+              ctx.globalAlpha = 0.2;
+            }
             mx = x0 + (x1 - x0) / 2;
             my = y0 + (y1 - y0) / 2;
-            _ref4 = [(x1 - x0) / 5, 0], dx = _ref4[0], dy = _ref4[1];
+            _ref7 = [(x1 - x0) / 5, 0], dx = _ref7[0], dy = _ref7[1];
             dx += 10 * (dx < 0 ? -1 : 1);
             if (y0 === y1) {
-              _ref5 = [0, 10], dx = _ref5[0], dy = _ref5[1];
+              _ref8 = [0, 10], dx = _ref8[0], dy = _ref8[1];
             }
             ctx.beginPath();
             ctx.moveTo(x0, y0);

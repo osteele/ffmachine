@@ -82,7 +82,7 @@
   };
 
   this.saveWires = function(name, wiring) {
-    var modified_at;
+    var modified_at, previous_wiring;
     wiring = wiring.replace(/\r\n/g, "\n");
     if (machine.wiring === wiring) {
       return;
@@ -94,11 +94,13 @@
       return;
     }
     modified_at = Firebase.ServerValue.TIMESTAMP;
+    previous_wiring = machine.wiring;
     machineRef.child('wiring').set(wiring);
     machineRef.child('modified_at').set(modified_at);
     return machineRef.child('history').push({
       user: user != null ? user.email : void 0,
       wiring: wiring,
+      previous_wiring: previous_wiring,
       modified_at: modified_at
     });
   };
