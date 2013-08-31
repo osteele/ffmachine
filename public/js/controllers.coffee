@@ -24,13 +24,14 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire) ->
     while true
       name = "#{machine.name} copy"
       name_index = 1
-      while (m for k, m of $scope.machines when m.name.toLowerCase() == name.toLowerCase()).length
+      while (m for k, m of $scope.machines when m.name.toLowerCase() == name.toLowerCase() and not m.deleted_at).length
         name_index += 1
         name = "#{machine.name} copy ##{name_index}"
       name = prompt "#{message_prefix}Name for the copy of machine '#{machine.name}':", name
       return unless name
-      break unless (m for k, m of $scope.machines when m.name.toLowerCase() == name.toLowerCase()).length
-      message_prefix = "A machine named '#{name}' already exists. Please choose another name.\n\n"
+      break
+      # break unless (m for k, m of $scope.machines when m.name.toLowerCase() == name.toLowerCase()).length
+      # message_prefix = "A machine named '#{name}' already exists. Please choose another name.\n\n"
     user_key = {id: user.id, email: user.email}
     now = Firebase.ServerValue.TIMESTAMP
     machineListRef.push {name, wiring: machine.wiring, creator: user_key, writers: [user_key], created_at: now}
@@ -38,7 +39,7 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire) ->
   $scope.delete_machine = (machine) ->
     return unless confirm "Are you sure you want to delete the machine named '#{machine.name}'?"
     key = (k for k, m of $scope.machines when m == machine)[0]
-    machineListRef.child(key).remove()
+    machineListRef.child(key).child('deleted_at').set Firebase.ServerValue.TIMESTAMP
 
   $scope.rename_machine = (machine) ->
     machine.name = machine.name.replace(/^\s+/, '').replace(/\s+$/, '')

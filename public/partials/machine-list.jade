@@ -8,10 +8,10 @@
     div(ng-show="user") {{user.email}}
 
   table.machines
-    tr.machine(ng-repeat="machine in machines", ng-class="{protected: !machine_editable(machine)}")
+    tr.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at'", ng-class="{protected: !machine_editable(machine)}")
       td
-        a(href="/#/machines/{{machine_key(machine) | encode}}", target="ffmachine-details")
-          wiring-diagram(wires="{{machine.wiring}}")
+        a(href="/#/machines/{{machine_key(machine) | encodeURIComponent}}", target="ffmachine-details")
+          wiring-diagram(wires="{{machine.wiring}}", width="63", height="72")
 
       td.name(title="Click to rename")
         span(ng-hide="machine_editable(machine) && editing", ng-click="editing=true") {{machine.name}}
@@ -19,15 +19,17 @@
           input(type="text", ng-model="machine.name", ui-keypress="{enter: 'foo()', escape: 'cancel()'}", placeholder="Name", ng-required, size=10)
 
       td.icons
-        a.icon-eye-open(ng-href="dlm.html?name={{machine_key(machine) | encode}}&readonly=true&sync=true", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
-        a.icon-edit.protect(ng-href="dlm.html?name={{machine_key(machine) | encode}}&sync=true", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
+        a.icon-eye-open(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&readonly=true&sync=true", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
+        a.icon-edit.protect(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&sync=true", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
         a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
         .icon-trash.protect(ng-hide="machine_editable(machine)")
         a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
 
-      td ({{machine_stats(machine)}})
+      td
+        | ({{machine_stats(machine)}})
 
-      td(ng-show="machine.creator") Created by {{machine.creator.email}}
+      td(ng-show="machine.creator")
+        | Created by {{machine.creator.email}}
 
       td
         ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': '1 viewer.', 'other': '{} viewers.'}")

@@ -18,6 +18,10 @@
         th Modified At
         td {{machine.modified_at | date}}
 
+      tr(ng-show="machine.deleted_at")
+        th Deleted At
+        td {{machine.deleted_at | date}}
+
       tr
         th
         td
