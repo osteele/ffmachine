@@ -1,8 +1,8 @@
-div(ng-show="machine")
+.machine-details(ng-show="machine")
   h1
-    wiring-diagram(wires="{{machine.wiring}}")
     {{machine.name}} Machine
 
+  wiring-diagram.big-diagram(wires="{{machine.wiring}}", width="270", height="300")
 
   table.machines
     tr.machine
@@ -27,11 +27,12 @@ div(ng-show="machine")
     h2 History
     table
       tr
-      tr(ng-repeat="history in machine.history | orderBy:'modified_at':true | limitTo:50 ")
+      tr(ng-repeat="history in machine.history | orderBy:'modified_at':true | limitTo:1")
         td
-          wiring-diagram(wires="{{history.wiring}}")
-        td edited by {{history.user}}
+          wiring-diagram(wires="{{history.wiring}}", width="180", height="200")
         td
-          | at
-          | {{history.modified_at | date:'mediumTime'}},
-          | {{history.modified_at | date:'mediumDate'}}
+          div edited by {{history.user}}
+          div.
+            at
+            {{history.modified_at | date:'mediumTime'}},
+            {{history.modified_at | date:'mediumDate'}}

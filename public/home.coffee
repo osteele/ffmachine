@@ -92,25 +92,36 @@ module.filter 'encode', -> encodeURIComponent
 module.directive 'wiringDiagram', ->
   restrict: 'CE'
   replace: true
-  template: '<canvas width="75" height="50"></canvas>'
+  template: '<canvas width="90" height="100"/>'
   transclude: true
-  scope: {wires: '@wires'}
+  scope: {wires: '@wires', width: '@', height: '@'}
   link: (scope, element, attrs) ->
-    element = element[0]
+    canvas = element[0]
     attrs.$observe 'wires', (wires) ->
       wires = (line.split(/\s+/) for line in scope.wires.split(/\n/) when line.match(/\S/))
-      ctx = element.getContext('2d')
+      ctx = canvas.getContext('2d')
+      [viewport_width, viewport_height] = [1800, 2000]
       ctx.save()
-      ctx.scale element.width / 1800, element.height / 2000
-      do ->
+      ctx.scale canvas.width / viewport_width, canvas.height / viewport_height
+      ctx.lineCap = 'round'
+      if canvas.width >= 200
+        canvas.style.background = 'url(ffmachine.png)'
+        canvas.style.backgroundSize = 'cover'
+        ctx.lineWidth = 8
+      else
+        canvas.style.background = null
+        ctx.lineWidth = 1.75 * viewport_width / canvas.width
         [rows, cols] = [5, 9]
         [rw, rh] = [200, 400]
         padding = 10
+        ctx.fillStyle = 'white'
+        ctx.fillRect 0, 0, viewport_width, viewport_height
         ctx.fillStyle = '#301E17'
+        ctx.globalAlpha = 0.9
         for i in [0...rows]
           for j in [0...cols]
             ctx.fillRect j * rw + padding, i * rh + padding, rw - 2 * padding, rh - 2 * padding
-      ctx.lineWidth = 60
+        ctx.globalAlpha = 1
       # TODO consolidate with the main drawing code
       colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0']
       {round, sqrt} = Math
