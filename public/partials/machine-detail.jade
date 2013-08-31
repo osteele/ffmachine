@@ -6,17 +6,17 @@
 
   table.machines
     tr.machine
-      tr
-        th Name
-        td.name {{machine.name}}
-
       tr(ng-show="machine.creator")
-        th Creator
+        th Author
         td {{machine.creator.email}}
 
       tr(ng-show="machine.created_at")
         th Created At
         td {{machine.created_at | date}}
+
+      tr(ng-show="machine.modified_at")
+        th Modified At
+        td {{machine.modified_at | date}}
 
       tr
         th
@@ -38,8 +38,8 @@
         td
           wiring-diagram(width="162", height="180", wires="{{history.wiring}}", previous_wires="{{history.previous_wiring}}")
         td
-          div edited by {{history.user}}
           div.
-            at
+            edited at
             {{history.modified_at | date:'mediumTime'}},
             {{history.modified_at | date:'mediumDate'}}
+          div  by {{history.user}}
