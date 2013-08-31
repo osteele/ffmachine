@@ -15,5 +15,4 @@ app.config ($locationProvider, $routeProvider) ->
   $routeProvider
     .when('/', templateUrl: 'partials/machine-list.html', controller: 'MachineListCtrl')
     .when('/machines/:machineId', templateUrl: 'partials/machine-detail.html', controller: 'MachineDetailCtrl')
-    # .otherwise(redirectTo: '/')
-
+    .otherwise(redirectTo: '/')

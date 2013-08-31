@@ -10,7 +10,7 @@
   table.machines
     tr.machine(ng-repeat="machine in machines", ng-class="{protected: !machine_editable(machine)}")
       td
-        a(href="#/machines/{{machine_key(machine) | encode}}")
+        a(href="/#/machines/{{machine_key(machine) | encode}}", target="ffmachine-details")
           wiring-diagram(wires="{{machine.wiring}}")
 
       td.name(title="Click to rename")
