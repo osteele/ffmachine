@@ -94,11 +94,23 @@ module.directive 'wiringDiagram', ->
   replace: true
   template: '<canvas width="90" height="100"/>'
   transclude: true
-  scope: {wires: '@wires', width: '@', height: '@'}
+  scope: {wires: '@wires', previous_wires: '@previousWires', width: '@', height: '@'}
   link: (scope, element, attrs) ->
     canvas = element[0]
     attrs.$observe 'wires', (wires) ->
-      wires = (line.split(/\s+/) for line in scope.wires.split(/\n/) when line.match(/\S/))
+      wires_string = wires
+      previous_wires_string = scope.previous_wires
+      previous_wires_string ||= wires_string
+      wiring_diff = (w1, w0) ->
+        w1 = (line for line in w1.split(/\n/) when line.match(/\S/))
+        w0 = (line for line in w0.split(/\n/) when line.match(/\S/))
+        ws = (w.split(/\s+/) for w in w1 when w not in w0)
+        dict = {}
+        dict[w] = w for w in ws
+        dict
+      wires = (line.split(/\s+/) for line in wires.split(/\n/) when line.match(/\S/))
+      added_wires = wiring_diff(wires_string, previous_wires_string)
+      deleted_wires = wiring_diff(previous_wires_string, wires_string)
       ctx = canvas.getContext('2d')
       [viewport_width, viewport_height] = [1800, 2000]
       ctx.save()
@@ -126,11 +138,17 @@ module.directive 'wiringDiagram', ->
       colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0']
       {round, sqrt} = Math
       sqr = (x) -> Math.pow(x, 2)
-      for [s0, s1] in wires
+      lineWidth = ctx.lineWidth
+      for wire in wires.concat(v for k, v of deleted_wires)
+        [s0, s1] = wire
         [x0, y0] = pinoutToXy(s0)
         [x1, y1] = pinoutToXy(s1)
         color_index = round(sqrt(sqr(x1 - x0, 2) + sqr(y1 - y0, 2)) / 100)
         ctx.strokeStyle = colors[color_index] ? '#d02090'
+        ctx.strokeStyle = 'green' if wire of added_wires
+        ctx.strokeStyle = 'gray' if wire of deleted_wires
+        ctx.lineWidth = lineWidth
+        ctx.lineWidth *= 4 if wire of added_wires or wire of deleted_wires
         mx = x0 + (x1 - x0) / 2
         my = y0 + (y1 - y0) / 2
         [dx, dy] = [(x1 - x0) / 5, 0]

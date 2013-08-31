@@ -29,7 +29,7 @@
       tr
       tr(ng-repeat="history in machine.history | orderBy:'modified_at':true | limitTo:1")
         td
-          wiring-diagram(wires="{{history.wiring}}", width="180", height="200")
+          wiring-diagram(width="180", height="200", wires="{{history.wiring}}", previous_wires="{{history.previous_wiring}}")
         td
           div edited by {{history.user}}
           div.

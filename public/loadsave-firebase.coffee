@@ -51,6 +51,7 @@ auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
   console.error "#{machine.name} is read-only" if machine.protected
   return if machine.protected
   modified_at = Firebase.ServerValue.TIMESTAMP
+  previous_wiring = machine.wiring
   machineRef.child('wiring').set wiring
   machineRef.child('modified_at').set modified_at
-  machineRef.child('history').push {user: user?.email, wiring, modified_at}
+  machineRef.child('history').push {user: user?.email, wiring, previous_wiring, modified_at}
