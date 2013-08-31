@@ -6,10 +6,13 @@ module.exports = (grunt) ->
         files:
           'build/js/app.js': ['public/js/**/*.coffee', '!public/js/modules/*.coffee']
         options:
+          join: true
           sourceMap: true
       release_bundle:
         files:
           'release/js/app.js': ['public/js/**/*.coffee', '!public/js/modules/*.coffee']
+        options:
+          join: true
       debug_modules:
         expand: true
         cwd: 'public/js/modules'
