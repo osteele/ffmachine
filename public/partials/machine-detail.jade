@@ -2,8 +2,6 @@
   h1
     {{machine.name}} Machine
 
-  //- wiring-diagram.big-diagram(wires="{{machine.wiring}}", width="360", height="400")
-
   table.machines
     tr.machine
       tr(ng-show="machine.creator")
@@ -26,6 +24,8 @@
         th
         td
           ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': '1 viewer.', 'other': '{} viewers.'}")
+
+  wiring-diagram.big-diagram(wires="{{machine.wiring}}", width="360", height="400", ng-hide="machine.history")
 
   section.history(ng-show="machine.history")
     h2 History
