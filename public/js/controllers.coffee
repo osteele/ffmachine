@@ -1,7 +1,9 @@
 controllers = angular.module 'FFMachine.controllers', []
 
 controllers.controller 'MachineListCtrl', ($scope, $location, angularFire) ->
+  $scope.layout = 'grid'
   $scope.machines = []
+
   # TODO is there a way to make this a list type?
   angularFire machineListRef, $scope, 'machines', {}
 
@@ -50,6 +52,11 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire) ->
 
   $scope.machine_stats = (machine) ->
     "#{(machine.wiring.split(/\s+/).length - 1) / 2} wires"
+
+  $scope.machine_url = (machine) ->
+    url = "dlm.html?name=#{encodeURIComponent($scope.machine_key(machine))}&sync=true"
+    url += '&readonly=true' unless $scope.machine_editable machine
+    return url
 
   $scope.machine_viewers = (machine) ->
     return [] unless machine.connected

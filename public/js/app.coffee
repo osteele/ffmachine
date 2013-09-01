@@ -8,7 +8,9 @@ firebaseRootRef.child('version').on 'value', (snapshot) ->
   location.reload() if reload_key and key and reload_key != key
   reload_key = key
 
-app = angular.module 'FFMachine', ['FFMachine.controllers', 'FFMachine.directives', 'FFMachine.filters', 'firebase']
+dependencies = ['firebase', 'ui']
+modules = ['FFMachine.controllers', 'FFMachine.directives', 'FFMachine.filters']
+app = angular.module 'FFMachine', modules.concat(dependencies)
 
 app.config ($locationProvider, $routeProvider) ->
   # $locationProvider.html5Mode true

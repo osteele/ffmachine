@@ -1,28 +1,36 @@
 .machine-list
 
+  #toolbar
+    | Search:
+    input(ng-model="searchText")
+    a.icon-list(ng-class="{active: layout == 'list'}", ng-click="layout = 'list'")
+    a.icon-th(ng-class="{active: layout == 'grid'}", ng-click="layout = 'grid'")
+
+    #account.pull-right
+      button(ng-hide="user", ng-click="login('persona')")
+        .icon-signin
+        | &nbsp;Sign In
+      div
+        button(ng-show="user", ng-click="logout()")
+          .icon-signout
+          | Sign Out
+        div(ng-show="user") {{user.email}}
+
+
   h1 Flip Flop Machines
 
-  #account
-    button(ng-hide="user", ng-click="login('persona')") Sign In
-    button(ng-show="user", ng-click="logout()") Sign Out
-    div(ng-show="user") {{user.email}}
-
-  table.machines
-    tr
-      td.pull-right
-        | Search:
-        input(ng-model="searchText")
+  table.machines.list(ng-show="layout == 'list'")
     tbody.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
       tr
         td.name(title="Click to rename")
-          span(ng-hide="machine_editable(machine) && editing", ng-click="editing=true") {{machine.name}}
-          form(ng-show="machine_editable(machine) && editing", ng-submit="editing=false; rename_machine(machine)")
-            input(type="text", ng-model="machine.name", ui-keypress="{enter: 'foo()', escape: 'cancel()'}", placeholder="Name", ng-required, size=10)
+          span(ng-show="!edit_title && !machine_editable(machine)") {{machine.name}}
+          span(ng-show="!edit_title && machine_editable(machine)", ng-click="edit_title=true", title="Click to edit") {{machine.name}}
+          input(ng-show="edit_title", type="text", ng-model="machine.name", ui-keypress="{13: 'edit_title=false', 27: 'edit_title=false'}", ui-event="{ blur : 'edit_title=false' }")
 
         td.icons
           a.icon-eye-open(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&readonly=true&sync=true", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
           a.icon-edit.protect(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&sync=true", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
-          a.icon-info-sign(ng-click="show_details = !show_details")
+          //- a.icon-info-sign(ng-click="show_details = !show_details")
           a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
           .icon-trash.protect(ng-hide="machine_editable(machine)")
           a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
@@ -36,24 +44,28 @@
         td
           ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': '1 viewer.', 'other': '{} viewers.'}")
 
-      tr(ng-show="show_details")
-        td
-          wiring-diagram.pull-right(wires="{{machine.wiring}}", width="270", height="300")
-        td(colspan="4")
-          table
-            tr(ng-show="machine.creator")
-              th Author
-              td {{machine.creator.email}}
 
-            tr(ng-show="machine.created_at")
-              th Created At
-              td {{machine.created_at | date}}
+  .machines.grid(ng-show="layout == 'grid'")
+    .machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
+      .titlebar(style="width:100%")
+        span(ng-show="!edit_title && !machine_editable(machine)") {{machine.name}}
+        span(ng-show="!edit_title && machine_editable(machine)", ng-click="edit_title=true", title="Click to edit") {{machine.name}}
+        input(ng-show="edit_title", type="text", ng-model="machine.name", ui-keypress="{13: 'edit_title=false', 27: 'edit_title=false'}", ui-event="{ blur : 'edit_title=false' }")
+        .buttons(ng-hide="edit_title")
+          a.icon-eye-open(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&readonly=true&sync=true", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
+          a.icon-edit.protect(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&sync=true", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
+          a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
+          a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
+      a(ng-href="{{machine_url(machine)}}")
+        wiring-diagram(wires="{{machine.wiring}}", width="270", height="300")
+      .caption
+        div(ng-show="machine.creator")
+          | Created by {{machine.creator.email}}
 
-            tr(ng-show="machine.modified_at")
-              th Modified At
-              td {{machine.modified_at | date}}
+        div(ng-show="machine.created_at")
+          | Created at {{machine.created_at | date}}
 
-            //- tr(ng-show="machine_viewers(machine)")
-            //-   th Viewers
-            //-   td(ng-repeat="viewer in machine_viewers(machine)")
-            //-     | {{viewer.email}}
+        div(ng-show="machine.modified_at")
+          | Modified on {{machine.modified_at | date}}
+
+        ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': 'One viewer.', 'other': '{} viewers.'}")

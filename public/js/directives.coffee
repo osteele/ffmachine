@@ -32,8 +32,8 @@ draw_wiring_thumbnail = (canvas, wires_string, previous_wires_string) ->
   [viewport_width, viewport_height] = [1800, 2000]
   canvas_width_breakpoint = 200
   background_image_url = 'url(ffmachine.png)'
-  [module_rows, module_cols] = [5, 9]
-  [module_width, module_height] = [200, 400]
+  [module_rows, module_cols] = [4, 9]
+  [module_width, module_height] = [200, 450]
   module_padding = 10
 
   {round, sqrt} = Math
@@ -48,15 +48,14 @@ draw_wiring_thumbnail = (canvas, wires_string, previous_wires_string) ->
   draw_module_rects = ->
     ctx.fillStyle = 'white'
     ctx.fillRect 0, 0, viewport_width, viewport_height
-    ctx.fillStyle = '#301E17'
     ctx.globalAlpha = 0.9
+    ctx.fillStyle = '#301E17'
     inner_width = module_width - 2 * module_padding
     inner_height = module_height - 2 * module_padding
     for i in [0...module_rows]
       for j in [0...module_cols]
         [x, y] = [j * module_width, i * module_height]
         ctx.fillRect x + module_padding, y + module_padding, inner_width, inner_height
-        # console.info x + module_padding, y + module_padding, inner_width, inner_height
     ctx.globalAlpha = 1
 
   ctx.save()
@@ -65,11 +64,14 @@ draw_wiring_thumbnail = (canvas, wires_string, previous_wires_string) ->
   if canvas.width >= canvas_width_breakpoint
     canvas.style.background = background_image_url
     canvas.style.backgroundSize = 'cover'
-    lineWidth = 8
+    ctx.fillStyle = 'white'
+    ctx.globalAlpha = 0.35
+    ctx.fillRect 0, 0, viewport_width, viewport_height
+    lineWidth = 12
   else
     canvas.style.background = null
-    lineWidth = 1.75 * viewport_width / canvas.width
     draw_module_rects()
+    lineWidth = 1.75 * viewport_width / canvas.width
 
   draw_plus = (x, y) ->
     d = 75
