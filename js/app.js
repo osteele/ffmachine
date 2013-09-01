@@ -1,5 +1,5 @@
 (function() {
-  var app, controllers, directives, draw_wiring_thumbnail, filters, firebaseRootRef, machineListRef, reload_key,
+  var app, controllers, dependencies, directives, draw_wiring_thumbnail, filters, firebaseRootRef, machineListRef, modules, reload_key,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   firebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
@@ -17,7 +17,11 @@
     return reload_key = key;
   });
 
-  app = angular.module('FFMachine', ['FFMachine.controllers', 'FFMachine.directives', 'FFMachine.filters', 'firebase']);
+  dependencies = ['firebase', 'ui'];
+
+  modules = ['FFMachine.controllers', 'FFMachine.directives', 'FFMachine.filters'];
+
+  app = angular.module('FFMachine', modules.concat(dependencies));
 
   app.config(function($locationProvider, $routeProvider) {
     return $routeProvider.when('/', {
@@ -35,6 +39,7 @@
 
   controllers.controller('MachineListCtrl', function($scope, $location, angularFire) {
     var auth;
+    $scope.layout = 'grid';
     $scope.machines = [];
     angularFire(machineListRef, $scope, 'machines', {});
     auth = new FirebaseSimpleLogin(firebaseRootRef, function(error, user) {
@@ -139,6 +144,14 @@
     };
     $scope.machine_stats = function(machine) {
       return "" + ((machine.wiring.split(/\s+/).length - 1) / 2) + " wires";
+    };
+    $scope.machine_url = function(machine) {
+      var url;
+      url = "dlm.html?name=" + (encodeURIComponent($scope.machine_key(machine))) + "&sync=true";
+      if (!$scope.machine_editable(machine)) {
+        url += '&readonly=true';
+      }
+      return url;
     };
     $scope.machine_viewers = function(machine) {
       var k;
@@ -277,8 +290,8 @@
     _ref = [1800, 2000], viewport_width = _ref[0], viewport_height = _ref[1];
     canvas_width_breakpoint = 200;
     background_image_url = 'url(ffmachine.png)';
-    _ref1 = [5, 9], module_rows = _ref1[0], module_cols = _ref1[1];
-    _ref2 = [200, 400], module_width = _ref2[0], module_height = _ref2[1];
+    _ref1 = [4, 9], module_rows = _ref1[0], module_cols = _ref1[1];
+    _ref2 = [200, 450], module_width = _ref2[0], module_height = _ref2[1];
     module_padding = 10;
     round = Math.round, sqrt = Math.sqrt;
     line_length = function(dx, dy) {
@@ -294,8 +307,8 @@
       var i, inner_height, inner_width, j, x, y, _i, _j, _ref3;
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, viewport_width, viewport_height);
-      ctx.fillStyle = '#301E17';
       ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#301E17';
       inner_width = module_width - 2 * module_padding;
       inner_height = module_height - 2 * module_padding;
       for (i = _i = 0; 0 <= module_rows ? _i < module_rows : _i > module_rows; i = 0 <= module_rows ? ++_i : --_i) {
@@ -311,11 +324,14 @@
     if (canvas.width >= canvas_width_breakpoint) {
       canvas.style.background = background_image_url;
       canvas.style.backgroundSize = 'cover';
-      lineWidth = 8;
+      ctx.fillStyle = 'white';
+      ctx.globalAlpha = 0.35;
+      ctx.fillRect(0, 0, viewport_width, viewport_height);
+      lineWidth = 12;
     } else {
       canvas.style.background = null;
-      lineWidth = 1.75 * viewport_width / canvas.width;
       draw_module_rects();
+      lineWidth = 1.75 * viewport_width / canvas.width;
     }
     draw_plus = function(x, y) {
       var d;
