@@ -26,18 +26,27 @@ h1, h2 {
   border-radius: 2px;
   width: 100%;
   padding: 10px;
-  position:relative;
+  position: relative;
+
+  a {
+    color: black;
+    border-radius: 2px;
+    margin: 0 5px;
+    padding: 5px;
+  }
+
+  a.active {
+    background: white;
+  }
 }
 
-#toolbar a {
-  color: black;
-  border-radius:2px;
-  margin:0 5px;
-  padding: 5px;
-}
-
-#toolbar a.active {
-  background: white;
+#message {
+  margin: 10px;
+  background: lightGreen;
+  border-radius: 5px;
+  box-shadow: 0 1px 1px #ccc;
+  padding: 0 5px;
+  max-width: 600px;
 }
 
 .machine-list {

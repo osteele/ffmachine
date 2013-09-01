@@ -3,11 +3,25 @@ controllers = angular.module 'FFMachine.controllers', []
 controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angularFireAuth) ->
   $scope.layout = 'grid'
   $scope.machines = []
+  $scope.message = "Loading..."
 
   angularFireAuth.initialize firebaseRootRef, scope: $scope, name: "user"
 
   # TODO is there a way to make this a list type?
   angularFire machineListRef, $scope, 'machines', {}
+
+  $scope.$watch ->
+    machines = (m for _, m of $scope.machines)
+    return unless machines.length
+    $scope.message = null
+    unless machines.some((m) -> $scope.machine_editable(m))
+      $scope.message = "Congratulation! You are signed in. " +
+        "You can view other people's machines but not save changes. " +
+        "Copy a machine to make your own machine that you can edit."
+    unless $scope.user
+      $scope.message = "You can view machines but not save changes. " +
+        "Sign In to make your own machines. " +
+        "The <em>Sign In</em> button will lead you through the steps to create an account."
 
   $scope.machine_key = (machine) ->
     (k for k, m of $scope.machines when m == machine)[0]
@@ -43,6 +57,7 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
 
   $scope.machine_editable = (machine) ->
     user = $scope.user
+    return false if machine.deleted_at
     return user and machine.writers and user.id in machine.writers.map (user) -> user.id
 
   $scope.machine_stats = (machine) ->

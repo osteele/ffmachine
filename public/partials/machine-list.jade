@@ -18,6 +18,9 @@
 
   h1 Flip Flop Machines
 
+  #message(ng-show="message")
+    p(ng-bind-html-unsafe=" message")
+
   table.machines.list(ng-show="layout == 'list'")
     tbody.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
       tr
