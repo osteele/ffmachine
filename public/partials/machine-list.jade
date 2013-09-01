@@ -16,7 +16,6 @@
           | Sign Out
         div(ng-show="user") {{user.email}}
 
-
   h1 Flip Flop Machines
 
   table.machines.list(ng-show="layout == 'list'")
@@ -48,9 +47,9 @@
   .machines.grid(ng-show="layout == 'grid'")
     .machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
       .titlebar(style="width:100%")
-        span(ng-show="!edit_title && !machine_editable(machine)") {{machine.name}}
-        span(ng-show="!edit_title && machine_editable(machine)", ng-click="edit_title=true", title="Click to edit") {{machine.name}}
-        input(ng-show="edit_title", type="text", ng-model="machine.name", ui-keypress="{13: 'edit_title=false', 27: 'edit_title=false'}", ui-event="{ blur : 'edit_title=false' }")
+        span.title(ng-show="!edit_title && !machine_editable(machine)") {{machine.name}}
+        span.title(ng-show="!edit_title && machine_editable(machine)", ng-click="edit_title=true", title="Click to edit") {{machine.name}}
+        input(ng-show="edit_title", type="text", ng-model="machine.name", style="width:100%", ui-keypress="{13: 'edit_title=false', 27: 'edit_title=false'}", ui-event="{ blur : 'edit_title=false' }")
         .buttons(ng-hide="edit_title")
           a.icon-eye-open(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&readonly=true&sync=true", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
           a.icon-edit.protect(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&sync=true", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")

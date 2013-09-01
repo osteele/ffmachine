@@ -57,8 +57,9 @@ h1, h2 {
   }
 
   .machines.grid {
-    .machine { float: left; margin: 10px; }
-    .titlebar { position: relative; padding: 1px; }
+    .machine { float: left; margin: 10px; width: 270px; }
+    .titlebar { position: relative; padding: 1px; width: 270px; }
+    .titlebar .title { display: block; width: 170px; overflow: hidden; text-overflow: ellipsis; white-space:nowrap; }
     .buttons { position: absolute; bottom: 0; right: 0; }
     .buttons a { padding-left: 8px; }
     .caption { font-size: small; }
