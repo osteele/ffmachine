@@ -37,21 +37,39 @@
 
   controllers = angular.module('FFMachine.controllers', []);
 
-  controllers.controller('MachineListCtrl', function($scope, $location, angularFire) {
-    var auth;
+  controllers.controller('MachineListCtrl', function($scope, $location, angularFire, angularFireAuth) {
     $scope.layout = 'grid';
     $scope.machines = [];
+    $scope.message = "Loading...";
+    angularFireAuth.initialize(firebaseRootRef, {
+      scope: $scope,
+      name: "user"
+    });
     angularFire(machineListRef, $scope, 'machines', {});
-    auth = new FirebaseSimpleLogin(firebaseRootRef, function(error, user) {
-      if (error) {
-        console.error(error);
+    $scope.$watch(function() {
+      var m, machines, _;
+      machines = (function() {
+        var _ref, _results;
+        _ref = $scope.machines;
+        _results = [];
+        for (_ in _ref) {
+          m = _ref[_];
+          _results.push(m);
+        }
+        return _results;
+      })();
+      if (!machines.length) {
         return;
       }
-      return setTimeout((function() {
-        return $scope.$apply(function() {
-          return $scope.user = user;
-        });
-      }), 10);
+      $scope.message = null;
+      if (!machines.some(function(m) {
+        return $scope.machine_editable(m);
+      })) {
+        $scope.message = "Congratulation! You are signed in. " + "You can view other people's machines but not save changes. " + "Copy a machine to make your own machine that you can edit.";
+      }
+      if (!$scope.user) {
+        return $scope.message = "You can view machines but not save changes. " + "Sign In to make your own machines. " + "The <em>Sign In</em> button will lead you through the steps to create an account.";
+      }
     });
     $scope.machine_key = function(machine) {
       var k, m;
@@ -138,6 +156,9 @@
     $scope.machine_editable = function(machine) {
       var user, _ref;
       user = $scope.user;
+      if (machine.deleted_at) {
+        return false;
+      }
       return user && machine.writers && (_ref = user.id, __indexOf.call(machine.writers.map(function(user) {
         return user.id;
       }), _ref) >= 0);
@@ -171,12 +192,12 @@
       return $location.path('/machines/' + encodeURIComponent($scope.machine_key(machine)));
     };
     $scope.login = function(provider) {
-      return auth.login(provider, {
+      return angularFireAuth.login(provider, {
         rememberMe: true
       });
     };
     return $scope.logout = function() {
-      return auth.logout();
+      return angularFireAuth.logout();
     };
   });
 
