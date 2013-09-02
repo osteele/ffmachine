@@ -70,13 +70,21 @@ module.exports = (grunt) ->
         ext: '.html'
     sass:
       debug:
-        files:
-          'build/css/app.css': 'app/css/**/*.scss'
+        expand: true
+        cwd: 'app'
+        dest: 'build'
+        src: ['css/**.scss']
+        ext: '.css'
+        filter: 'isFile'
         options:
           sourcemap: true
       release:
-        files:
-          'release/css/app.css': 'app/css/**/*.scss'
+        expand: true
+        cwd: 'app'
+        dest: 'release'
+        src: ['css/**.scss']
+        ext: '.css'
+        filter: 'isFile'
         options:
           style: 'compressed'
     watch:

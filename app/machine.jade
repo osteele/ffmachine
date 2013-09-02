@@ -4,7 +4,7 @@ html(lang="en")
     title Flip Flop Machine
     meta(charset="utf-8")
 
-    link(href="dlm.css", rel="stylesheet")
+    link(href="css/machine.css", rel="stylesheet")
 
     script(type='text/javascript', src='https://cdn.firebase.com/v0/firebase.js')
     script(type='text/javascript', src="https://cdn.firebase.com/v0/firebase-simple-login.js")
@@ -16,10 +16,10 @@ html(lang="en")
   body(onload="setup()")
     p.title Flip Flop Machine
 
-    .frame#frame
+    #frame.frame
       .ffmachine
         img(src="img/ffmachine.png", width=900, height=1000)
-        canvas.ffmachine#wirebuffer
+        canvas#wirebuffer
 
     #connected-users
       h2 Current Viewers
