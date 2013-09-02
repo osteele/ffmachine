@@ -1,7 +1,20 @@
-submit = (name) ->
-  saveWires name, wiresString()
+filename = null
+readonly = null
+sync = null
 
-wiresString = ->
+@setup = ->
+  urlvars = getUrlVars()
+  filename = urlvars['name']
+  readonly = urlvars['readonly']
+  sync = urlvars['sync']
+  @setup_canvas()
+  loadWires filename if filename
+
+@wires_changed = (wires) ->
+  return if readonly
+  saveWires name, wiresString(wires)
+
+wiresString = (wires) ->
   (wire.join(' ') for wire in wires).join('\r\n')
 
 getUrlVars = ->

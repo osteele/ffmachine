@@ -29,7 +29,7 @@ holedefs = {
 # Holes
 #
 
-xyToPinout = (x, y) ->
+@xyToPinout = (x, y) ->
   mx = Math.floor(x / 200)
   my = Math.floor(y / 500)
   return undefined if mx < 0 or my < 0 or mx > 9 or my > 4
@@ -40,7 +40,7 @@ xyToPinout = (x, y) ->
   return undefined unless hole
   return ['a','b','c','d'][my] + '_' + mx + '_' + hole[2]
 
-pinoutToXy = (p) ->
+@pinoutToXy = (p) ->
   r = p.split('_')
   mx = r[1]
   my = {a:0, b:1, c:2, d:3}[r[0]]

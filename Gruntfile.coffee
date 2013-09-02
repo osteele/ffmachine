@@ -20,7 +20,6 @@ module.exports = (grunt) ->
         dest: 'build'
         ext: '.js'
         options:
-          bare: true
           sourceMap: true
       release_modules:
         expand: true
@@ -28,8 +27,6 @@ module.exports = (grunt) ->
         src: '**/*.coffee'
         dest: 'release'
         ext: '.js'
-        options:
-          bare: true
     coffeelint:
       app: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
       gruntfile: 'Gruntfile.coffee'

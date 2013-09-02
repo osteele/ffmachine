@@ -1,6 +1,3 @@
-filename = null
-readonly = null
-sync = null
 wirebuffer = ctx = null
 ffholes = null
 wires = []
@@ -13,11 +10,7 @@ knobs = [
 ]
 
 
-setup = () ->
-  urlvars = getUrlVars()
-  filename = urlvars['name']
-  readonly = urlvars['readonly']
-  sync = urlvars['sync']
+@setup_canvas = () ->
   wirebuffer = document.getElementById('wirebuffer')
   wirebuffer.width = 1800
   wirebuffer.height = 2000
@@ -26,7 +19,10 @@ setup = () ->
   wirebuffer.onmousedown = (e) -> mouseDown(e)
   window.onmouseup = (e) -> mouseUp(e)
   window.onkeypress = (e) -> handleKey(e)
-  loadWires filename if filename
+  redraw()
+
+@set_wires = (wires_) ->
+  wires = wires_
   redraw()
 
 #
@@ -54,14 +50,14 @@ pickUpWire = (wn, x, y) ->
   d2 = dist([x,y], pinoutToXy(w[1]))
   startpin = (if d1 > d2 then w[0] else w[1])
   redraw()
-  submit filename if sync and not readonly
+  wires_changed wires
   drawLine pinoutToXy(startpin), [x, y], 0
   window.onmousemove = (e) -> mouseMove(e)
 
 mouseMove = (e) ->
   moved = true
   redraw()
-  submit filename if sync and not readonly
+  wires_changed wires
   drawLine pinoutToXy(startpin), [localx(e.clientX), localy(e.clientY)], 0
 
 dragKnob = (e) ->
@@ -72,7 +68,7 @@ dragKnob = (e) ->
     knoboffset = mod360(knob[2]-a)
   knob[2] = mod360(a+knoboffset)
   redraw()
-  submit filename if sync and not readonly
+  wires_changed wires
 
 mouseUp = (e) ->
   window.onmousemove = undefined
@@ -85,7 +81,7 @@ mouseUp = (e) ->
     wires.push [startpin, endpin]
   startpin = undefined
   redraw()
-  submit filename if sync and not readonly
+  wires_changed wires
 
 releaseKnob = ->
   knob = knobs[starty]
@@ -94,7 +90,7 @@ releaseKnob = ->
   if starty == 2
     knob[2] = findNearest(knob[2], [-68, -23, 22, 67])
   redraw()
-  submit filename if sync and not readonly
+  wires_changed wires
 
 mouseClicked = (e) ->
 
@@ -194,7 +190,7 @@ bufferPixel = (x, y) ->
   return 0 unless a == 255
   return ((r & 15) << 8) + ((g & 15) << 4) + (b & 15)
 
-dist = (a, b) ->
+@dist = (a, b) ->
   dx = b[0] - a[0]
   dy = b[1] - a[1]
   Math.sqrt(dx * dx + dy * dy)

@@ -16,7 +16,6 @@ auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
     return
   user = _user
 
-# This replaces the function in loadsave.js
 @loadWires = (name) ->
   machineRef = machineListRef.child(name)
   machineRef.on 'value', (snapshot) ->
@@ -25,8 +24,7 @@ auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
     wiring_string = snapshot.val().wiring.replace(/\\n/g, "\n")
     wire_strings = wiring_string.split(/\n/)
     wire_strings.pop() if wire_strings[wire_strings.length - 1] == ''
-    window.wires = wire_strings.map (wire) -> wire.split ' '
-    redraw()
+    @set_wires wire_strings.map (wire) -> wire.split ' '
 
     connectionListRef = machineRef.child('connected')
     connectionListRef.off()
@@ -44,7 +42,6 @@ auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
       onlineRef.onDisconnect().remove()
       onlineRef.set user.email
 
-# This replaces the function in loadsave.js
 @saveWires = (name, wiring) ->
   wiring = wiring.replace /\r\n/g, "\n"
   return if machine.wiring == wiring
