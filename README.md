@@ -17,7 +17,7 @@
 `grunt` with no arguments copies / transcodes sources into the `build` directory, runs a server at port 8000,
 watches files, and copies / transcodes them again if they change.
 
-Run `grunt build` to force a re-build and copy of all files from `public` into the `build` directory.
+Run `grunt build` to force a re-build and copy of all files from `app` into the `build` directory.
 
 Optional: `grunt server` runs a [LiveReload server][LiveRelad]. Install and activate the [LiveReload extension (Safari, Chrome, or Firefox)][LiveReload extensions] to reload the web page when the sources are changed.
 

@@ -4,18 +4,18 @@ module.exports = (grunt) ->
     coffee:
       debug_bundle:
         files:
-          'build/js/app.js': ['public/js/**/*.coffee', '!public/js/modules/*.coffee']
+          'build/js/app.js': ['app/js/**/*.coffee', '!app/js/modules/*.coffee']
         options:
           join: true
           sourceMap: true
       release_bundle:
         files:
-          'release/js/app.js': ['public/js/**/*.coffee', '!public/js/modules/*.coffee']
+          'release/js/app.js': ['app/js/**/*.coffee', '!app/js/modules/*.coffee']
         options:
           join: true
       debug_modules:
         expand: true
-        cwd: 'public/js/modules'
+        cwd: 'app/js/modules'
         src: '**/*.coffee'
         dest: 'build'
         ext: '.js'
@@ -23,7 +23,7 @@ module.exports = (grunt) ->
           sourceMap: true
       release_modules:
         expand: true
-        cwd: 'public/js/modules'
+        cwd: 'app/js/modules'
         src: '**/*.coffee'
         dest: 'release'
         ext: '.js'
@@ -43,20 +43,20 @@ module.exports = (grunt) ->
     copy:
       debug:
         expand: true
-        cwd: 'public'
+        cwd: 'app'
         dest: 'build'
         src: ['**', '!**/*.coffee', '!**/*.jade', '!**/*.scss']
         filter: 'isFile'
       release:
         expand: true
-        cwd: 'public'
+        cwd: 'app'
         dest: 'release'
         src: ['**', '!**/*.coffee', '!**/*.jade', '!**/*.scss']
         filter: 'isFile'
     jade:
       debug:
         expand: true
-        cwd: 'public'
+        cwd: 'app'
         src: '**/*.jade'
         dest: 'build'
         ext: '.html'
@@ -64,19 +64,19 @@ module.exports = (grunt) ->
           pretty: true
       release:
         expand: true
-        cwd: 'public'
+        cwd: 'app'
         src: '**/*.jade'
         dest: 'release'
         ext: '.html'
     sass:
       debug:
         files:
-          'build/css/app.css': 'public/css/**/*.scss'
+          'build/css/app.css': 'app/css/**/*.scss'
         options:
           sourcemap: true
       release:
         files:
-          'release/css/app.css': 'public/css/**/*.scss'
+          'release/css/app.css': 'app/css/**/*.scss'
         options:
           style: 'compressed'
     watch:
@@ -88,16 +88,16 @@ module.exports = (grunt) ->
         options:
           livereload: false
       copy:
-        files: ['public/**/*.css', 'public/**/*.html', 'public/**/*.js', 'public/**/*.png']
+        files: ['app/**/*.css', 'app/**/*.html', 'app/**/*.js', 'app/**/*.png']
         tasks: ['copy:debug']
       gruntfile:
         files: 'Gruntfile.coffee'
         tasks: ['coffeelint:gruntfile']
       jade:
-        files: ['public/**/*.jade']
+        files: ['app/**/*.jade']
         tasks: ['jade:debug']
       sass:
-        files: ['public/**/*.scss']
+        files: ['app/**/*.scss']
         tasks: ['sass:debug']
       scripts:
         files: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
