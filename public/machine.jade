@@ -1,0 +1,26 @@
+doctype 5
+html(lang="en")
+  head
+    title Flip Flop Machine
+    meta(charset="utf-8")
+
+    link(href="dlm.css", rel="stylesheet")
+
+    script(type='text/javascript', src='https://cdn.firebase.com/v0/firebase.js')
+    script(type='text/javascript', src="https://cdn.firebase.com/v0/firebase-simple-login.js")
+    script(type="text/javascript", src="dlm.js")
+    script(type="text/javascript", src="modules.js")
+    script(type="text/javascript", src="loadsave.js")
+    script(type="text/javascript", src="loadsave-firebase.js")
+
+  body(onload="setup()")
+    p.title Flip Flop Machine
+
+    .frame#frame
+      .ffmachine
+        img(src="ffmachine.png", width=900, height=1000)
+        canvas.ffmachine#wirebuffer
+
+    #connected-users
+      h2 Current Viewers
+      ul

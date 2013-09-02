@@ -30,8 +30,8 @@
           input(ng-show="edit_title", type="text", ng-model="machine.name", ui-keypress="{13: 'edit_title=false', 27: 'edit_title=false'}", ui-event="{ blur : 'edit_title=false' }")
 
         td.icons
-          a.icon-eye-open(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&readonly=true&sync=true", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
-          a.icon-edit.protect(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&sync=true", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
+          a.icon-eye-open(ng-href="{{machine_url(machine)}}", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
+          a.icon-edit.protect(ng-href="{{machine_url(machine)}}", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
           //- a.icon-info-sign(ng-click="show_details = !show_details")
           a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
           .icon-trash.protect(ng-hide="machine_editable(machine)")
@@ -56,8 +56,8 @@
         .buttons(ng-hide="edit_title")
           a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
           a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
-          a.icon-eye-open(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&readonly=true&sync=true", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
-          a.icon-edit.protect(ng-href="dlm.html?name={{machine_key(machine) | encodeURIComponent}}&sync=true", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
+          a.icon-eye-open(ng-href="{{machine_url(machine)}}", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
+          a.icon-edit.protect(ng-href="{{machine_url(machine)}}", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
       a(ng-href="{{machine_url(machine)}}")
         wiring-diagram(wires="{{machine.wiring}}", width="270", height="300")
       .caption

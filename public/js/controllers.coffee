@@ -64,7 +64,7 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
     "#{(machine.wiring.split(/\s+/).length - 1) / 2} wires"
 
   $scope.machine_url = (machine) ->
-    url = "dlm.html?name=#{encodeURIComponent($scope.machine_key(machine))}&sync=true"
+    url = "machine.html?name=#{encodeURIComponent($scope.machine_key(machine))}&sync=true"
     url += '&readonly=true' unless $scope.machine_editable machine
     return url
 
