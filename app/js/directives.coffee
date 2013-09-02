@@ -31,7 +31,7 @@ draw_wiring_thumbnail = (canvas, wires_string, previous_wires_string) ->
   # constants
   [viewport_width, viewport_height] = [1800, 2000]
   canvas_width_breakpoint = 200
-  background_image_url = 'url(ffmachine.png)'
+  background_image_url = 'url(img/ffmachine.png)'
   [module_rows, module_cols] = [4, 9]
   [module_width, module_height] = [200, 450]
   module_padding = 10
