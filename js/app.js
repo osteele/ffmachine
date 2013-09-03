@@ -167,12 +167,7 @@
       return "" + ((machine.wiring.split(/\s+/).length - 1) / 2) + " wires";
     };
     $scope.machine_url = function(machine) {
-      var url;
-      url = "machine.html?name=" + (encodeURIComponent($scope.machine_key(machine))) + "&sync=true";
-      if (!$scope.machine_editable(machine)) {
-        url += '&readonly=true';
-      }
-      return url;
+      return "machine.html?name=" + (encodeURIComponent($scope.machine_key(machine)));
     };
     $scope.machine_viewers = function(machine) {
       var k;

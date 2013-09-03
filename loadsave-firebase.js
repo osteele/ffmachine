@@ -33,7 +33,7 @@
   this.loadWires = function(name) {
     machineRef = machineListRef.child(name);
     return machineRef.on('value', function(snapshot) {
-      var connectionListRef, onlineRef, wire_strings, wiring_string;
+      var connectionListRef, onlineRef, readonly, wire_strings, wires, wiring_string;
       machine = snapshot.val();
       if (!machine) {
         console.error("No machine named " + name);
@@ -43,9 +43,11 @@
       if (wire_strings[wire_strings.length - 1] === '') {
         wire_strings.pop();
       }
-      this.set_wires(wire_strings.map(function(wire) {
+      wires = wire_strings.map(function(wire) {
         return wire.split(' ');
-      }));
+      });
+      readonly = !user || machine.creator.id !== user.id;
+      this.setModel(wires, readonly);
       connectionListRef = machineRef.child('connected');
       connectionListRef.off();
       connectionListRef.on('value', function(snapshot) {

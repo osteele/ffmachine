@@ -47,24 +47,7 @@
   };
 
   this.holePositions = function() {
-    var col, holes, moduleType, pinName, row, rowModuleTypes, x, y, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
-    holes = [];
-    for (row = _i = 0, _len = moduleTypes.length; _i < _len; row = ++_i) {
-      rowModuleTypes = moduleTypes[row];
-      for (col = _j = 0, _len1 = rowModuleTypes.length; _j < _len1; col = ++_j) {
-        moduleType = rowModuleTypes[col];
-        _ref = holedefs[moduleType];
-        for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
-          _ref1 = _ref[_k], x = _ref1[0], y = _ref1[1], pinName = _ref1[2];
-          holes.push({
-            x: col * moduleWidth + x,
-            y: row * moduleHeight + y,
-            name: modulePinName(row, col, pinName)
-          });
-        }
-      }
-    }
-    return holes;
+    return pins;
   };
 
   moduleName = function(row, col) {
