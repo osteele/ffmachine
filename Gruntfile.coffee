@@ -90,11 +90,11 @@ module.exports = (grunt) ->
     watch:
       options:
         livereload: true
-      coffeelint:
-        files: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
-        tasks: ['coffeelint:app']
-        options:
-          livereload: false
+      # coffeelint:
+      #   files: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
+      #   tasks: ['coffeelint:app']
+      #   options:
+      #     livereload: false
       copy:
         files: ['app/**/*.css', 'app/**/*.html', 'app/**/*.js', 'app/**/*.png']
         tasks: ['copy:debug']
@@ -109,7 +109,7 @@ module.exports = (grunt) ->
         tasks: ['sass:debug']
       scripts:
         files: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
-        tasks: ['coffeelint:app', 'coffee:debug']
+        tasks: ['coffee:debug']
 
   grunt.loadNpmTasks 'grunt-coffeelint'
   grunt.loadNpmTasks 'grunt-contrib-coffee'
@@ -123,7 +123,7 @@ module.exports = (grunt) ->
 
   grunt.registerTask 'coffee:debug', ['coffee:debug_modules', 'coffee:debug_bundle']
   grunt.registerTask 'coffee:release', ['coffee:release_modules', 'coffee:release_bundle']
-  grunt.registerTask 'build', ['coffeelint', 'coffee:debug', 'copy:debug', 'jade:debug', 'sass:debug']
+  grunt.registerTask 'build', ['coffee:debug', 'copy:debug', 'jade:debug', 'sass:debug']
   grunt.registerTask 'build:release', ['coffeelint', 'coffee:release', 'copy:release', 'jade:release', 'sass:release']
   grunt.registerTask 'deploy', ['build:release', 'githubPages:target']
   grunt.registerTask 'default', ['build', 'connect', 'watch']
