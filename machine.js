@@ -1,5 +1,5 @@
 (function() {
-  var add_wire, arctan2, clickWillDeleteWire, clickWire, cmerge, cos, delete_wire, dragKnob, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, redraw, releaseKnob, sin, wireColor, wirePath, wirebuffer, wires,
+  var add_wire, arctan2, clickWillDeleteWire, cmerge, cos, delete_wire, dragKnob, dragOrDeleteWire, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, redraw, releaseKnob, sin, wireColor, wirePath, wirebuffer, wires,
     __slice = [].slice;
 
   knobs = [[100, 252, 288, '#f0f0f0'], [100, 382, 0, '#f0f0f0'], [1700, 252, 292, '#202020'], [1700, 382, 0, '#202020']];
@@ -26,7 +26,8 @@
 
   this.set_wires = function(wires_) {
     wires = wires_;
-    return redraw();
+    redraw();
+    return document.getElementById('loading').style.display = 'none';
   };
 
   add_wire = function(wire) {
@@ -98,7 +99,7 @@
     return Math.min(d1, d2) > 20 || 45 > dist(pinoutToXy(p1), pinoutToXy(p2));
   };
 
-  clickWire = function(wire) {
+  dragOrDeleteWire = function(wire) {
     var d1, d2, lastEndPin, p1, p2, pinIndex, view, x, y, _ref;
     _ref = localEvent(d3.event), x = _ref[0], y = _ref[1];
     p1 = wire[0], p2 = wire[1];
@@ -109,8 +110,10 @@
       return;
     }
     pinIndex = (d1 < d2 ? 0 : 1);
-    view = this;
-    d3.select(view).classed('repinning', true);
+    view = d3.select(wirebuffer).selectAll('.wire').filter(function(d) {
+      return d === wire;
+    });
+    view.classed('repinning', true);
     lastEndPin = null;
     window.onmousemove = function(e) {
       var endPin, endpoints;
@@ -124,11 +127,12 @@
           d3.select(wirebuffer.getElementById(endPin)).classed('active', true);
         }
       }
-      return d3.select(view).attr('d', endpointsToPath.apply(null, endpoints)).attr('stroke', endpointsToColor.apply(null, endpoints));
+      view.attr('stroke', 'blue');
+      return view.attr('d', endpointsToPath.apply(null, endpoints)).attr('stroke', endpointsToColor.apply(null, endpoints));
     };
     return window.onmouseup = function(e) {
       var endPin;
-      d3.select(view).classed('repinning', false);
+      view.classed('repinning', false);
       d3.select(wirebuffer).select('.active').classed('active', false);
       window.onmousemove = null;
       window.onmouseup = null;
@@ -169,19 +173,22 @@
   };
 
   redraw = function() {
-    var setWireClasses, wire_views;
+    var setWireClasses, wireTargets, wireViews;
     setWireClasses = function(w) {
       var flag;
       flag = clickWillDeleteWire(w);
       return d3.select(this).classed('delete', flag).select('title').text(flag ? 'Click to delete this wire.' : 'Hold the mouse to drag the wire to another contact.');
     };
-    wire_views = d3.select(wirebuffer).selectAll('.wire').data(wires);
-    wire_views.enter().append('path');
-    wire_views.classed('wire', true).attr('d', wirePath).attr('stroke', wireColor).on('mousedown', clickWire).on('mouseenter', setWireClasses).on('mousemove', setWireClasses).on('mouseeexit', function() {
+    wireViews = d3.select(wirebuffer).selectAll('.wire').data(wires);
+    wireViews.enter().append('path');
+    wireViews.exit().remove();
+    wireViews.classed('wire', true).attr('d', wirePath).attr('stroke', wireColor);
+    wireTargets = d3.select(wirebuffer).selectAll('.wire-target').data(wires);
+    wireTargets.enter().append('path').append('title');
+    wireTargets.exit().remove();
+    return wireTargets.classed('wire-mouse-target', true).attr('d', wirePath).on('mousedown', dragOrDeleteWire).on('mouseenter', setWireClasses).on('mousemove', setWireClasses).on('mouseeexit', function() {
       return d3.select(this).classed('delete', false);
     });
-    wire_views.append('title');
-    return wire_views.exit().remove();
   };
 
   wirePath = function(_arg) {
