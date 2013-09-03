@@ -168,7 +168,7 @@
     };
     $scope.machine_url = function(machine) {
       var url;
-      url = "dlm.html?name=" + (encodeURIComponent($scope.machine_key(machine))) + "&sync=true";
+      url = "machine.html?name=" + (encodeURIComponent($scope.machine_key(machine))) + "&sync=true";
       if (!$scope.machine_editable(machine)) {
         url += '&readonly=true';
       }
@@ -310,7 +310,7 @@
     deleted_wires = wiring_diff(previous_wires_string, wires_string);
     _ref = [1800, 2000], viewport_width = _ref[0], viewport_height = _ref[1];
     canvas_width_breakpoint = 200;
-    background_image_url = 'url(ffmachine.png)';
+    background_image_url = 'url(img/ffmachine.png)';
     _ref1 = [4, 9], module_rows = _ref1[0], module_cols = _ref1[1];
     _ref2 = [200, 450], module_width = _ref2[0], module_height = _ref2[1];
     module_padding = 10;

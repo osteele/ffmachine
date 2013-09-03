@@ -1,65 +1,56 @@
-/////////////////////////
-//
-// Load and Save
-//
-/////////////////////////
+(function() {
+  var filename, getUrlVars, readonly, sync, wiresString;
 
-function loadWires(filename){
-  var request=new XMLHttpRequest()
-  request.onreadystatechange=function(){wiresLoaded(request);}
-  request.open('GET','saved/'+filename+'.txt?timestamp=' + new Date().getTime(),true)
-  request.send(null);
-}
+  filename = null;
 
-function wiresLoaded(request){
-  if (request.readyState!=4) return;
-  if (request.status!=200) return;
-  console.log(request.responseText);
-  var array = request.responseText.split('\r\n');
-  array.pop();
-  for(var i=0;i<array.length;i++) array[i]=array[i].split(' ');
-  wires = array;
-  redraw();
-}
+  readonly = null;
 
-function parseInts(a){
-  for(var i=0;i<a.length;i++) a[i]=parseInt(a[i]);
-}
+  sync = null;
 
-function submit(name){
-  saveWires(name, wiresString());
-}
+  this.setup = function() {
+    var urlvars;
+    urlvars = getUrlVars();
+    filename = urlvars['name'];
+    readonly = urlvars['readonly'];
+    sync = urlvars['sync'];
+    this.setupCanvas();
+    if (filename) {
+      return loadWires(filename);
+    }
+  };
 
-function saveWires(name, str){
-  var request = new XMLHttpRequest();
-  request.onreadystatechange=function(){wiresSaved(request);};
-  request.open('PUT', 'savetext.php?name='+name, true);
-  request.setRequestHeader("Content-Type", 'text/plain');
-  request.send(str);
-}
+  this.wires_changed = function(wires) {
+    if (readonly) {
+      return;
+    }
+    return saveWires(name, wiresString(wires));
+  };
 
+  wiresString = function(wires) {
+    var wire;
+    return ((function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = wires.length; _i < _len; _i++) {
+        wire = wires[_i];
+        _results.push(wire.join(' '));
+      }
+      return _results;
+    })()).join('\r\n');
+  };
 
-function wiresSaved(req, start, len){
-  if (req.readyState!=4) return;
-  if (req.status!=200) return;
-  alert("saved: "+req.responseText);
-}
+  getUrlVars = function() {
+    var hash, k, q, v, vars, _i, _len, _ref, _ref1;
+    vars = [];
+    hash = null;
+    _ref = window.location.search.slice(1).split(/&/);
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      q = _ref[_i];
+      _ref1 = q.split('=', 2), k = _ref1[0], v = _ref1[1];
+      vars.push(k);
+      vars[k] = decodeURIComponent(v);
+    }
+    return vars;
+  };
 
-function wiresString(){
-  var res = '';
-  for(var i in wires) res=res+wires[i].join(' ')+'\r\n';
-  return res;
-}
-
-function getUrlVars()
-{
-  var args = window.location.href.slice(window.location.href.indexOf('?') + 1);
-  var vars = [], hash;
-  var hashes = args.split('&');
-  for(var i = 0; i < hashes.length; i++){
-    hash = hashes[i].split('=');
-    vars.push(hash[0]);
-    vars[hash[0]] = decodeURIComponent(hash[1]);
-  }
-  return vars;
-}
+}).call(this);

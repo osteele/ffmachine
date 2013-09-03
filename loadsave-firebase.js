@@ -43,10 +43,9 @@
       if (wire_strings[wire_strings.length - 1] === '') {
         wire_strings.pop();
       }
-      window.wires = wire_strings.map(function(wire) {
+      this.set_wires(wire_strings.map(function(wire) {
         return wire.split(' ');
-      });
-      redraw();
+      }));
       connectionListRef = machineRef.child('connected');
       connectionListRef.off();
       connectionListRef.on('value', function(snapshot) {
@@ -89,8 +88,10 @@
     }
     if (machine["protected"]) {
       console.error("" + machine.name + " is read-only");
+      return;
     }
-    if (machine["protected"]) {
+    if (!user) {
+      console.error("Not signed in");
       return;
     }
     modified_at = Firebase.ServerValue.TIMESTAMP;
