@@ -61,7 +61,7 @@ add_wire = (wire) ->
   wires_changed wires
 
 deleteWire = (wire) ->
-  wires = (w for w in wires when w.join(' ') != wire.join(' '))
+  wires = (w for w in wires when w != wire)
   redraw()
   wires_changed wires
 
@@ -188,7 +188,9 @@ redraw = ->
     .attr('d', wirePath)
 
   updateEndPinTargets = (className, endIndex) ->
-    startPinTargets = svgSelection.select('.wire-end-targets').selectAll('.' + className).data(w for w in wires when wireLength(w) > 45)
+    startPinTargets = svgSelection.select('.wire-end-targets')
+      .selectAll('.' + className)
+      .data(w for w in wires when wireLength(w) > 45)
     startPinTargets.enter()
       .append('circle')
       .classed(className, true)
