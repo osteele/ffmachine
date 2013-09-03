@@ -48,6 +48,16 @@ holedefs = {
   holepos = holePos(holedefs[type], r[2])
   return [mx * 200 + holepos[0], my * 500 + holepos[1]]
 
+@holePositions = ->
+  holes = []
+  for rows, i in modules
+    for moduleType, j in rows
+      moduleName = 'abcd'.charAt(i) + '_' + j
+      for [x, y, pinName] in (holedefs[moduleType] or [])
+        holes.push {x: j * 200 + x, y: i * 500 + y, name: moduleName + '_' + pinName}
+  return holes
+
+
 findHole = (holes, x, y) ->
   for hole in holes
     return hole if dist(hole, [x,y]) < 12
@@ -55,5 +65,5 @@ findHole = (holes, x, y) ->
 
 holePos = (holes, pin) ->
   for hole in holes
-    return hole if hole[2]==pin
+    return hole if hole[2] == pin
 

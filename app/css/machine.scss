@@ -29,6 +29,20 @@ body {
 }
 
 svg {
+  .hole {
+    &:hover {
+      fill: blue;
+      cursor: cell;
+    }
+
+    &.active {
+      fill: white;
+      stroke: white;
+      stroke-width: 25px;
+      stroke-opacity: 50%;
+    }
+  }
+
   .wire {
     fill: none;
     stroke-width: 4px;

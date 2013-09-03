@@ -21,7 +21,17 @@ knoboffset = null
   wirebuffer = document.getElementById('wirebuffer')
   wirebuffer.width = 1800
   wirebuffer.height = 2000
-  wirebuffer.onmousedown = mouseDown
+  wirebuffer.onmousedown = mouseDownAddWire
+
+  d3.select(wirebuffer)
+    .selectAll('.hole').data(holePositions())
+    .enter().append('circle')
+    .classed('hole', true)
+    .attr('id', (pos) -> pos.name)
+    .attr('cx', (pos) -> pos.x / 2)
+    .attr('cy', (pos) -> pos.y / 2)
+    .attr('r', 3)
+
   redraw()
 
 
@@ -49,10 +59,13 @@ delete_wire = (wire) ->
 # Dragging
 #
 
-mouseDown = (e) ->
+mouseDownAddWire = (e) ->
   e.preventDefault()
   startpin = xyToPinout(localEvent(e)...)
   return unless startpin
+
+  # d3.select(wirebuffer.getElementById(startpin)).classed 'active', true
+  lastEndPin = null
 
   view = d3.select(wirebuffer)
     .append('path')
@@ -62,6 +75,12 @@ mouseDown = (e) ->
 
   window.onmousemove = (e) ->
     endpoints = [pinoutToXy(startpin), localEvent(e)]
+    endpin = xyToPinout(localEvent(e)...)
+    endpin = null if endpin == startpin
+    unless lastEndPin == endpin
+      lastEndPin = endpin
+      d3.select(wirebuffer).select('.active.end').classed('active', false).classed('end', false)
+      d3.select(wirebuffer.getElementById(endpin)).classed('active', true).classed('end', true) if endpin
     view
       .attr('d', endpointsToPath(endpoints...))
       .attr('stroke', endpointsToColor(endpoints...))
@@ -70,10 +89,11 @@ mouseDown = (e) ->
     window.onmousemove = null
     window.onmouseup = null
     view.remove()
+    d3.select(wirebuffer).select('.active').classed('active', false).classed('end', false)
     endpin = xyToPinout(localEvent(e)...)
     add_wire [startpin, endpin] if endpin and endpin != startpin
 
-clickWillDelete = (wire) ->
+clickWillDeleteWire = (wire) ->
   [x, y] = localEvent(d3.event)
   [p1, p2] = wire
   d1 = dist([x,y], pinoutToXy(p1))
@@ -85,22 +105,29 @@ clickWire = (wire) ->
   [p1, p2] = wire
   d1 = dist([x,y], pinoutToXy(p1))
   d2 = dist([x,y], pinoutToXy(p2))
-  if clickWillDelete(wire)
+  if clickWillDeleteWire(wire)
     delete_wire wire
     return
   pinIndex = (if d1 < d2 then 0 else 1)
   view = this
   d3.select(view).classed 'repinning', true
+  lastEndPin = null
 
   window.onmousemove = (e) ->
     endpoints = [pinoutToXy(p1), pinoutToXy(p2)]
     endpoints[pinIndex] = localEvent(e)
+    endPin = xyToPinout(localEvent(e)...)
+    unless lastEndPin == endPin
+      lastEndPin = endPin
+      d3.select(wirebuffer).select('.active').classed('active', false)
+      d3.select(wirebuffer.getElementById(endPin)).classed('active', true) if endPin
     d3.select(view)
       .attr('d', endpointsToPath(endpoints...))
       .attr('stroke', endpointsToColor(endpoints...))
 
   window.onmouseup = (e) ->
     d3.select(view).classed 'repinning', false
+    d3.select(wirebuffer).select('.active').classed('active', false)
     window.onmousemove = null
     window.onmouseup = null
     endPin = xyToPinout(localEvent(e)...)
@@ -134,8 +161,8 @@ releaseKnob = ->
 #
 
 redraw = ->
-  setClasses = (w) ->
-    d3.select(this).classed 'delete', clickWillDelete(w)
+  setWireClasses = (w) ->
+    d3.select(this).classed 'delete', clickWillDeleteWire(w)
 
   wire_views = d3.select(wirebuffer)
     .selectAll('.wire')
@@ -144,13 +171,13 @@ redraw = ->
   wire_views.enter().append('path')
 
   wire_views
-      .classed('wire', true)
-      .attr('d', wirePath)
-      .attr('stroke', wireColor)
-      .on('mousedown', clickWire)
-      .on('mouseenter', setClasses)
-      .on('mousemove', setClasses)
-      .on('mouseeexit', -> d3.select(this).classed 'delete', false)
+    .classed('wire', true)
+    .attr('d', wirePath)
+    .attr('stroke', wireColor)
+    .on('mousedown', clickWire)
+    .on('mouseenter', setWireClasses)
+    .on('mousemove', setWireClasses)
+    .on('mouseeexit', -> d3.select(this).classed 'delete', false)
 
   wire_views.exit().remove()
 
