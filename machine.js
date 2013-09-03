@@ -14,14 +14,13 @@
     wirebuffer = document.getElementById('wirebuffer');
     wirebuffer.width = 1800;
     wirebuffer.height = 2000;
-    wirebuffer.onmousedown = mouseDownAddWire;
     d3.select(wirebuffer).selectAll('.hole').data(holePositions()).enter().append('circle').classed('hole', true).attr('id', function(pos) {
       return pos.name;
     }).attr('cx', function(pos) {
       return pos.x / 2;
     }).attr('cy', function(pos) {
       return pos.y / 2;
-    }).attr('r', 3);
+    }).attr('r', 3).on('mousedown', mouseDownAddWire).append('title').text('Drag to another contact to create a wire.');
     return redraw();
   };
 
@@ -53,10 +52,9 @@
     return wires_changed(wires);
   };
 
-  mouseDownAddWire = function(e) {
+  mouseDownAddWire = function() {
     var lastEndPin, startpin, view;
-    e.preventDefault();
-    startpin = xyToPinout.apply(null, localEvent(e));
+    startpin = xyToPinout.apply(null, localEvent(d3.event));
     if (!startpin) {
       return;
     }
@@ -173,13 +171,16 @@
   redraw = function() {
     var setWireClasses, wire_views;
     setWireClasses = function(w) {
-      return d3.select(this).classed('delete', clickWillDeleteWire(w));
+      var flag;
+      flag = clickWillDeleteWire(w);
+      return d3.select(this).classed('delete', flag).select('title').text(flag ? 'Click to delete this wire.' : 'Hold the mouse to drag the wire to another contact.');
     };
     wire_views = d3.select(wirebuffer).selectAll('.wire').data(wires);
     wire_views.enter().append('path');
     wire_views.classed('wire', true).attr('d', wirePath).attr('stroke', wireColor).on('mousedown', clickWire).on('mouseenter', setWireClasses).on('mousemove', setWireClasses).on('mouseeexit', function() {
       return d3.select(this).classed('delete', false);
     });
+    wire_views.append('title');
     return wire_views.exit().remove();
   };
 
