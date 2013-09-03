@@ -32,7 +32,7 @@ knoboffset = null
     .attr('r', 3)
     .on('mousedown', mouseDownAddWire)
     .append('title')
-      .text('Drag to another contact to create a wire.')
+      .text((pos) -> "Drag #{pos.name} to another pin to create a wire.")
 
   redraw()
 
