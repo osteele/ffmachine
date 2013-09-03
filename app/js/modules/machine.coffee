@@ -13,7 +13,7 @@ knobs = [
 # Globals
 #
 
-wirebuffer = null
+svgSelection = null
 wires = []
 knoboffset = null
 
@@ -22,7 +22,9 @@ knoboffset = null
   wirebuffer.width = 1800
   wirebuffer.height = 2000
 
-  d3.select(wirebuffer)
+  svgSelection = d3.select(wirebuffer)
+
+  svgSelection
     .selectAll('.hole').data(holePositions())
     .enter().append('circle')
     .classed('hole', true)
@@ -33,6 +35,10 @@ knoboffset = null
     .on('mousedown', mouseDownAddWire)
     .append('title')
       .text((pos) -> "Drag #{pos.name} to another pin to create a wire.")
+
+  svgSelection.append('g').classed('wires', true)
+  svgSelection.append('g').classed('deletion-targets', true)
+  svgSelection.append('g').classed('wire-end-targets', true)
 
   redraw()
 
@@ -54,7 +60,7 @@ add_wire = (wire) ->
   redraw()
   wires_changed wires
 
-delete_wire = (wire) ->
+deleteWire = (wire) ->
   wires = (w for w in wires when w.join(' ') != wire.join(' '))
   redraw()
   wires_changed wires
@@ -71,7 +77,7 @@ mouseDownAddWire = ->
   # d3.select(wirebuffer.getElementById(startpin)).classed 'active', true
   lastEndPin = null
 
-  view = d3.select(wirebuffer)
+  view = svgSelection
     .append('path')
     .classed('wire', true)
     .classed('dragging', true)
@@ -83,7 +89,7 @@ mouseDownAddWire = ->
     endpin = null if endpin == startpin
     unless lastEndPin == endpin
       lastEndPin = endpin
-      d3.select(wirebuffer).select('.active.end').classed('active', false).classed('end', false)
+      svgSelection.select('.active.end').classed('active', false).classed('end', false)
       d3.select(wirebuffer.getElementById(endpin)).classed('active', true).classed('end', true) if endpin
     view
       .attr('d', endpointsToPath(endpoints...))
@@ -93,29 +99,25 @@ mouseDownAddWire = ->
     window.onmousemove = null
     window.onmouseup = null
     view.remove()
-    d3.select(wirebuffer).select('.active').classed('active', false).classed('end', false)
+    svgSelection.select('.active').classed('active', false).classed('end', false)
     endpin = xyToPinout(localEvent(e)...)
     add_wire [startpin, endpin] if endpin and endpin != startpin
 
-clickWillDeleteWire = (wire) ->
+closestEndIndex = (wire) ->
   [x, y] = localEvent(d3.event)
   [p1, p2] = wire
   d1 = dist([x,y], pinoutToXy(p1))
   d2 = dist([x,y], pinoutToXy(p2))
-  return Math.min(d1, d2) > 20 or 45 > dist(pinoutToXy(p1), pinoutToXy(p2))
+  (if d1 < d2 then 0 else 1)
 
-dragOrDeleteWire = (wire) ->
-  [x, y] = localEvent(d3.event)
+wireView = (wire) ->
+  svgSelection.selectAll('.wire').filter((d) -> d == wire)
+
+dragWireEnd = (wire) ->
+  view = wireView(wire)
+  view.transition().delay(0)
   [p1, p2] = wire
-  d1 = dist([x,y], pinoutToXy(p1))
-  d2 = dist([x,y], pinoutToXy(p2))
-  if clickWillDeleteWire(wire)
-    delete_wire wire
-    return
-  pinIndex = (if d1 < d2 then 0 else 1)
-
-  view = d3.select(wirebuffer).selectAll('.wire').filter((d) -> d == wire)
-  view.classed 'repinning', true
+  pinIndex = closestEndIndex(wire)
   lastEndPin = null
 
   window.onmousemove = (e) ->
@@ -124,7 +126,7 @@ dragOrDeleteWire = (wire) ->
     endPin = xyToPinout(localEvent(e)...)
     unless lastEndPin == endPin
       lastEndPin = endPin
-      d3.select(wirebuffer).select('.active').classed('active', false)
+      svgSelection.select('.active').classed('active', false)
       d3.select(wirebuffer.getElementById(endPin)).classed('active', true) if endPin
     view.attr 'stroke', 'blue'
     view
@@ -133,7 +135,7 @@ dragOrDeleteWire = (wire) ->
 
   window.onmouseup = (e) ->
     view.classed 'repinning', false
-    d3.select(wirebuffer).select('.active').classed('active', false)
+    svgSelection.select('.active').classed('active', false)
     window.onmousemove = null
     window.onmouseup = null
     endPin = xyToPinout(localEvent(e)...)
@@ -168,35 +170,56 @@ releaseKnob = ->
 
 redraw = ->
   setWireClasses = (w) ->
-    flag = clickWillDeleteWire(w)
-    d3.select(this)
-      .classed('delete', flag)
-      .select('title')
-        .text(if flag then 'Click to delete this wire.' else 'Hold the mouse to drag the wire to another contact.')
-
-  wireViews = d3.select(wirebuffer).selectAll('.wire').data(wires)
-  wireViews.enter().append('path')
+  wireViews = svgSelection.select('.wires').selectAll('.wire').data(wires)
+  wireViews.enter().append('path').classed('wire', true)
   wireViews.exit().remove()
   wireViews
-    .classed('wire', true)
     .attr('d', wirePath)
     .attr('stroke', wireColor)
 
-  wireTargets = d3.select(wirebuffer).selectAll('.wire-target').data(wires)
-  wireTargets.enter().append('path').append('title')
+  wireTargets = svgSelection.select('.deletion-targets').selectAll('.wire-target').data(wires)
+  wireTargets.enter()
+    .append('path')
+    .classed('wire-mouse-target', true)
+    .on('mousedown', deleteWire)
+    .append('title').text('Click to delete this wire.')
   wireTargets.exit().remove()
   wireTargets
-    .classed('wire-mouse-target', true)
     .attr('d', wirePath)
-    .on('mousedown', dragOrDeleteWire)
-    .on('mouseenter', setWireClasses)
-    .on('mousemove', setWireClasses)
-    .on('mouseeexit', -> d3.select(this).classed 'delete', false)
+
+  updateEndPinTargets = (className, endIndex) ->
+    startPinTargets = svgSelection.select('.wire-end-targets').selectAll('.' + className).data(w for w in wires when wireLength(w) > 45)
+    startPinTargets.enter()
+      .append('circle')
+      .classed(className, true)
+      .attr('r', 10)
+      .on('mousedown', dragWireEnd)
+      # .on('mouseover', (wire) ->
+      #   targetView = wireView(wire)
+      #   endpoints = wireEndpoints(wire)
+      #   endpoints[closestEndIndex(wire)][1] += 10
+      #   targetView.transition().delay(0).attr('d', endpointsToPath(endpoints...))
+      #   )
+      # .on('mouseout', (wire) -> wireView(wire).transition().delay(0).attr('d', wirePath(wire)) )
+      .append('title').text('Click to drag the wire end to another pin.')
+    startPinTargets.exit().remove()
+    startPinTargets
+      .attr('cx', (wire) -> pinoutToXy(wire[endIndex])[0] / 2)
+      .attr('cy', (wire) -> pinoutToXy(wire[endIndex])[1] / 2)
+
+  updateEndPinTargets 'wire-start-target', 0
+  updateEndPinTargets 'wire-end-target', 1
 
   # drawKnobs()
 
-wirePath = ([p1, p2]) ->
-  endpointsToPath(pinoutToXy(p1), pinoutToXy(p2))
+wireEndpoints = ([p1, p2]) ->
+  [pinoutToXy(p1), pinoutToXy(p2)]
+
+wireLength = (wire) ->
+  dist(wireEndpoints(wire)...)
+
+wirePath = (wire) ->
+  endpointsToPath(wireEndpoints(wire)...)
 
 endpointsToPath = ([x1, y1], [x2, y2]) ->
   x1 /= 2
@@ -212,7 +235,7 @@ endpointsToPath = ([x1, y1], [x2, y2]) ->
   ['M', x1, y1, 'Q', x1 + dx, y1 + dy, mx, my, 'T', x2, y2].join(' ')
 
 wireColor = ([p1, p2], n) ->
-  endpointsToColor(pinoutToXy(p1), pinoutToXy(p2))
+  endpointsToColor(pinoutToXy(p1), pinoutToXy(p2), n)
 
 endpointsToColor = ([x1, y1], [x2, y2], n) ->
   n or= wires.length
