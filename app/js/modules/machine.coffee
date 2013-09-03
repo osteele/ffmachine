@@ -45,6 +45,9 @@ knoboffset = null
 @set_wires = (wires_) ->
   wires = wires_
   redraw()
+  # prevent clicks until the machine is loaded
+  # so we don't overwrite the stored data
+  document.getElementById('loading').style.display = 'none'
 
 add_wire = (wire) ->
   wires.push wire

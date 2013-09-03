@@ -1,4 +1,4 @@
-modules = [
+moduleTypes = [
   ['clk1', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'clk2'],
   ['ff', 'ff', 'ff', 'ff', 'ff', 'dg', 'ff', 'ff', 'ff'],
   ['ff', 'ff', 'ff', 'ff', 'ff', 'pa', 'ff', 'ff', 'ff'],
@@ -24,46 +24,52 @@ holedefs = {
     [40, 360, 'gnd2']]
 }
 
+moduleWidth = 200
+moduleHeight = 500
+
+findHoleTolerance = 12
+
 
 #
 # Holes
 #
 
 @xyToPinout = (x, y) ->
-  mx = Math.floor(x / 200)
-  my = Math.floor(y / 500)
-  return undefined if mx < 0 or my < 0 or mx > 9 or my > 4
-  ix = x % 200
-  iy = y % 500
-  type = modules[my][mx]
-  hole = findHole(holedefs[type], ix, iy)
+  row = Math.floor(y / moduleHeight)
+  col = Math.floor(x / moduleWidth)
+  return undefined unless 0 <= col < 9 and 0 <= row < 4
+  moduleType = moduleTypes[row][col]
+  hole = findHole(holedefs[moduleType], x % moduleWidth, y % moduleHeight)
   return undefined unless hole
-  return ['a','b','c','d'][my] + '_' + mx + '_' + hole[2]
+  return modulePinName(row, col, hole[2])
 
 @pinoutToXy = (p) ->
-  r = p.split('_')
-  mx = r[1]
-  my = {a:0, b:1, c:2, d:3}[r[0]]
-  type = modules[my][mx]
-  holepos = holePos(holedefs[type], r[2])
-  return [mx * 200 + holepos[0], my * 500 + holepos[1]]
+  [rowName, col, pinName] = p.split('_')
+  row = rowName.charCodeAt(0) - 97
+  moduleType = moduleTypes[row][col]
+  [x, y] = holePos(holedefs[moduleType], pinName)
+  return [col * moduleWidth + x, row * moduleHeight + y]
 
 @holePositions = ->
   holes = []
-  for rows, i in modules
-    for moduleType, j in rows
-      moduleName = 'abcd'.charAt(i) + '_' + j
+  for rowModuleTypes, row in moduleTypes
+    for moduleType, col in rowModuleTypes
       for [x, y, pinName] in (holedefs[moduleType] or [])
-        holes.push {x: j * 200 + x, y: i * 500 + y, name: moduleName + '_' + pinName}
+        holes.push {x: col * moduleWidth + x, y: row * moduleHeight + y, name: modulePinName(row, col, pinName)}
   return holes
 
+moduleName = (row, col) ->
+  [String.fromCharCode(97 + row), col].join('_')
+
+modulePinName = (row, col, pinName) ->
+  [moduleName(row, col), pinName].join('_')
 
 findHole = (holes, x, y) ->
   for hole in holes
-    return hole if dist(hole, [x,y]) < 12
+    return hole if dist(hole, [x,y]) < findHoleTolerance
   return undefined
 
-holePos = (holes, pin) ->
+holePos = (holes, pinName) ->
   for hole in holes
-    return hole if hole[2] == pin
+    return hole if hole[2] == pinName
 
