@@ -14,9 +14,8 @@ knobs = [
 #
 
 wirebuffer = null
-ffholes = null
 wires = []
-moved = startpin = knoboffset = null
+knoboffset = null
 
 @setupCanvas = () ->
   wirebuffer = document.getElementById('wirebuffer')
@@ -53,14 +52,26 @@ delete_wire = (wire) ->
 mouseDown = (e) ->
   e.preventDefault()
   startpin = xyToPinout(localEvent(e)...)
-  if startpin
-    d3.select(wirebuffer)
-      .append('path')
-      .classed('wire', true)
-      .classed('dragging', true)
-      .attr('stroke', 'red')
-    window.onmousemove = newWireMouseMove
-    window.onmouseup = newWireMouseUp
+  return unless startpin
+
+  view = d3.select(wirebuffer)
+    .append('path')
+    .classed('wire', true)
+    .classed('dragging', true)
+    .attr('stroke', 'red')
+
+  window.onmousemove = (e) ->
+    endpoints = [pinoutToXy(startpin), localEvent(e)]
+    view
+      .attr('d', endpointsToPath(endpoints...))
+      .attr('stroke', endpointsToColor(endpoints...))
+
+  window.onmouseup = (e) ->
+    window.onmousemove = null
+    window.onmouseup = null
+    view.remove()
+    endpin = xyToPinout(localEvent(e)...)
+    add_wire [startpin, endpin] if endpin and endpin != startpin
 
 clickWillDelete = (wire) ->
   [x, y] = localEvent(d3.event)
@@ -100,19 +111,6 @@ clickWire = (wire) ->
     else
       redraw()
 
-newWireMouseMove = (e) ->
-  endpoints = [pinoutToXy(startpin), localEvent(e)]
-  d3.select(wirebuffer).select('.dragging')
-    .attr('d', endpointsToPath(endpoints...))
-    .attr('stroke', endpointsToColor(endpoints...))
-
-newWireMouseUp = (e) ->
-  window.onmousemove = null
-  window.onmouseup = null
-  d3.select(wirebuffer).select('.dragging').remove()
-  endpin = xyToPinout(localEvent(e)...)
-  add_wire [startpin, endpin] if endpin and endpin != startpin
-
 dragKnob = (e) ->
   knob = knobs[starty]
   a = knobAngle(knob, localEvent(e)...)
@@ -136,18 +134,16 @@ releaseKnob = ->
 #
 
 redraw = ->
-  wire_views = d3.select(wirebuffer)
-    .selectAll('.wire')
-    .remove()
+  setClasses = (w) ->
+    d3.select(this).classed 'delete', clickWillDelete(w)
 
   wire_views = d3.select(wirebuffer)
     .selectAll('.wire')
     .data(wires)
 
-  setClasses = (w) ->
-    d3.select(this).classed 'delete', clickWillDelete(w)
-
   wire_views.enter().append('path')
+
+  wire_views
       .classed('wire', true)
       .attr('d', wirePath)
       .attr('stroke', wireColor)
@@ -156,7 +152,7 @@ redraw = ->
       .on('mousemove', setClasses)
       .on('mouseeexit', -> d3.select(this).classed 'delete', false)
 
-  # wire_views.exit().remove()
+  wire_views.exit().remove()
 
   # drawKnobs()
 
