@@ -77,12 +77,7 @@ findHoleTolerance = 12
   return [col * moduleWidth + x, row * moduleHeight + y]
 
 @holePositions = ->
-  holes = []
-  for rowModuleTypes, row in moduleTypes
-    for moduleType, col in rowModuleTypes
-      for [x, y, pinName] in holedefs[moduleType]
-        holes.push {x: col * moduleWidth + x, y: row * moduleHeight + y, name: modulePinName(row, col, pinName)}
-  return holes
+  pins
 
 moduleName = (row, col) ->
   [String.fromCharCode(97 + row), col].join('_')

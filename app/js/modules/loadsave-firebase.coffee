@@ -24,7 +24,9 @@ auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
     wiring_string = snapshot.val().wiring.replace(/\\n/g, "\n")
     wire_strings = wiring_string.split(/\n/)
     wire_strings.pop() if wire_strings[wire_strings.length - 1] == ''
-    @set_wires wire_strings.map (wire) -> wire.split ' '
+    wires = wire_strings.map((wire) -> wire.split ' ')
+    readonly = !user or machine.creator.id != user.id
+    @setModel wires, readonly
 
     connectionListRef = machineRef.child('connected')
     connectionListRef.off()

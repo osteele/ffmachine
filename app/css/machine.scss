@@ -34,6 +34,10 @@ body {
 }
 
 svg {
+  &.readonly {
+    .pin-targets, .deletion-targets, .wire-end-targets { display: none; }
+  }
+
   .hole {
     &:hover {
       fill: blue;

@@ -25,6 +25,8 @@ knoboffset = null
   svgSelection = d3.select(wirebuffer)
 
   svgSelection
+    .append('g')
+    .classed('pin-targets', true)
     .selectAll('.hole').data(holePositions())
     .enter().append('circle')
     .classed('hole', true)
@@ -48,8 +50,9 @@ knoboffset = null
 #
 
 # The storage interface calls this
-@set_wires = (wires_) ->
+@setModel = (wires_, readonly) ->
   wires = wires_
+  svgSelection.classed 'readonly', readonly
   redraw()
   # prevent clicks until the machine is loaded
   # so we don't overwrite the stored data
