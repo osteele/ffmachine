@@ -45,8 +45,12 @@ auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
 @saveWires = (name, wiring) ->
   wiring = wiring.replace /\r\n/g, "\n"
   return if machine.wiring == wiring
-  console.error "#{machine.name} is read-only" if machine.protected
-  return if machine.protected
+  if machine.protected
+    console.error "#{machine.name} is read-only"
+    return
+  unless user
+    console.error "Not signed in"
+    return
   modified_at = Firebase.ServerValue.TIMESTAMP
   previous_wiring = machine.wiring
   machineRef.child('wiring').set wiring

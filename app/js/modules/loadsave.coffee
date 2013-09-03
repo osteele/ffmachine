@@ -7,7 +7,7 @@ sync = null
   filename = urlvars['name']
   readonly = urlvars['readonly']
   sync = urlvars['sync']
-  @setup_canvas()
+  @setupCanvas()
   loadWires filename if filename
 
 @wires_changed = (wires) ->

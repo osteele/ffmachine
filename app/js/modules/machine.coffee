@@ -1,7 +1,7 @@
-wirebuffer = ctx = null
-ffholes = null
-wires = []
-moved = startpin = knoboffset = null
+#
+# Constants
+#
+
 knobs = [
   [100, 252, 288, '#f0f0f0']
   [100, 382, 0, '#f0f0f0']
@@ -9,41 +9,60 @@ knobs = [
   [1700, 382, 0, '#202020']
 ]
 
+#
+# Globals
+#
 
-@setup_canvas = () ->
+wirebuffer = null
+ffholes = null
+wires = []
+moved = startpin = knoboffset = null
+
+@setupCanvas = () ->
   wirebuffer = document.getElementById('wirebuffer')
   wirebuffer.width = 1800
   wirebuffer.height = 2000
-  ctx = wirebuffer.getContext('2d')
-  ctx.lineCap = 'round'
-  wirebuffer.onmousedown = (e) -> mouseDown(e)
-  window.onmouseup = (e) -> mouseUp(e)
-  window.onkeypress = (e) -> handleKey(e)
+  wirebuffer.onmousedown = mouseDown
   redraw()
 
+
+#
+# Model
+#
+
+# The storage interface calls this
 @set_wires = (wires_) ->
   wires = wires_
   redraw()
 
+add_wire = (wire) ->
+  wires.push wire
+  redraw()
+  wires_changed wires
+
+delete_wire = (wire) ->
+  wires = (w for w in wires when w.join(' ') != wire.join(' '))
+  redraw()
+  wires_changed wires
+
+
 #
-# User Interface
+# Mouse
 #
 
 mouseDown = (e) ->
   e.preventDefault()
-  moved = false
-  startx = -1
-  starty = -1
-  x = localx(e.clientX)
-  y = localy(e.clientY)
-  startpin = xyToPinout(x,y)
+  startpin = xyToPinout(localEvent(e)...)
   if startpin
-    window.onmousemove = (e) -> mouseMove(e)
-  else
-    wn = bufferPixel(x,y)
-    pickUpWire(wn, x, y) if wn != 0
+    d3.select(wirebuffer)
+      .append('path')
+      .classed('wire', true)
+      .classed('dragging', true)
+      .attr('stroke', 'red')
+    window.onmousemove = newWireMouseMove
+    window.onmouseup = newWireMouseUp
 
-pickUpWire = (wn, x, y) ->
+clickWire = (wn, x, y) ->
   w = wires[wn - 1]
   wires.splice(wn - 1,1)
   d1 = dist([x,y], pinoutToXy(w[0]))
@@ -52,36 +71,30 @@ pickUpWire = (wn, x, y) ->
   redraw()
   wires_changed wires
   drawLine pinoutToXy(startpin), [x, y], 0
-  window.onmousemove = (e) -> mouseMove(e)
+  window.onmousemove = mouseMove
 
-mouseMove = (e) ->
+newWireMouseMove = (e) ->
   moved = true
-  redraw()
-  wires_changed wires
-  drawLine pinoutToXy(startpin), [localx(e.clientX), localy(e.clientY)], 0
+  endpoints = [pinoutToXy(startpin), localEvent(e)]
+  d3.select(wirebuffer).select('.dragging')
+    .attr('d', endpoints_to_path(endpoints...))
+    .attr('stroke', endpoints_to_color(endpoints...))
 
 dragKnob = (e) ->
   knob = knobs[starty]
-  a = knobAngle(knob, localx(e.clientX), localy(e.clientY))
-  if !moved
-    moved = true
-    knoboffset = mod360(knob[2]-a)
-  knob[2] = mod360(a+knoboffset)
+  a = knobAngle(knob, localEvent(e)...)
+  knoboffset = mod360(knob[2] - a) unless moved
+  moved = true
+  knob[2] = mod360(a + knoboffset)
   redraw()
   wires_changed wires
 
-mouseUp = (e) ->
-  window.onmousemove = undefined
-  # if(!moved){mouseClicked(e); return;}
-  moved = false
-  x = localx(e.clientX)
-  y = localy(e.clientY)
-  endpin = xyToPinout(x,y)
-  if endpin and endpin != startpin
-    wires.push [startpin, endpin]
-  startpin = undefined
-  redraw()
-  wires_changed wires
+newWireMouseUp = (e) ->
+  window.onmousemove = null
+  window.onmouseup = null
+  d3.select(wirebuffer).select('.dragging').remove()
+  endpin = xyToPinout(localEvent(e)...)
+  add_wire [startpin, endpin] if endpin and endpin != startpin
 
 releaseKnob = ->
   knob = knobs[starty]
@@ -92,50 +105,56 @@ releaseKnob = ->
   redraw()
   wires_changed wires
 
-mouseClicked = (e) ->
-
-handleKey = (e) ->
-  c = e.charCode
-  c = String.fromCharCode(c)
-  console.log(c)
-
 
 #
 # Drawing
 #
 
 redraw = ->
-  ctx.clearRect 0, 0, 1800, 2000
+  wire_views = d3.select(wirebuffer)
+    .selectAll('.wire')
+    .remove()
+
+  wire_views = d3.select(wirebuffer)
+    .selectAll('.wire')
+    .data(wires)
+
+  wire_views.enter().append('path')
+      .classed('wire', true)
+      .attr('d', wire_path)
+      .attr('stroke', wire_color)
+      .on('click', delete_wire)
+
+  # wire_views.exit().remove()
+
   # drawKnobs()
-  drawWireBetweenPins wire[0], wire[1], i + 1 for wire, i in wires
 
-drawWireBetweenPins = (p1, p2, n) ->
-  drawLine pinoutToXy(p1), pinoutToXy(p2), n
+wire_path = ([p1, p2]) ->
+  [x1, y1] = pinoutToXy(p1)
+  [x2, y2] = pinoutToXy(p2)
+  endpoints_to_path([x1, y1], [x2, y2])
 
-drawLine = (p1, p2, n) ->
-  [x1, y1] = p1
-  [x2, y2] = p2
-  ctx.lineWidth =  12
-  ctx.strokeStyle = cmerge('#808080', n)
-  curveLine x1, y1, x2, y2
-  ctx.lineWidth =  8
-  ctx.strokeStyle = cmerge(pickColor(x1, y1, x2, y2), n)
-  curveLine x1, y1, x2, y2
-
-curveLine = (x1, y1, x2, y2) ->
-  mx = x1 + (x2 - x1) / 2
-  my = y1 + (y2 - y1) / 2
+endpoints_to_path = ([x1, y1], [x2, y2]) ->
+  x1 /= 2
+  y1 /= 2
+  x2 /= 2
+  y2 /= 2
+  mx = (x1 + x2) / 2
+  my = (y1 + y2) / 2
   dx = (x2 - x1) / 5
   dy = 0
-  dx += 10 * (if dx < 0 then -1 else 1)
-  [dx, dy] = [0, 10] if y1 == y2
-  ctx.beginPath()
-  ctx.moveTo x1, y1
-  ctx.quadraticCurveTo x1 + dx, y1 + dy, mx, my
-  ctx.moveTo x2, y2
-  ctx.quadraticCurveTo x2 - dx, y2 - dy, mx, my
-  ctx.moveTo x1, y1
-  ctx.stroke()
+  dx += 5 * (if dx < 0 then -1 else 1)
+  [dx, dy] = [0, 5] if Math.abs(y1 - y2) < 10
+  ['M', x1, y1, 'Q', x1 + dx, y1 + dy, mx, my, 'T', x2, y2].join(' ')
+
+wire_color = ([p1, p2], n) ->
+  [x1, y1] = pinoutToXy(p1)
+  [x2, y2] = pinoutToXy(p2)
+  endpoints_to_color([x1, y1], [x2, y2])
+
+endpoints_to_color = ([x1, y1], [x2, y2], n) ->
+  n or= wires.length
+  cmerge(pickColor(x1, y1, x2, y2), n)
 
 drawKnobs = ->
   drawKnob k[0], k[1], k[2], k[3] for k in knobs
@@ -170,7 +189,7 @@ pickColor = (x1, y1, x2, y2) ->
   colors[i] ? '#d02090'
 
 findNearest = (n, ls) ->
-  diff = 1000000
+  diff = Infinity
   res = null
   for l in ls
     d = Math.abs(n - l)
@@ -185,11 +204,6 @@ mod360 = (n) ->
   n -= 360 if n > 180
   return n
 
-bufferPixel = (x, y) ->
-  [r, g, b, a] = ctx.getImageData(x, y, 2, 2).data
-  return 0 unless a == 255
-  return ((r & 15) << 8) + ((g & 15) << 4) + (b & 15)
-
 @dist = (a, b) ->
   dx = b[0] - a[0]
   dy = b[1] - a[1]
@@ -198,7 +212,9 @@ bufferPixel = (x, y) ->
 cos = (n) -> Math.cos(n * Math.PI / 180)
 sin = (n) -> Math.sin(n * Math.PI / 180)
 arctan2 = (x, y) -> Math.atan2(x, y) * 180 / Math.PI
-hexd = (n) -> '0123456789abcdef'[n]
+hexd = do (hexdigits='0123456789abcdef') ->
+  (n) -> hexdigits[n]
 
 localx = (gx) -> (gx - wirebuffer.getBoundingClientRect().left) * 1800 / 900
 localy = (gy) -> (gy - wirebuffer.getBoundingClientRect().top) * 2000 / 1000
+localEvent = (e) -> [localx(e.clientX), localy(e.clientY)]

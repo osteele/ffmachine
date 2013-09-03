@@ -8,6 +8,7 @@ html(lang="en")
 
     script(type='text/javascript', src='https://cdn.firebase.com/v0/firebase.js')
     script(type='text/javascript', src="https://cdn.firebase.com/v0/firebase-simple-login.js")
+    script(src='//cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js')
     script(type="text/javascript", src="machine.js")
     script(type="text/javascript", src="modules.js")
     script(type="text/javascript", src="loadsave.js")
@@ -19,7 +20,12 @@ html(lang="en")
     #frame.frame
       .ffmachine
         img(src="img/ffmachine.png", width=900, height=1000)
-        canvas#wirebuffer
+        svg#wirebuffer
+          defs
+            filter#drop-shadow
+              feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="2")
+              feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
+              feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
 
     #connected-users
       h2 Current Viewers

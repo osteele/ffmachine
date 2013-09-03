@@ -19,12 +19,25 @@ body {
   height: 1000px;
   overflow: hidden;
 
-  canvas {
+  svg {
     position: absolute;
     width: 900px;
     height: 1000px;
     top: 0px;
     left: 0px;
+  }
+}
+
+svg {
+  .wire {
+    fill: none;
+    stroke-width: 4px;
+    stroke-linecap: round;
+    filter: url(#drop-shadow);
+
+    &.dragging {
+      // filter: none;
+    }
   }
 }
 
