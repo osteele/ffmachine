@@ -50,6 +50,11 @@ svg {
     filter: url(#drop-shadow);
     cursor: move;
 
+    &:hover {
+      // stroke: url(#grad1);
+      // filter: url(#drop-shadow-2);
+    }
+
     &.dragging {
       // filter: none;
     }

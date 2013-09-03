@@ -21,7 +21,6 @@ knoboffset = null
   wirebuffer = document.getElementById('wirebuffer')
   wirebuffer.width = 1800
   wirebuffer.height = 2000
-  wirebuffer.onmousedown = mouseDownAddWire
 
   d3.select(wirebuffer)
     .selectAll('.hole').data(holePositions())
@@ -31,6 +30,9 @@ knoboffset = null
     .attr('cx', (pos) -> pos.x / 2)
     .attr('cy', (pos) -> pos.y / 2)
     .attr('r', 3)
+    .on('mousedown', mouseDownAddWire)
+    .append('title')
+      .text('Drag to another contact to create a wire.')
 
   redraw()
 
@@ -59,9 +61,8 @@ delete_wire = (wire) ->
 # Dragging
 #
 
-mouseDownAddWire = (e) ->
-  e.preventDefault()
-  startpin = xyToPinout(localEvent(e)...)
+mouseDownAddWire = ->
+  startpin = xyToPinout(localEvent(d3.event)...)
   return unless startpin
 
   # d3.select(wirebuffer.getElementById(startpin)).classed 'active', true
@@ -162,7 +163,11 @@ releaseKnob = ->
 
 redraw = ->
   setWireClasses = (w) ->
-    d3.select(this).classed 'delete', clickWillDeleteWire(w)
+    flag = clickWillDeleteWire(w)
+    d3.select(this)
+      .classed('delete', flag)
+      .select('title')
+        .text(if flag then 'Click to delete this wire.' else 'Hold the mouse to drag the wire to another contact.')
 
   wire_views = d3.select(wirebuffer)
     .selectAll('.wire')
@@ -178,6 +183,8 @@ redraw = ->
     .on('mouseenter', setWireClasses)
     .on('mousemove', setWireClasses)
     .on('mouseeexit', -> d3.select(this).classed 'delete', false)
+
+  wire_views.append('title')
 
   wire_views.exit().remove()
 
