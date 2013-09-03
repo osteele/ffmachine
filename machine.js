@@ -20,7 +20,9 @@
       return pos.x / 2;
     }).attr('cy', function(pos) {
       return pos.y / 2;
-    }).attr('r', 3).on('mousedown', mouseDownAddWire).append('title').text('Drag to another contact to create a wire.');
+    }).attr('r', 3).on('mousedown', mouseDownAddWire).append('title').text(function(pos) {
+      return "Drag " + pos.name + " to another pin to create a wire.";
+    });
     return redraw();
   };
 

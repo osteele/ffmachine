@@ -7,7 +7,8 @@
     ff: [[100, 166, 'p'], [66, 190, '0'], [134, 190, '1'], [66, 252, '0in'], [134, 252, '1in'], [100, 266, 'comp'], [66, 290, 'e0'], [66, 336, 'c0'], [40, 314, 'b0'], [134, 290, 'e1'], [134, 336, 'c1'], [160, 314, 'b1'], [66, 372, 'gnd1'], [100, 372, 'gnd2'], [134, 372, 'gnd3']],
     clk1: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
     clk2: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
-    pa: [[160, 90, '-0'], [160, 136, '+0'], [66, 113, 'in0'], [160, 167, 'gnd0'], [160, 240, '-1'], [160, 286, '+1'], [66, 263, 'in1'], [160, 317, 'gnd1'], [66, 143, 'c0'], [66, 189, 'e0'], [40, 167, 'b0'], [66, 293, 'c1'], [66, 339, 'e1'], [40, 317, 'b1'], [40, 360, 'gnd2']]
+    pa: [[160, 90, '-0'], [160, 136, '+0'], [66, 113, 'in0'], [160, 167, 'gnd0'], [160, 240, '-1'], [160, 286, '+1'], [66, 263, 'in1'], [160, 317, 'gnd1'], [66, 143, 'c0'], [66, 189, 'e0'], [40, 167, 'b0'], [66, 293, 'c1'], [66, 339, 'e1'], [40, 317, 'b1'], [40, 360, 'gnd2']],
+    dg: [[61, 126, 'in0'], [141, 126, '+0'], [61, 158, 'c0'], [61, 204, 'e0'], [141, 158, 'gnd0'], [141, 204, 'gnd0'], [60, 275, 'in1'], [49, 300, 'c1'], [60, 325, 'b1'], [49, 350, 'e1'], [60, 375, 'gnd2'], [49, 400, 'x1'], [141, 275, 'r1'], [152, 300, 'r2'], [141, 325, 'r3'], [152, 350, 'r4'], [141, 375, 'r3'], [152, 400, 'r4']]
   };
 
   moduleWidth = 200;
@@ -32,11 +33,16 @@
   };
 
   this.pinoutToXy = function(p) {
-    var col, moduleType, pinName, row, rowName, x, y, _ref, _ref1;
+    var col, moduleType, pinName, pos, row, rowName, x, y, _ref;
     _ref = p.split('_'), rowName = _ref[0], col = _ref[1], pinName = _ref[2];
     row = rowName.charCodeAt(0) - 97;
     moduleType = moduleTypes[row][col];
-    _ref1 = holePos(holedefs[moduleType], pinName), x = _ref1[0], y = _ref1[1];
+    pos = holePos(holedefs[moduleType], pinName);
+    if (!pos) {
+      console.error("Can't find " + pinName + " in module of type " + moduleType);
+    }
+    pos || (pos = [0, 0]);
+    x = pos[0], y = pos[1];
     return [col * moduleWidth + x, row * moduleHeight + y];
   };
 
@@ -47,7 +53,7 @@
       rowModuleTypes = moduleTypes[row];
       for (col = _j = 0, _len1 = rowModuleTypes.length; _j < _len1; col = ++_j) {
         moduleType = rowModuleTypes[col];
-        _ref = holedefs[moduleType] || [];
+        _ref = holedefs[moduleType];
         for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
           _ref1 = _ref[_k], x = _ref1[0], y = _ref1[1], pinName = _ref1[2];
           holes.push({
