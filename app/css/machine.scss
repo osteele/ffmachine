@@ -34,9 +34,19 @@ svg {
     stroke-width: 4px;
     stroke-linecap: round;
     filter: url(#drop-shadow);
+    cursor: move;
 
     &.dragging {
       // filter: none;
+    }
+
+    &.hide {
+      display: none;
+    }
+
+    &.delete {
+      cursor: no-drop;
+      &.repinning { cursor: move; }
     }
   }
 }

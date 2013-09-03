@@ -47,7 +47,7 @@ delete_wire = (wire) ->
 
 
 #
-# Mouse
+# Dragging
 #
 
 mouseDown = (e) ->
@@ -62,32 +62,49 @@ mouseDown = (e) ->
     window.onmousemove = newWireMouseMove
     window.onmouseup = newWireMouseUp
 
-clickWire = (wn, x, y) ->
-  w = wires[wn - 1]
-  wires.splice(wn - 1,1)
-  d1 = dist([x,y], pinoutToXy(w[0]))
-  d2 = dist([x,y], pinoutToXy(w[1]))
-  startpin = (if d1 > d2 then w[0] else w[1])
-  redraw()
-  wires_changed wires
-  drawLine pinoutToXy(startpin), [x, y], 0
-  window.onmousemove = mouseMove
+clickWillDelete = (wire) ->
+  [x, y] = localEvent(d3.event)
+  [p1, p2] = wire
+  d1 = dist([x,y], pinoutToXy(p1))
+  d2 = dist([x,y], pinoutToXy(p2))
+  return Math.min(d1, d2) > 20 or 45 > dist(pinoutToXy(p1), pinoutToXy(p2))
+
+clickWire = (wire) ->
+  [x, y] = localEvent(d3.event)
+  [p1, p2] = wire
+  d1 = dist([x,y], pinoutToXy(p1))
+  d2 = dist([x,y], pinoutToXy(p2))
+  if clickWillDelete(wire)
+    delete_wire wire
+    return
+  pinIndex = (if d1 < d2 then 0 else 1)
+  view = this
+  d3.select(view).classed 'repinning', true
+
+  window.onmousemove = (e) ->
+    endpoints = [pinoutToXy(p1), pinoutToXy(p2)]
+    endpoints[pinIndex] = localEvent(e)
+    d3.select(view)
+      .attr('d', endpointsToPath(endpoints...))
+      .attr('stroke', endpointsToColor(endpoints...))
+
+  window.onmouseup = (e) ->
+    d3.select(view).classed 'repinning', false
+    window.onmousemove = null
+    window.onmouseup = null
+    endPin = xyToPinout(localEvent(e)...)
+    if endPin and wire[pinIndex] != endPin
+      wire[pinIndex] = endPin
+      redraw()
+      wires_changed wires
+    else
+      redraw()
 
 newWireMouseMove = (e) ->
-  moved = true
   endpoints = [pinoutToXy(startpin), localEvent(e)]
   d3.select(wirebuffer).select('.dragging')
-    .attr('d', endpoints_to_path(endpoints...))
-    .attr('stroke', endpoints_to_color(endpoints...))
-
-dragKnob = (e) ->
-  knob = knobs[starty]
-  a = knobAngle(knob, localEvent(e)...)
-  knoboffset = mod360(knob[2] - a) unless moved
-  moved = true
-  knob[2] = mod360(a + knoboffset)
-  redraw()
-  wires_changed wires
+    .attr('d', endpointsToPath(endpoints...))
+    .attr('stroke', endpointsToColor(endpoints...))
 
 newWireMouseUp = (e) ->
   window.onmousemove = null
@@ -95,6 +112,14 @@ newWireMouseUp = (e) ->
   d3.select(wirebuffer).select('.dragging').remove()
   endpin = xyToPinout(localEvent(e)...)
   add_wire [startpin, endpin] if endpin and endpin != startpin
+
+dragKnob = (e) ->
+  knob = knobs[starty]
+  a = knobAngle(knob, localEvent(e)...)
+  knoboffset = mod360(knob[2] - a) unless moved
+  knob[2] = mod360(a + knoboffset)
+  redraw()
+  wires_changed wires
 
 releaseKnob = ->
   knob = knobs[starty]
@@ -119,22 +144,26 @@ redraw = ->
     .selectAll('.wire')
     .data(wires)
 
+  setClasses = (w) ->
+    d3.select(this).classed 'delete', clickWillDelete(w)
+
   wire_views.enter().append('path')
       .classed('wire', true)
-      .attr('d', wire_path)
-      .attr('stroke', wire_color)
-      .on('click', delete_wire)
+      .attr('d', wirePath)
+      .attr('stroke', wireColor)
+      .on('mousedown', clickWire)
+      .on('mouseenter', setClasses)
+      .on('mousemove', setClasses)
+      .on('mouseeexit', -> d3.select(this).classed 'delete', false)
 
   # wire_views.exit().remove()
 
   # drawKnobs()
 
-wire_path = ([p1, p2]) ->
-  [x1, y1] = pinoutToXy(p1)
-  [x2, y2] = pinoutToXy(p2)
-  endpoints_to_path([x1, y1], [x2, y2])
+wirePath = ([p1, p2]) ->
+  endpointsToPath(pinoutToXy(p1), pinoutToXy(p2))
 
-endpoints_to_path = ([x1, y1], [x2, y2]) ->
+endpointsToPath = ([x1, y1], [x2, y2]) ->
   x1 /= 2
   y1 /= 2
   x2 /= 2
@@ -147,17 +176,15 @@ endpoints_to_path = ([x1, y1], [x2, y2]) ->
   [dx, dy] = [0, 5] if Math.abs(y1 - y2) < 10
   ['M', x1, y1, 'Q', x1 + dx, y1 + dy, mx, my, 'T', x2, y2].join(' ')
 
-wire_color = ([p1, p2], n) ->
-  [x1, y1] = pinoutToXy(p1)
-  [x2, y2] = pinoutToXy(p2)
-  endpoints_to_color([x1, y1], [x2, y2])
+wireColor = ([p1, p2], n) ->
+  endpointsToColor(pinoutToXy(p1), pinoutToXy(p2))
 
-endpoints_to_color = ([x1, y1], [x2, y2], n) ->
+endpointsToColor = ([x1, y1], [x2, y2], n) ->
   n or= wires.length
   cmerge(pickColor(x1, y1, x2, y2), n)
 
 drawKnobs = ->
-  drawKnob k[0], k[1], k[2], k[3] for k in knobs
+  drawKnob k... for k in knobs
 
 drawKnob = (x, y, a, c) ->
   ctx.fillStyle = c
