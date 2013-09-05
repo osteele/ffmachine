@@ -6,6 +6,7 @@ body {
 h1 {
   font-family: cursive;
   font-size: 30px;
+  margin-left: 10px;
 }
 
 h1 a { color: inherit; }
@@ -130,8 +131,7 @@ body.simulate-mode .ffmachine {
   position: absolute;
   top: 70px;
   right: 10px;
-  font-family: serif;
-  font-size: 14px;
+  font-size: 16px;
   text-align: right;
 
   h2 {

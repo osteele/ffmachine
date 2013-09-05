@@ -5,10 +5,6 @@ body {
   font-family: "Abel", Arial, sans-serif;
 }
 
-h1, h2 {
-  font-family: cursive;
-}
-
 #account {
   // position: absolute; top: 90px; right: 10px;
   font-size: medium;
@@ -53,6 +49,10 @@ h1, h2 {
 }
 
 .machine-list {
+  h1, h2 {
+    font-family: cursive;
+  }
+
   .icons a, .icons div { padding: 0 10px; cursor: pointer; }
   .icons a:hover { text-decoration: none }
   .machine .name { display:block; min-width: 350px; text-align: right; padding-right: 15px; font-family: cursive; font-size: 120%; }
