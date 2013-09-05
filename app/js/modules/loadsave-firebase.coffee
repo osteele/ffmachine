@@ -18,10 +18,21 @@ app.controller 'MachineSimulatorCtrl', ($scope, angularFire, angularFireAuth) ->
 
   angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
 
+  $scope.login = (provider) ->
+    angularFireAuth.login provider, rememberMe: true
+
+  $scope.logout = ->
+    angularFireAuth.logout()
+
   $scope.$watch 'user', ->
     removeCurrentViewer()
     CurrentUser = $scope.user
     addCurrentViewer()
+
+  $scope.$watch 'user + machine', ->
+    $scope.editable = CurrentMachine and CurrentUser and CurrentMachine.creator.id == CurrentUser.id
+    $scope.mode = 'view' if $scope.mode == 'edit' and not $scope.editable
+    $scope.mode = 'edit' if $scope.mode == 'view' and $scope.editable
 
   MachineChangedHooks.push (machine) ->
     $scope.$apply ->
@@ -47,9 +58,8 @@ removeCurrentViewer = ->
     CurrentMachine = snapshot.val()
     console.error "No machine named #{name}" unless CurrentMachine
     wires = unserializeWiring(snapshot.val().wiring)
-    readonly = !CurrentUser or CurrentMachine.creator.id != CurrentUser.id
-    hook(CurrentMachine) for hook in MachineChangedHooks
-    @setModel wires, readonly
+    setTimeout (-> hook(CurrentMachine)), 10 for hook in MachineChangedHooks
+    @setModel wires
     addCurrentViewer()
 
 @saveWires = (name, wiring) ->

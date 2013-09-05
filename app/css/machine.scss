@@ -48,19 +48,19 @@ h1 a { color: inherit; }
   }
 }
 
+body .ffmachine {
+  .edit-mode-layer, .simulation-mode-layer { display: none; }
+}
+
 body.edit-mode .ffmachine {
-  .simulation-mode-layer { display: none; }
+  .edit-mode-layer { display: block; }
 }
 
 body.simulate-mode .ffmachine {
-  .edit-mode-layer { display: none; }
+  .simulation-mode-layer { display: block; }
 }
 
 .ffmachine svg {
-  &.readonly {
-    .pin-targets, .deletion-targets, .wire-end-targets { display: none; }
-  }
-
   .hole {
     &:hover {
       fill: blue;

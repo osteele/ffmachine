@@ -53,9 +53,8 @@ knoboffset = null
 #
 
 # The storage interface calls this
-@setModel = (wires_, readonly) ->
+@setModel = (wires_) ->
   wires = wires_
-  svgSelection.classed 'readonly', readonly
   redraw()
   # prevent clicks until the machine is loaded
   # so we don't overwrite the stored data
