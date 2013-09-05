@@ -1,5 +1,5 @@
 (function() {
-  var add_wire, arctan2, closestEndIndex, cmerge, cos, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, redraw, releaseKnob, sin, svgSelection, wireColor, wireEndpoints, wireLength, wirePath, wireView, wires,
+  var addWire, arctan2, closestEndIndex, cmerge, cos, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, redraw, redrawTraces, releaseKnob, sin, svgSelection, wireColor, wireEndpoints, wireLength, wirePath, wireView, wires,
     __slice = [].slice;
 
   knobs = [[100, 252, 288, '#f0f0f0'], [100, 382, 0, '#f0f0f0'], [1700, 252, 292, '#202020'], [1700, 382, 0, '#202020']];
@@ -26,6 +26,7 @@
       return "Drag " + pos.name + " to another pin to create a wire.";
     });
     svgSelection.append('g').classed('wires', true);
+    svgSelection.append('g').classed('traces', true);
     svgSelection.append('g').classed('deletion-targets', true);
     svgSelection.append('g').classed('wire-end-targets', true);
     return redraw();
@@ -38,7 +39,7 @@
     return document.getElementById('loading').style.display = 'none';
   };
 
-  add_wire = function(wire) {
+  addWire = function(wire) {
     wires.push(wire);
     redraw();
     return wires_changed(wires);
@@ -59,6 +60,11 @@
     })();
     redraw();
     return wires_changed(wires);
+  };
+
+  this.stepSimulator = function() {
+    this.Simulator.step(this.machineState.modules, wires);
+    return redrawTraces();
   };
 
   mouseDownAddWire = function() {
@@ -93,7 +99,7 @@
       svgSelection.select('.active').classed('active', false).classed('end', false);
       endpin = xyToPinout.apply(null, localEvent(e));
       if (endpin && endpin !== startpin) {
-        return add_wire([startpin, endpin]);
+        return addWire([startpin, endpin]);
       }
     };
   };
@@ -182,13 +188,12 @@
   };
 
   redraw = function() {
-    var setWireClasses, updateEndPinTargets, wireTargets, wireViews;
-    setWireClasses = function(w) {};
+    var updateEndPinTargets, wireTargets, wireViews;
     wireViews = svgSelection.select('.wires').selectAll('.wire').data(wires);
     wireViews.enter().append('path').classed('wire', true);
     wireViews.exit().remove();
     wireViews.attr('d', wirePath).attr('stroke', wireColor);
-    wireTargets = svgSelection.select('.deletion-targets').selectAll('.wire-target').data(wires);
+    wireTargets = svgSelection.select('.deletion-targets').selectAll('.wire-mouse-target').data(wires);
     wireTargets.enter().append('path').classed('wire-mouse-target', true).on('mousedown', deleteWire).append('title').text('Click to delete this wire.');
     wireTargets.exit().remove();
     wireTargets.attr('d', wirePath);
@@ -280,6 +285,38 @@
     ctx.arc(x + 22 * sin(a), y - 22 * cos(a), 4, 0, Math.PI * 2, true);
     ctx.closePath();
     return ctx.fill();
+  };
+
+  redrawTraces = function() {
+    var addTraces, hasVoltage, wireVoltageName;
+    wireVoltageName = function(wire) {
+      switch (wire.value) {
+        case -3:
+          return 'low';
+        case 0:
+          return 'ground';
+        default:
+          return 'float';
+      }
+    };
+    hasVoltage = function(symbolicValue) {
+      return function(wire) {
+        return wireVoltageName(wire) === symbolicValue;
+      };
+    };
+    addTraces = function(className, endIndex) {
+      var enter, nodes;
+      nodes = svgSelection.select('.traces').selectAll('.' + className).data(wires);
+      nodes.exit().remove();
+      enter = nodes.enter().append('g').classed(className, true).attr('transform', function(wire) {
+        var pt;
+        pt = pinoutToXy(wire[endIndex]);
+        return "translate(" + (pt[0] / 2) + ", " + (pt[1] / 2) + ")";
+      });
+      return enter.append('circle').attr('r', 10).classed('voltage-low', hasVoltage('low')).classed('voltage-ground', hasVoltage('ground')).classed('voltage-float', hasVoltage('float'));
+    };
+    addTraces('start-trace', 0);
+    return addTraces('end-trace', 1);
   };
 
   knobAngle = function(knob, x, y) {
