@@ -1,22 +1,12 @@
 .machine-list
 
-  #toolbar
-    | Search:
+  include toolbar
+    span Search:
     input(ng-model="searchText")
     a.icon-list(ng-class="{active: layout == 'list'}", ng-click="layout = 'list'")
     a.icon-th(ng-class="{active: layout == 'grid'}", ng-click="layout = 'grid'")
 
-    #account.pull-right
-      button(ng-hide="user", ng-click="login('persona')")
-        .icon-signin
-        | &nbsp;Sign In
-      div
-        button(ng-show="user", ng-click="logout()")
-          .icon-signout
-          | Sign Out
-        div(ng-show="user") {{user.email}}
-
-  h1 Flip Flop Machines
+  h1 Flip Flop Machines2
 
   #message(ng-show="message")
     p(ng-bind-html-unsafe=" message")
