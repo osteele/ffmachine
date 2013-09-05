@@ -1,10 +1,11 @@
 FirebaseRootRef = new Firebase 'https://ffmachine.firebaseIO.com/'
-MachineListRef = FirebaseRootRef.child 'machines'
-CurrentMachineRef = null
+
 CurrentMachine = null
-ReloadAppSeed = null
+CurrentMachineRef = null
 CurrentUser = null
 MachineChangedHooks = []
+MachineListRef = FirebaseRootRef.child 'machines'
+ReloadAppSeed = null
 
 FirebaseRootRef.child('version').on 'value', (snapshot) ->
   key = snapshot.val()
@@ -13,7 +14,7 @@ FirebaseRootRef.child('version').on 'value', (snapshot) ->
 
 app = angular.module 'FFMachine', ['firebase']
 
-app.controller 'MachineSimulatorCtrl', ($scope, angularFire, angularFireAuth) ->
+app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire, angularFireAuth) ->
   $scope.mode = 'edit'
 
   angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
@@ -30,14 +31,19 @@ app.controller 'MachineSimulatorCtrl', ($scope, angularFire, angularFireAuth) ->
     addCurrentViewer()
 
   $scope.$watch 'user + machine', ->
+    wasEditable = $scope.editable
     $scope.editable = CurrentMachine and CurrentUser and CurrentMachine.creator.id == CurrentUser.id
     $scope.mode = 'view' if $scope.mode == 'edit' and not $scope.editable
+    $scope.mode = 'edit' if $scope.editable and not wasEditable
 
   MachineChangedHooks.push (machine) ->
     $scope.$apply ->
       $scope.machine = machine
 
-  setup()
+  name = $location.search().name
+  $window.location.href = '.' unless name
+  setupCanvas()
+  loadWires name
 
 addCurrentViewer = ->
   user = CurrentUser
@@ -51,7 +57,7 @@ removeCurrentViewer = ->
   onlineRef = CurrentMachineRef.child('connected').child(CurrentUser.id)
   onlineRef.remove()
 
-@loadWires = (name) ->
+loadWires = (name) ->
   CurrentMachineRef = MachineListRef.child(name)
   CurrentMachineRef.on 'value', (snapshot) ->
     CurrentMachine = snapshot.val()
@@ -61,7 +67,7 @@ removeCurrentViewer = ->
     @setModel wires
     addCurrentViewer()
 
-@saveWires = (name, wiring) ->
+saveWires = (name, wiring) ->
   user = CurrentUser
   previous_wiring = CurrentMachine.wiring
   wiring = serializeWiring(wiring)
@@ -77,8 +83,11 @@ removeCurrentViewer = ->
   CurrentMachineRef.child('modified_at').set modified_at
   CurrentMachineRef.child('history').push {user: user?.email, wiring, previous_wiring, modified_at}
 
-serializeWiring = (str) ->
-  return str.replace /\r\n/g, "\n"
+@wires_changed = (wires) ->
+  saveWires name, wires
+
+serializeWiring = (wires) ->
+  return (wire.join(' ') for wire in wires).join("\n")
 
 unserializeWiring = (str) ->
   wire_strings = str.replace(/\\n/g, "\n").split(/\n/)
