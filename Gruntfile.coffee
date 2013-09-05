@@ -28,7 +28,7 @@ module.exports = (grunt) ->
         dest: 'release'
         ext: '.js'
     coffeelint:
-      app: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
+      app: ['app/**/*.coffee', '!Gruntfile.coffee']
       gruntfile: 'Gruntfile.coffee'
       options:
         max_line_length:
@@ -102,7 +102,7 @@ module.exports = (grunt) ->
         files: 'Gruntfile.coffee'
         tasks: ['coffeelint:gruntfile']
       jade:
-        files: ['app/**/*.jade']
+        files: ['app/*.jade', 'app/**/*.jade']
         tasks: ['jade:debug']
       sass:
         files: ['app/**/*.scss']
