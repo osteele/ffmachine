@@ -22,8 +22,14 @@ html(lang="en", ng-app="FFMachine")
     script(src="loadsave-firebase.js")
     script(src="simulator.js")
 
-  body(ng-controller="MachineSimulatorCtrl")
+  body(ng-controller="MachineSimulatorCtrl", ng-class="{'edit-mode': mode == 'edit', 'simulate-mode': mode == 'simulate'}")
     include partials/toolbar
+      button(ng-disabled="mode == 'edit'", ng-click="mode = 'edit'") Edit
+      button(ng-disabled="mode == 'simulate'", ng-click="mode = 'simulate'") Simulate
+      //- #simulation-buttons
+      //-   a.icon-play(ng-show="mode == 'simulate'", ng-class="{disabled: simulaton_running}")
+      //-   a.icon-stop(ng-show="mode == 'simulate'", ng-class="{disabled: !simulaton_running}")
+      //-   a.icon-pause(ng-show="mode == 'simulate'", ng-class="{disabled: !simulaton_running}")
 
     h1
       a(href=".") Flip Flop Machines

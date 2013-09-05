@@ -10,7 +10,7 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
   # TODO is there a way to make this a list type?
   angularFire machineListRef, $scope, 'machines', {}
 
-  $scope.$watch 'machine + user', ->
+  $scope.$watch ->
     machines = (m for _, m of $scope.machines)
     return unless machines.length
     $scope.message = null

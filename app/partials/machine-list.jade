@@ -1,12 +1,13 @@
 .machine-list
 
   include toolbar
-    span Search:
-    input(ng-model="searchText")
+    .search
+      span Search Machines:
+      input(ng-model="searchText", placeholder="machine name")
     a.icon-list(ng-class="{active: layout == 'list'}", ng-click="layout = 'list'")
     a.icon-th(ng-class="{active: layout == 'grid'}", ng-click="layout = 'grid'")
 
-  h1 Flip Flop Machines2
+  h1 Flip Flop Machines
 
   #message(ng-show="message")
     p(ng-bind-html-unsafe=" message")

@@ -14,6 +14,8 @@ FirebaseRootRef.child('version').on 'value', (snapshot) ->
 app = angular.module 'FFMachine', ['firebase']
 
 app.controller 'MachineSimulatorCtrl', ($scope, angularFire, angularFireAuth) ->
+  $scope.mode = 'edit'
+
   angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
 
   $scope.$watch 'user', ->

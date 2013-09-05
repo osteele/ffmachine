@@ -1,12 +1,24 @@
 body {
-  background: white;
-  color: black;
+  margin: 0;
+  font-size: normal;
+}
+
+h1 {
   font-family: cursive;
   font-size: 30px;
-  margin: 0;
 }
 
 h1 a { color: inherit; }
+
+#toolbar #simulation-buttons {
+  display: inline-block;
+
+  a {
+    // color: gray;
+    // &:hover { background: none; }
+    &.disabled { color: gray; }
+  }
+}
 
 .frame {
   margin-left: 60px;
@@ -34,6 +46,14 @@ h1 a { color: inherit; }
     background: rgba(255,255,255,0.25);
     z-index: 10;
   }
+}
+
+body.edit-mode .ffmachine {
+  .simulation-mode-layer { display: none; }
+}
+
+body.simulate-mode .ffmachine {
+  .edit-mode-layer { display: none; }
 }
 
 .ffmachine svg {
@@ -83,14 +103,12 @@ h1 a { color: inherit; }
     stroke-linecap: round;
   }
 
-  .wire-start-target, .wire-end-target {
+  .wire-end-target {
     cursor: move;
     fill: rgba(255, 0, 0, 0);
   }
 
-  .traces {
-    display: none;
-
+  .trace-layer {
     .start-trace, .end-trace {
       fill: blue;
       opacity: 0.5;

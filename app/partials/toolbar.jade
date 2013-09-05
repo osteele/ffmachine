@@ -4,9 +4,9 @@
   #account.pull-right
     button(ng-hide="user", ng-click="login('persona')")
       .icon-signin
-      | Sign In
+      | &nbsp;Sign In
     div
       button(ng-show="user", ng-click="logout()")
         .icon-signout
-        | Sign Out
+        | &nbsp;Sign Out
       div(ng-show="user") {{user.email}}

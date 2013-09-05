@@ -26,7 +26,8 @@ knoboffset = null
 
   svgSelection
     .append('g')
-    .classed('pin-targets', true)
+    .classed('pin-target-layer', true)
+    .classed('edit-mode-layer', true)
     .selectAll('.hole').data(holePositions())
     .enter().append('circle')
     .classed('hole', true)
@@ -38,13 +39,13 @@ knoboffset = null
     .append('title')
       .text((pos) -> "Drag #{pos.name} to another pin to create a wire.")
 
-  svgSelection.append('g').classed('wires', true)
-  svgSelection.append('g').classed('traces', true)
-  svgSelection.append('g').classed('deletion-targets', true)
-  svgSelection.append('g').classed('wire-end-targets', true)
+  svgSelection.append('g').classed('wire-layer', true)
+  svgSelection.append('g').classed('simulation-mode-layer', true).classed('trace-layer', true)
+  svgSelection.append('g').classed('edit-mode-layer', true).classed('deletion-target-layer', true)
+  svgSelection.append('g').classed('edit-mode-layer', true).classed('wire-start-target-layer', true)
+  svgSelection.append('g').classed('edit-mode-layer', true).classed('wire-end-target-layer', true)
 
   redraw()
-  # redrawTraces()
 
 
 #
@@ -177,14 +178,14 @@ releaseKnob = ->
 #
 
 redraw = ->
-  wireViews = svgSelection.select('.wires').selectAll('.wire').data(wires)
+  wireViews = svgSelection.select('.wire-layer').selectAll('.wire').data(wires)
   wireViews.enter().append('path').classed('wire', true)
   wireViews.exit().remove()
   wireViews
     .attr('d', wirePath)
     .attr('stroke', wireColor)
 
-  wireTargets = svgSelection.select('.deletion-targets').selectAll('.wire-mouse-target').data(wires)
+  wireTargets = svgSelection.select('.deletion-target-layer').selectAll('.wire-mouse-target').data(wires)
   wireTargets.enter()
     .append('path')
     .classed('wire-mouse-target', true)
@@ -194,13 +195,13 @@ redraw = ->
   wireTargets
     .attr('d', wirePath)
 
-  updateEndPinTargets = (className, endIndex) ->
-    startPinTargets = svgSelection.select('.wire-end-targets')
-      .selectAll('.' + className)
+  updateEndPinTargets = (layerName, endIndex) ->
+    startPinTargets = svgSelection.select('.' + layerName)
+      .selectAll('.wire-end-target')
       .data(w for w in wires when wireLength(w) > 45)
     startPinTargets.enter()
       .append('circle')
-      .classed(className, true)
+      .classed('wire-end-target', true)
       .attr('r', 10)
       .on('mousedown', dragWireEnd)
       # Uncomment below for cheesy hover animation of wire end
@@ -217,10 +218,10 @@ redraw = ->
       .attr('cx', (wire) -> pinoutToXy(wire[endIndex])[0] / 2)
       .attr('cy', (wire) -> pinoutToXy(wire[endIndex])[1] / 2)
 
-  updateEndPinTargets 'wire-start-target', 0
-  updateEndPinTargets 'wire-end-target', 1
+  updateEndPinTargets 'wire-start-target-layer', 0
+  updateEndPinTargets 'wire-end-target-layer', 1
 
-  # redrawTraces()
+  redrawTraces()
   # drawKnobs()
 
 wireEndpoints = ([p1, p2]) ->
@@ -279,7 +280,7 @@ redrawTraces = ->
       wireVoltageName(wire) == symbolicValue
 
   addTraces = (className, endIndex) ->
-    nodes = svgSelection.select('.traces').selectAll('.' + className).data(wires)
+    nodes = svgSelection.select('.trace-layer').selectAll('.' + className).data(wires)
     nodes.exit().remove()
     enter = nodes.enter().append('g').classed(className, true)
       .attr('transform', (wire) ->

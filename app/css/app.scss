@@ -39,6 +39,8 @@ h1, h2 {
     &:hover { background: lightGray; }
     &.active { background: white; }
   }
+
+  .search { display: inline-block; margin-right: 60px; }
 }
 
 #message {
