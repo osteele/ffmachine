@@ -3,7 +3,10 @@ body {
   color: black;
   font-family: cursive;
   font-size: 30px;
+  margin: 0;
 }
+
+h1 a { color: inherit; }
 
 .frame {
   margin-left: 60px;
@@ -33,7 +36,7 @@ body {
   }
 }
 
-svg {
+.ffmachine svg {
   &.readonly {
     .pin-targets, .deletion-targets, .wire-end-targets { display: none; }
   }
@@ -107,7 +110,7 @@ svg {
 
 #connected-users {
   position: absolute;
-  top: 10px;
+  top: 70px;
   right: 10px;
   font-family: serif;
   font-size: 14px;

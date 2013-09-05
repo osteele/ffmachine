@@ -1,60 +1,75 @@
-firebaseRootRef = new Firebase 'https://ffmachine.firebaseIO.com/'
-machineListRef = firebaseRootRef.child 'machines'
-machineRef = null
-machine = null
-reload_key = null
-user = null
+FirebaseRootRef = new Firebase 'https://ffmachine.firebaseIO.com/'
+MachineListRef = FirebaseRootRef.child 'machines'
+CurrentMachineRef = null
+CurrentMachine = null
+ReloadAppSeed = null
+CurrentUser = null
+MachineChangedHooks = []
 
-firebaseRootRef.child('version').on 'value', (snapshot) ->
+FirebaseRootRef.child('version').on 'value', (snapshot) ->
   key = snapshot.val()
-  location.reload() if reload_key and key and reload_key != key
-  reload_key = key
+  location.reload() if ReloadAppSeed and key and ReloadAppSeed != key
+  ReloadAppSeed = key
 
-auth = new FirebaseSimpleLogin firebaseRootRef, (error, _user) ->
-  if error
-    console.error error
-    return
-  user = _user
+app = angular.module 'FFMachine', ['firebase']
+
+app.controller 'MachineSimulatorCtrl', ($scope, angularFire, angularFireAuth) ->
+  angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
+
+  $scope.$watch 'user', ->
+    removeCurrentViewer()
+    CurrentUser = $scope.user
+    addCurrentViewer()
+
+  MachineChangedHooks.push (machine) ->
+    $scope.$apply ->
+      $scope.machine = machine
+
+  setup()
+
+addCurrentViewer = ->
+  user = CurrentUser
+  return unless CurrentMachineRef and CurrentUser
+  onlineRef = CurrentMachineRef.child('connected').child(user.id)
+  onlineRef.onDisconnect().remove()
+  onlineRef.set user.email
+
+removeCurrentViewer = ->
+  return unless CurrentMachineRef and CurrentUser
+  onlineRef = CurrentMachineRef.child('connected').child(CurrentUser.id)
+  onlineRef.remove()
 
 @loadWires = (name) ->
-  machineRef = machineListRef.child(name)
-  machineRef.on 'value', (snapshot) ->
-    machine = snapshot.val()
-    console.error "No machine named #{name}" unless machine
-    wiring_string = snapshot.val().wiring.replace(/\\n/g, "\n")
-    wire_strings = wiring_string.split(/\n/)
-    wire_strings.pop() if wire_strings[wire_strings.length - 1] == ''
-    wires = wire_strings.map((wire) -> wire.split ' ')
-    readonly = !user or machine.creator.id != user.id
+  CurrentMachineRef = MachineListRef.child(name)
+  CurrentMachineRef.on 'value', (snapshot) ->
+    CurrentMachine = snapshot.val()
+    console.error "No machine named #{name}" unless CurrentMachine
+    wires = unserializeWiring(snapshot.val().wiring)
+    readonly = !CurrentUser or CurrentMachine.creator.id != CurrentUser.id
+    hook(CurrentMachine) for hook in MachineChangedHooks
     @setModel wires, readonly
-
-    connectionListRef = machineRef.child('connected')
-    connectionListRef.off()
-    connectionListRef.on 'value', (snapshot) ->
-      user_emails = (v for k, v of snapshot?.val() || {})
-      user_emails.sort()
-      e = document.querySelector('#connected-users ul')
-      e.innerHTML = ''
-      for email in user_emails
-        user_view = document.createElement 'li'
-        user_view.appendChild document.createTextNode(email)
-        e.appendChild user_view
-    if user
-      onlineRef = connectionListRef.child(user.id)
-      onlineRef.onDisconnect().remove()
-      onlineRef.set user.email
+    addCurrentViewer()
 
 @saveWires = (name, wiring) ->
-  wiring = wiring.replace /\r\n/g, "\n"
-  return if machine.wiring == wiring
-  if machine.protected
-    console.error "#{machine.name} is read-only"
+  user = CurrentUser
+  previous_wiring = CurrentMachine.wiring
+  wiring = serializeWiring(wiring)
+  return if previous_wiring == wiring
+  if CurrentMachine.protected
+    console.error "#{CurrentMachine.name} is read-only"
     return
   unless user
     console.error "Not signed in"
     return
   modified_at = Firebase.ServerValue.TIMESTAMP
-  previous_wiring = machine.wiring
-  machineRef.child('wiring').set wiring
-  machineRef.child('modified_at').set modified_at
-  machineRef.child('history').push {user: user?.email, wiring, previous_wiring, modified_at}
+  CurrentMachineRef.child('wiring').set wiring
+  CurrentMachineRef.child('modified_at').set modified_at
+  CurrentMachineRef.child('history').push {user: user?.email, wiring, previous_wiring, modified_at}
+
+serializeWiring = (str) ->
+  return str.replace /\r\n/g, "\n"
+
+unserializeWiring = (str) ->
+  wire_strings = str.replace(/\\n/g, "\n").split(/\n/)
+  wire_strings.pop() if wire_strings[wire_strings.length - 1] == ''
+  return wire_strings.map((wire) -> wire.split ' ')

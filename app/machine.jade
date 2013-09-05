@@ -1,22 +1,33 @@
 doctype 5
-html(lang="en")
+html(lang="en", ng-app="FFMachine")
   head
     title Flip Flop Machine
     meta(charset="utf-8")
 
+    link(href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc2/css/bootstrap.min.css", rel="stylesheet", type="text/css")
+    link(href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.1/css/font-awesome.min.css", rel="stylesheet")
+    link(href="css/app.css", rel="stylesheet")
     link(href="css/machine.css", rel="stylesheet")
 
-    script(type='text/javascript', src='https://cdn.firebase.com/v0/firebase.js')
-    script(type='text/javascript', src="https://cdn.firebase.com/v0/firebase-simple-login.js")
-    script(src='//cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js')
-    script(type="text/javascript", src="machine.js")
-    script(type="text/javascript", src="modules.js")
-    script(type="text/javascript", src="loadsave.js")
-    script(type="text/javascript", src="loadsave-firebase.js")
-    script(type="text/javascript", src="simulator.js")
+    script(src="https://cdn.firebase.com/v0/firebase.js")
+    script(src="https://cdn.firebase.com/v0/firebase-simple-login.js")
+    script(src="https://login.persona.org/include.js")
+    script(src="//cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js")
+    script(src="//cdnjs.cloudflare.com/ajax/libs/angular.js/1.1.5/angular.min.js")
+    script(src="//cdn.firebase.com/libs/angularfire/0.3.0/angularfire.min.js")
 
-  body(onload="setup()")
-    p.title Flip Flop Machine
+    script(src="machine.js")
+    script(src="modules.js")
+    script(src="loadsave.js")
+    script(src="loadsave-firebase.js")
+    script(src="simulator.js")
+
+  body(ng-controller="MachineSimulatorCtrl")
+    include partials/toolbar
+
+    h1
+      a(href=".") Flip Flop Machines
+      | &nbsp;» {{machine.name}}
 
     #frame.frame
       .ffmachine
@@ -38,4 +49,4 @@ html(lang="en")
 
     #connected-users
       h2 Current Viewers
-      ul
+      ul(ng-repeat="viewer in machine.connected") {{viewer}}

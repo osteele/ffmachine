@@ -5,12 +5,12 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
   $scope.machines = []
   $scope.message = "Loading..."
 
-  angularFireAuth.initialize firebaseRootRef, scope: $scope, name: "user"
+  angularFireAuth.initialize firebaseRootRef, scope: $scope, name: 'user'
 
   # TODO is there a way to make this a list type?
   angularFire machineListRef, $scope, 'machines', {}
 
-  $scope.$watch ->
+  $scope.$watch 'machine + user', ->
     machines = (m for _, m of $scope.machines)
     return unless machines.length
     $scope.message = null
