@@ -39,10 +39,12 @@ knoboffset = null
       .text((pos) -> "Drag #{pos.name} to another pin to create a wire.")
 
   svgSelection.append('g').classed('wires', true)
+  svgSelection.append('g').classed('traces', true)
   svgSelection.append('g').classed('deletion-targets', true)
   svgSelection.append('g').classed('wire-end-targets', true)
 
   redraw()
+  # redrawTraces()
 
 
 #
@@ -58,7 +60,7 @@ knoboffset = null
   # so we don't overwrite the stored data
   document.getElementById('loading').style.display = 'none'
 
-add_wire = (wire) ->
+addWire = (wire) ->
   wires.push wire
   redraw()
   wires_changed wires
@@ -68,6 +70,9 @@ deleteWire = (wire) ->
   redraw()
   wires_changed wires
 
+@stepSimulator = ->
+  @Simulator.step @machineState.modules, wires
+  redrawTraces()
 
 #
 # Dragging
@@ -104,7 +109,7 @@ mouseDownAddWire = ->
     view.remove()
     svgSelection.select('.active').classed('active', false).classed('end', false)
     endpin = xyToPinout(localEvent(e)...)
-    add_wire [startpin, endpin] if endpin and endpin != startpin
+    addWire [startpin, endpin] if endpin and endpin != startpin
 
 closestEndIndex = (wire) ->
   [x, y] = localEvent(d3.event)
@@ -172,7 +177,6 @@ releaseKnob = ->
 #
 
 redraw = ->
-  setWireClasses = (w) ->
   wireViews = svgSelection.select('.wires').selectAll('.wire').data(wires)
   wireViews.enter().append('path').classed('wire', true)
   wireViews.exit().remove()
@@ -180,7 +184,7 @@ redraw = ->
     .attr('d', wirePath)
     .attr('stroke', wireColor)
 
-  wireTargets = svgSelection.select('.deletion-targets').selectAll('.wire-target').data(wires)
+  wireTargets = svgSelection.select('.deletion-targets').selectAll('.wire-mouse-target').data(wires)
   wireTargets.enter()
     .append('path')
     .classed('wire-mouse-target', true)
@@ -199,6 +203,7 @@ redraw = ->
       .classed(className, true)
       .attr('r', 10)
       .on('mousedown', dragWireEnd)
+      # Uncomment below for cheesy hover animation of wire end
       # .on('mouseover', (wire) ->
       #   targetView = wireView(wire)
       #   endpoints = wireEndpoints(wire)
@@ -215,6 +220,7 @@ redraw = ->
   updateEndPinTargets 'wire-start-target', 0
   updateEndPinTargets 'wire-end-target', 1
 
+  # redrawTraces()
   # drawKnobs()
 
 wireEndpoints = ([p1, p2]) ->
@@ -256,6 +262,37 @@ drawKnob = (x, y, a, c) ->
   ctx.closePath()
   ctx.fill()
 
+
+#
+# Drawing Traces
+#
+
+redrawTraces = ->
+  wireVoltageName = (wire) ->
+    switch wire.value
+      when -3 then 'low'
+      when 0 then 'ground'
+      else 'float'
+
+  hasVoltage = (symbolicValue) ->
+    (wire) ->
+      wireVoltageName(wire) == symbolicValue
+
+  addTraces = (className, endIndex) ->
+    nodes = svgSelection.select('.traces').selectAll('.' + className).data(wires)
+    nodes.exit().remove()
+    enter = nodes.enter().append('g').classed(className, true)
+      .attr('transform', (wire) ->
+        pt = pinoutToXy(wire[endIndex])
+        "translate(#{pt[0] / 2}, #{pt[1] / 2})")
+    enter.append('circle')
+      .attr('r', 10)
+      .classed('voltage-low', hasVoltage('low'))
+      .classed('voltage-ground', hasVoltage('ground'))
+      .classed('voltage-float', hasVoltage('float'))
+
+  addTraces 'start-trace', 0
+  addTraces 'end-trace', 1
 
 #
 # Etc.

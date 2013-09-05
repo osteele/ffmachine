@@ -84,6 +84,25 @@ svg {
     cursor: move;
     fill: rgba(255, 0, 0, 0);
   }
+
+  .traces {
+    display: none;
+
+    .start-trace, .end-trace {
+      fill: blue;
+      opacity: 0.5;
+
+      &:hover {
+        // opacity: 1;
+        fill: green;
+        stroke: green;
+      }
+
+      &.voltage-low { color: red; }
+      &.voltage-ground { color: black; }
+      &.voltage-float { color: gray; }
+    }
+  }
 }
 
 #connected-users {
