@@ -78,29 +78,44 @@ modulePinNameToMachinePinName = (row, col, pinName) ->
 moduleComponents = ({type: moduleType, name: moduleName}) ->
   component = (type, componentPinNames, componentIndex) ->
     pins = for componentPinName in componentPinNames
-      machinePinName = [moduleName, componentPinName.replace(/(\w+)/, '$1' + componentIndex)].join('_')
+      machinePinName = [moduleName, componentPinName.replace(/(\w+)/, "$1#{componentIndex}")].join('_')
       {componentPinName, machinePinName}
     return {type, pins}
-  gate = (componentIndex) ->
-    component('gate', ['c', 'e', 'b'], componentIndex)
+
+  clock = ->
+    component('clock', ['-', '+', 'gnd'])
+  gate = (componentIndex, baseCount=1) ->
+    bases = ['b']
+    bases = ("b#{n}" for n in [0..baseCount]) if baseCount > 1
+    component('gate', ['c', 'e'].concat(bases), componentIndex)
   ground = (componentIndex) ->
     component('ground', ['gnd'], componentIndex)
+  pa = (componentIndex) ->
+    component('pa', ['-', '+', 'in', 'gnd'])
+
   switch moduleType
     when 'ff' then [
+      component('ff', ['p', '0', '1', '0in', '1in', 'comp'])
       gate(0)
       gate(1)
       ground(1)
       ground(2)
       ground(3)
     ]
-    when 'clk1' then []
-    when 'clk2' then []
+    when 'clk1' then [clock()]
+    when 'clk2' then [clock()]
     when 'dg' then [
-      # component('clamp', ['cl0', 'cl1'])
-      # component('gate', ['c0', 'e0', 'b00', 'b01', 'b02', 'b03', 'b04', 'b05'], ['c0'])
-      # component('gate', ['c1', 'e1', 'b10', 'b11', 'b12', 'b13', 'b14', 'b15'], ['c1'])
+      component('clamp', ['cl0', 'cl1'])
+      gate(0, 5)
+      gate(1, 5)
     ]
-    when 'pa' then []
+    when 'pa' then [
+      pa(0)
+      pa(1)
+      gate(0)
+      gate(1)
+      ground(2)
+    ]
     else console.error 'unknown module type', moduleType
 
 createModules = ->

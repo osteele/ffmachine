@@ -303,9 +303,6 @@ updateTraces = do ->
     nodes = getLayer('trace-layer').selectAll('.' + className).data(wires)
     nodes.exit().remove()
     enter = nodes.enter().append('g').classed(className, true)
-      .attr('transform', (wire) ->
-        pt = pinoutToXy(wire[endIndex])
-        "translate(#{pt[0] / 2}, #{pt[1] / 2})")
     enter.append('circle')
       .attr('r', 10)
       .on('click', cyclePinValue)
@@ -313,6 +310,9 @@ updateTraces = do ->
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
       .classed('voltage-float', isVoltage('float'))
+      .attr('transform', (wire) ->
+        pt = pinoutToXy(wire[endIndex])
+        "translate(#{pt[0] / 2}, #{pt[1] / 2})")
 
   return ->
     updateWireEndTraces 'start-trace', 0
