@@ -29,7 +29,7 @@ draw_wiring_thumbnail = (canvas, wires_string, previous_wires_string) ->
   deleted_wires = wiring_diff(previous_wires_string, wires_string)
 
   # constants
-  [viewport_width, viewport_height] = [1800, 2000]
+  [viewport_width, viewport_height] = [1800 / 2, 2000 / 2]
   canvas_width_breakpoint = 200
   background_image_url = 'url(img/ffmachine.png)'
   [module_rows, module_cols] = [4, 9]
@@ -42,7 +42,7 @@ draw_wiring_thumbnail = (canvas, wires_string, previous_wires_string) ->
 
   line_colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0', '#d02090']
   line_color = (x0, y0, x1, y1) ->
-    color_index = round(line_length(x1 - x0, y1 - y0) / 100)
+    color_index = round(line_length(x1 - x0, y1 - y0) / 50)
     line_colors[color_index] ? line_colors[line_colors.length - 1]
 
   draw_module_rects = ->

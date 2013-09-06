@@ -35,8 +35,8 @@ knoboffset = null
     .enter().append('circle')
     .classed('terminal-position', true)
     .attr('id', (pos) -> pos.machineTerminalName)
-    .attr('cx', (pos) -> pos.x / 2)
-    .attr('cy', (pos) -> pos.y / 2)
+    .attr('cx', (pos) -> pos.x)
+    .attr('cy', (pos) -> pos.y)
     .attr('r', 3)
     .on('mousedown', mouseDownAddWire)
     .append('title')
@@ -105,6 +105,7 @@ mouseDownAddWire = ->
     wireView
       .attr('d', endpointsToPath(wireEndCoordinates...))
       .attr('stroke', endpointsToColor(wireEndCoordinates...))
+
     newEndTerminal = findNearbyTerminal(mouseCoordinates...)
     newEndTerminal = null if newEndTerminal == startTerminal
     unless endTerminal == newEndTerminal
@@ -141,6 +142,7 @@ dragWireEnd = (wire) ->
     wireView
       .attr('d', endpointsToPath(endpoints...))
       .attr('stroke', endpointsToColor(endpoints...))
+
     newEndTerminal = findNearbyTerminal(mouseCoordinates...)
     unless endTerminal == newEndTerminal
       endTerminal = newEndTerminal
@@ -156,6 +158,9 @@ dragWireEnd = (wire) ->
       wire[wireTerminalIndex] = endTerminal.machineTerminalName
       updateCircuitView()
       wires_changed wires
+    else
+      # restore the wire position and color
+      updateCircuitView()
 
 dragKnob = (e) ->
   knob = knobs[starty]
@@ -217,8 +222,8 @@ updateCircuitView = ->
       .append('title').text('Click to drag the wire end to another terminal.')
     startPinTargets.exit().remove()
     startPinTargets
-      .attr('cx', (wire) -> getTerminalCoordinates(wire[endIndex])[0] / 2)
-      .attr('cy', (wire) -> getTerminalCoordinates(wire[endIndex])[1] / 2)
+      .attr('cx', (wire) -> getTerminalCoordinates(wire[endIndex])[0])
+      .attr('cy', (wire) -> getTerminalCoordinates(wire[endIndex])[1])
 
   updateEndPinTargets 'wire-start-target-layer', 0
   updateEndPinTargets 'wire-end-target-layer', 1
@@ -236,10 +241,6 @@ wirePath = (wire) ->
   endpointsToPath(wireEndpoints(wire)...)
 
 endpointsToPath = ([x1, y1], [x2, y2]) ->
-  x1 /= 2
-  y1 /= 2
-  x2 /= 2
-  y2 /= 2
   mx = (x1 + x2) / 2
   my = (y1 + y2) / 2
   dx = (x2 - x1) / 5
@@ -308,7 +309,7 @@ updateTraces = do ->
       .classed('voltage-float', isVoltage('float'))
       .attr('transform', (wire) ->
         pt = getTerminalCoordinates(wire[endIndex])
-        "translate(#{pt[0] / 2}, #{pt[1] / 2})")
+        "translate(#{pt[0]}, #{pt[1]})")
 
   return ->
     updateWireEndTraces 'start-trace', 0
@@ -350,7 +351,7 @@ pickColor = (x1, y1, x2, y2) ->
   dx = x2 - x1
   dy = y2 - y1
   len = Math.sqrt(dx * dx + dy * dy)
-  i = Math.round(len/100)
+  i = Math.round(len/50)
   colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0']
   colors[i] ? '#d02090'
 
@@ -381,6 +382,6 @@ arctan2 = (x, y) -> Math.atan2(x, y) * 180 / Math.PI
 hexd = do (hexdigits='0123456789abcdef') ->
   (n) -> hexdigits[n]
 
-localx = (gx) -> (gx - wirebuffer.getBoundingClientRect().left) * 1800 / 900
-localy = (gy) -> (gy - wirebuffer.getBoundingClientRect().top) * 2000 / 1000
+localx = (gx) -> (gx - wirebuffer.getBoundingClientRect().left)
+localy = (gy) -> (gy - wirebuffer.getBoundingClientRect().top)
 localEvent = (e) -> [localx(e.clientX), localy(e.clientY)]

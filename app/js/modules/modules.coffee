@@ -118,17 +118,17 @@ createModules = ->
   rows = for moduleRow, rowIndex in ModuleLocationMap
     for moduleType, colIndex in moduleRow
       moduleName = [String.fromCharCode(97 + rowIndex), colIndex].join('_')
-      x = colIndex * ModuleDimensions.width
-      y = rowIndex * ModuleDimensions.height
+      x = colIndex * ModuleDimensions.width / 2
+      y = rowIndex * ModuleDimensions.height / 2
       moduleTerminalNames = TerminalLocations[moduleType]
       terminals =
         for [dx, dy, moduleTerminalName] in TerminalLocations[moduleType]
           {
             machineTerminalName: [moduleName, moduleTerminalName].join('_')
             moduleTerminalName
-            coordinates: [x + dx, y + dy]
-            x: x + dx
-            y: y + dy
+            coordinates: [x + dx / 2, y + dy / 2]
+            x: x + dx / 2
+            y: y + dy / 2
           }
       {
         name: moduleName
