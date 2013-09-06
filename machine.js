@@ -337,13 +337,13 @@
       var enter, nodes;
       nodes = getLayer('trace-layer').selectAll('.' + className).data(wires);
       nodes.exit().remove();
-      enter = nodes.enter().append('g').classed(className, true).attr('transform', function(wire) {
+      enter = nodes.enter().append('g').classed(className, true);
+      enter.append('circle').attr('r', 10).on('click', cyclePinValue);
+      return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).attr('transform', function(wire) {
         var pt;
         pt = pinoutToXy(wire[endIndex]);
         return "translate(" + (pt[0] / 2) + ", " + (pt[1] / 2) + ")";
       });
-      enter.append('circle').attr('r', 10).on('click', cyclePinValue);
-      return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float'));
     };
     return function() {
       updateWireEndTraces('start-trace', 0);
