@@ -50,7 +50,9 @@
   runComponent = function(component, wires, outputWireValues) {
     var circuitType, componentPinName, connectedWires, machinePinName, outputs, pinValues, pinWires, pins, value, wire, wireCount, _i, _j, _len, _len1, _ref, _ref1, _results;
     circuitType = component.type, pins = component.pins;
-    component.state || (component.state = {});
+    component.state || (component.state = {
+      falling: edgeDetector
+    });
     pinWires = {};
     pinValues = {};
     for (_i = 0, _len = pins.length; _i < _len; _i++) {
@@ -146,16 +148,14 @@
       };
     },
     ff: function(_arg) {
-      var in0, in1, p;
+      var in0, in1, p, _ref;
       in0 = _arg['0in'], in1 = _arg['1in'], p = _arg.p;
-      this.pulse || (this.pulse = edgeDetector(p));
-      if (this.pulse(p)) {
-        this.in0 = in0;
-        this.in1 = in1;
+      if (this.falling(p)) {
+        _ref = [in0, in1], this.s0 = _ref[0], this.s1 = _ref[1];
       }
       return {
-        '0': this.in0,
-        '1': this.in1
+        '0': this.s0,
+        '1': this.s1
       };
     },
     pa: function(_arg) {
@@ -169,12 +169,11 @@
     gate: function(_arg) {
       var b, e;
       e = _arg.e, b = _arg.b;
-      this.pulse || (this.pulse = edgeDetector(b));
-      if (this.pulse(b)) {
-        this.v = b;
+      if (this.falling(b)) {
+        this.state = e;
       }
       return {
-        c: this.v
+        c: this.state
       };
     },
     ground: function(values) {

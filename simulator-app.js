@@ -59,6 +59,11 @@
       $scope.stopSimulation();
       return stepSimulator();
     };
+    $scope.$watch('mode', function() {
+      if ($scope.mode !== 'simulate') {
+        return $scope.stopSimulation();
+      }
+    });
     $scope.$watch('user', function() {
       removeCurrentViewer();
       CurrentUser = $scope.user;
