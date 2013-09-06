@@ -70,12 +70,6 @@ ModuleDimensions =
 # Constructors
 #
 
-getModuleName = (row, col) ->
-  [String.fromCharCode(97 + row), col].join('_')
-
-moduleTerminalNameToMachineTerminalName = (row, col, moduleTerminalName) ->
-  [getModuleName(row, col), moduleTerminalName].join('_')
-
 moduleComponents = ({type: moduleType, name: moduleName}) ->
   component = (type, componentTerminalNames, componentIndex='') ->
     terminals = for componentTerminalName in componentTerminalNames
@@ -121,40 +115,49 @@ moduleComponents = ({type: moduleType, name: moduleName}) ->
     else console.error 'unknown module type', moduleType
 
 createModules = ->
-  rows = for moduleRow, row in ModuleLocationMap
-    for moduleType, col in moduleRow
-      moduleName = getModuleName(row, col)
-      x = col * ModuleDimensions.width
-      y = row * ModuleDimensions.height
+  rows = for moduleRow, rowIndex in ModuleLocationMap
+    for moduleType, colIndex in moduleRow
+      moduleName = [String.fromCharCode(97 + rowIndex), colIndex].join('_')
+      x = colIndex * ModuleDimensions.width
+      y = rowIndex * ModuleDimensions.height
       moduleTerminalNames = TerminalLocations[moduleType]
       terminals =
         for [dx, dy, moduleTerminalName] in TerminalLocations[moduleType]
-          {x: x + dx, y: y + dy, name: moduleTerminalNameToMachineTerminalName(row, col, moduleTerminalName)}
+          {
+            machineTerminalName: [moduleName, moduleTerminalName].join('_')
+            moduleTerminalName
+            coordinates: [x + dx, y + dy]
+            x: x + dx
+            y: y + dy
+          }
       {
         name: moduleName
         type: moduleType
         terminals
         components: moduleComponents(type: moduleType, name: moduleName)
-        x
-        y
       }
   [].concat rows...
 
 
 
 #
-# Holes
+# Terminals
 #
 
+@findNearbyTerminal = (x, y, tolerance=12) ->
+  for terminal in @machineState.terminals
+    return terminal if dist([terminal.x, terminal.y], [x, y]) < tolerance
+  return null
+
 @xyToTerminalName = (x, y, tolerance=12) ->
-  for {x: px, y: py, name} in @machineState.terminals
-    return name if dist([px, py], [x, y]) < tolerance
+  for {x: px, y: py, machineTerminalName} in @machineState.terminals
+    return machineTerminalName if dist([px, py], [x, y]) < tolerance
   return null
 
 @getTerminalCoordinates = (machineTerminalName) ->
-  for {x, y, name} in @machineState.terminals
-    return [x,y] if name == machineTerminalName
-  console.error "Can't find #{pinName} in module of type #{moduleType}" unless pos
+  for terminal in @machineState.terminals
+    return terminal.coordinates if terminal.machineTerminalName == machineTerminalName
+  console.error "Can't find #{machineTerminalName}"
 
 @machineState = do ->
   modules = createModules()

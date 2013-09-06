@@ -102,8 +102,8 @@ draw_wiring_thumbnail = (canvas, wires_string, previous_wires_string) ->
 
   for wire in wires.concat(v for k, v of deleted_wires)
     [s0, s1] = wire
-    [x0, y0] = pinoutToXy(s0)
-    [x1, y1] = pinoutToXy(s1)
+    [x0, y0] = getTerminalCoordinates(s0)
+    [x1, y1] = getTerminalCoordinates(s1)
     ctx.strokeStyle = line_color(x0, y0, x1, y1)
     ctx.lineCap = 'round'
     ctx.lineWidth = lineWidth

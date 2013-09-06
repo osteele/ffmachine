@@ -34,7 +34,7 @@ knoboffset = null
     .selectAll('.terminal-position').data(TerminalPositions)
     .enter().append('circle')
     .classed('terminal-position', true)
-    .attr('id', (pos) -> pos.name)
+    .attr('id', (pos) -> pos.machineTerminalName)
     .attr('cx', (pos) -> pos.x / 2)
     .attr('cy', (pos) -> pos.y / 2)
     .attr('r', 3)
@@ -42,7 +42,7 @@ knoboffset = null
     .append('title')
       .text((pos) -> "Drag #{pos.name} to another terminal to create a wire.")
 
-  updateWires()
+  updateCircuitView()
 
 createLayer = (layerName, {editMode, simulationMode}={}) ->
   return svgSelection.append('g')
@@ -61,19 +61,20 @@ getLayer = (layerName) ->
 # The storage interface calls this
 @setModel = (wires_) ->
   wires = wires_
-  updateWires()
+  updateCircuitView()
   # prevent clicks until the machine is loaded
   # so we don't overwrite the stored data
   document.getElementById('loading').style.display = 'none'
 
-addWire = (wire) ->
+addWire = ([t1, t2]) ->
+  wire = [t1.machineTerminalName,t2.machineTerminalName]
   wires.push wire
-  updateWires()
+  updateCircuitView()
   wires_changed wires
 
 deleteWire = (wire) ->
   wires = (w for w in wires when w != wire)
-  updateWires()
+  updateCircuitView()
   wires_changed wires
 
 @stepSimulator = ->
@@ -85,38 +86,39 @@ deleteWire = (wire) ->
 # Dragging
 #
 
+getWireView = (wire) ->
+  svgSelection.selectAll('.wire').filter((d) -> d == wire)
+
 mouseDownAddWire = ->
-  startTerminal = xyToTerminalName(localEvent(d3.event)...)
+  startTerminal = findNearbyTerminal(localEvent(d3.event)...)
+  endTerminal = null
   return unless startTerminal
 
-  # d3.select(wirebuffer.getElementById(startTerminal)).classed 'active', true
-  previousEndTerminal = null
-
-  view = svgSelection
+  wireView = svgSelection
     .append('path')
     .classed('wire', true)
     .classed('dragging', true)
-    .attr('stroke', 'red')
 
   window.onmousemove = (e) ->
-    endpoints = [getTerminalCoordinates(startTerminal), localEvent(e)]
-    endTerminal = xyToTerminalName(localEvent(e)...)
-    endTerminal = null if endTerminal == startTerminal
-    unless previousEndTerminal == endTerminal
-      previousEndTerminal = endTerminal
+    mouseCoordinates = localEvent(e)
+    wireEndCoordinates = [startTerminal.coordinates, mouseCoordinates]
+    wireView
+      .attr('d', endpointsToPath(wireEndCoordinates...))
+      .attr('stroke', endpointsToColor(wireEndCoordinates...))
+    newEndTerminal = findNearbyTerminal(mouseCoordinates...)
+    newEndTerminal = null if newEndTerminal == startTerminal
+    unless endTerminal == newEndTerminal
+      endTerminal = newEndTerminal
       svgSelection.select('.active.end').classed('active', false).classed('end', false)
-      d3.select(wirebuffer.getElementById(endTerminal)).classed('active', true).classed('end', true) if endTerminal
-    view
-      .attr('d', endpointsToPath(endpoints...))
-      .attr('stroke', endpointsToColor(endpoints...))
+      d3.select(wirebuffer.getElementById(endTerminal.machineTerminalName))
+        .classed('active', true).classed('end', true) if endTerminal
 
   window.onmouseup = (e) ->
     window.onmousemove = null
     window.onmouseup = null
-    view.remove()
+    wireView.remove()
     svgSelection.select('.active').classed('active', false).classed('end', false)
-    endTerminal = xyToTerminalName(localEvent(e)...)
-    addWire [startTerminal, endTerminal] if endTerminal and endTerminal != startTerminal
+    addWire [startTerminal, endTerminal] if endTerminal
 
 closestEndIndex = (wire) ->
   [x, y] = localEvent(d3.event)
@@ -125,47 +127,42 @@ closestEndIndex = (wire) ->
   d2 = dist([x,y], getTerminalCoordinates(p2))
   (if d1 < d2 then 0 else 1)
 
-wireView = (wire) ->
-  svgSelection.selectAll('.wire').filter((d) -> d == wire)
-
 dragWireEnd = (wire) ->
-  view = wireView(wire)
-  view.transition().delay(0)
+  wireView = getWireView(wire)
+  wireView.transition().delay(0)
   [p1, p2] = wire
   wireTerminalIndex = closestEndIndex(wire)
-  previousEndTerminal = null
+  endTerminal = null
 
   window.onmousemove = (e) ->
+    mouseCoordinates = localEvent(e)
     endpoints = [getTerminalCoordinates(p1), getTerminalCoordinates(p2)]
-    endpoints[wireTerminalIndex] = localEvent(e)
-    endPin = xyToTerminalName(localEvent(e)...)
-    unless previousEndTerminal == endPin
-      previousEndTerminal = endPin
-      svgSelection.select('.active').classed('active', false)
-      d3.select(wirebuffer.getElementById(endPin)).classed('active', true) if endPin
-    view.attr 'stroke', 'blue'
-    view
+    endpoints[wireTerminalIndex] = mouseCoordinates
+    wireView
       .attr('d', endpointsToPath(endpoints...))
       .attr('stroke', endpointsToColor(endpoints...))
+    newEndTerminal = findNearbyTerminal(mouseCoordinates...)
+    unless endTerminal == newEndTerminal
+      endTerminal = newEndTerminal
+      svgSelection.select('.active').classed('active', false)
+      d3.select(wirebuffer.getElementById(endTerminal.machineTerminalName))
+        .classed('active', true) if endTerminal
 
   window.onmouseup = (e) ->
-    svgSelection.select('.active').classed('active', false)
     window.onmousemove = null
     window.onmouseup = null
-    endPin = xyToTerminalName(localEvent(e)...)
-    if endPin and wire[wireTerminalIndex] != endPin
-      wire[wireTerminalIndex] = endPin
-      updateWires()
+    svgSelection.select('.active').classed('active', false)
+    if endTerminal and wire[wireTerminalIndex] != endTerminal.machineTerminalName
+      wire[wireTerminalIndex] = endTerminal.machineTerminalName
+      updateCircuitView()
       wires_changed wires
-    else
-      updateWires()
 
 dragKnob = (e) ->
   knob = knobs[starty]
   a = knobAngle(knob, localEvent(e)...)
   knoboffset = mod360(knob[2] - a) unless moved
   knob[2] = mod360(a + knoboffset)
-  updateWires()
+  updateCircuitView()
   wires_changed wires
 
 releaseKnob = ->
@@ -174,7 +171,7 @@ releaseKnob = ->
     knob[2] = findNearest(knob[2], [-72, -36, 0, 36, 72])
   if starty == 2
     knob[2] = findNearest(knob[2], [-68, -23, 22, 67])
-  updateWires()
+  updateCircuitView()
   wires_changed wires
 
 
@@ -182,7 +179,7 @@ releaseKnob = ->
 # Drawing
 #
 
-updateWires = ->
+updateCircuitView = ->
   wireViews = getLayer('wire-layer').selectAll('.wire').data(wires)
   wireViews.enter().append('path').classed('wire', true)
   wireViews.exit().remove()
@@ -211,12 +208,12 @@ updateWires = ->
       .on('mousedown', dragWireEnd)
       # Uncomment below for cheesy hover animation of wire end
       # .on('mouseover', (wire) ->
-      #   targetView = wireView(wire)
+      #   targetView = getWireView(wire)
       #   endpoints = wireEndpoints(wire)
       #   endpoints[closestEndIndex(wire)][1] += 10
       #   targetView.transition().delay(0).attr('d', endpointsToPath(endpoints...))
       #   )
-      # .on('mouseout', (wire) -> wireView(wire).transition().delay(0).attr('d', wirePath(wire)) )
+      # .on('mouseout', (wire) -> getWireView(wire).transition().delay(0).attr('d', wirePath(wire)) )
       .append('title').text('Click to drag the wire end to another terminal.')
     startPinTargets.exit().remove()
     startPinTargets
