@@ -1,5 +1,5 @@
 (function() {
-  var ComponentStepFunctions, runComponent, updateModule, updateModules, updateWires;
+  var ComponentStepFunctions, boolToVolt, comp, edgeDetector, runComponent, updateModule, updateModules, updateWires;
 
   this.Simulator = {
     step: function(modules, wires) {
@@ -12,11 +12,6 @@
 
   updateModules = function(modules, wires, outputWireValues) {
     var module, _i, _len, _results;
-    modules = modules.filter((function(_arg) {
-      var name;
-      name = _arg.name;
-      return name === "a_1";
-    }));
     _results = [];
     for (_i = 0, _len = modules.length; _i < _len; _i++) {
       module = modules[_i];
@@ -52,9 +47,10 @@
     return _results;
   };
 
-  runComponent = function(_arg, wires, outputWireValues) {
+  runComponent = function(component, wires, outputWireValues) {
     var circuitType, componentPinName, connectedWires, machinePinName, pinValues, pinWires, pins, value, wire, wireCount, _i, _j, _len, _len1, _ref, _ref1, _results;
-    circuitType = _arg.type, pins = _arg.pins;
+    circuitType = component.type, pins = component.pins;
+    component.state || (component.state = {});
     pinWires = {};
     pinValues = {};
     for (_i = 0, _len = pins.length; _i < _len; _i++) {
@@ -73,13 +69,10 @@
       wireCount += connectedWires.length;
       pinValues[componentPinName] = (_ref1 = connectedWires[0]) != null ? _ref1.value : void 0;
     }
-    if (!(wireCount > 0)) {
-      return;
-    }
     if (ComponentStepFunctions[circuitType] == null) {
       console.error("No component step function for " + circuitType);
     }
-    ComponentStepFunctions[circuitType].call(runComponent, pinValues);
+    ComponentStepFunctions[circuitType].call(component.state, pinValues);
     _results = [];
     for (componentPinName in pinWires) {
       connectedWires = pinWires[componentPinName];
@@ -97,17 +90,51 @@
     return _results;
   };
 
+  comp = function(value) {
+    return -3 - value;
+  };
+
+  boolToVolt = function(value) {
+    if (value) {
+      return -3;
+    } else {
+      return 0;
+    }
+  };
+
+  edgeDetector = function(init) {
+    var previous;
+    previous = init;
+    return function(value) {
+      var isEdge;
+      isEdge = value && !previous;
+      previous = value;
+      return isEdge;
+    };
+  };
+
   ComponentStepFunctions = {
     clamp: function(values) {},
+    clock: function(values) {
+      var freq, v;
+      this.counter || (this.counter = 0);
+      this.counter += 1;
+      freq = 2;
+      v = boolToVolt(this.counter % freq >= freq / 2);
+      values['-'] = comp(v);
+      return values['+'] = v;
+    },
+    pa: function(values) {
+      var v;
+      v = values['in'];
+      values['-'] = comp(v);
+      return values['+'] = v;
+    },
     gate: function(values) {
       var b, c, e;
       c = values.c, e = values.e, b = values.b;
-      console.info('gate', {
-        c: c,
-        e: e,
-        b: b
-      }, values);
-      if (b && !this.b) {
+      this.pulse || (this.pulse = edgeDetector(b));
+      if (this.pulse(b)) {
         this.v = b;
       }
       return values.c = this.v;
