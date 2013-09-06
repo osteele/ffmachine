@@ -24,10 +24,7 @@ knoboffset = null
 
   svgSelection = d3.select(wirebuffer)
 
-  svgSelection
-    .append('g')
-    .classed('pin-target-layer', true)
-    .classed('edit-mode-layer', true)
+  createLayer('pin-target-layer', editMode: true)
     .selectAll('.hole').data(holePositions())
     .enter().append('circle')
     .classed('hole', true)
@@ -39,13 +36,22 @@ knoboffset = null
     .append('title')
       .text((pos) -> "Drag #{pos.name} to another pin to create a wire.")
 
-  svgSelection.append('g').classed('wire-layer', true)
-  svgSelection.append('g').classed('simulation-mode-layer', true).classed('trace-layer', true)
-  svgSelection.append('g').classed('edit-mode-layer', true).classed('deletion-target-layer', true)
-  svgSelection.append('g').classed('edit-mode-layer', true).classed('wire-start-target-layer', true)
-  svgSelection.append('g').classed('edit-mode-layer', true).classed('wire-end-target-layer', true)
+  createLayer('wire-layer')
+  createLayer('trace-layer', simulationMode: true)
+  createLayer('deletion-target-layer', editMode: true)
+  createLayer('wire-start-target-layer', editMode: true)
+  createLayer('wire-end-target-layer', editMode: true)
 
-  redraw()
+  updateWires()
+
+createLayer = (layerName, {editMode, simulationMode}={}) ->
+  return svgSelection.append('g')
+    .classed(layerName, true)
+    .classed('edit-mode-layer', editMode)
+    .classed('simulation-mode-layer', simulationMode)
+
+getLayer = (layerName) ->
+  return svgSelection.select('.' + layerName)
 
 
 #
@@ -55,24 +61,25 @@ knoboffset = null
 # The storage interface calls this
 @setModel = (wires_) ->
   wires = wires_
-  redraw()
+  updateWires()
   # prevent clicks until the machine is loaded
   # so we don't overwrite the stored data
   document.getElementById('loading').style.display = 'none'
 
 addWire = (wire) ->
   wires.push wire
-  redraw()
+  updateWires()
   wires_changed wires
 
 deleteWire = (wire) ->
   wires = (w for w in wires when w != wire)
-  redraw()
+  updateWires()
   wires_changed wires
 
 @stepSimulator = ->
   @Simulator.step @machineState.modules, wires
-  redrawTraces()
+  updateTraces()
+
 
 #
 # Dragging
@@ -149,17 +156,17 @@ dragWireEnd = (wire) ->
     endPin = xyToPinout(localEvent(e)...)
     if endPin and wire[pinIndex] != endPin
       wire[pinIndex] = endPin
-      redraw()
+      updateWires()
       wires_changed wires
     else
-      redraw()
+      updateWires()
 
 dragKnob = (e) ->
   knob = knobs[starty]
   a = knobAngle(knob, localEvent(e)...)
   knoboffset = mod360(knob[2] - a) unless moved
   knob[2] = mod360(a + knoboffset)
-  redraw()
+  updateWires()
   wires_changed wires
 
 releaseKnob = ->
@@ -168,7 +175,7 @@ releaseKnob = ->
     knob[2] = findNearest(knob[2], [-72, -36, 0, 36, 72])
   if starty == 2
     knob[2] = findNearest(knob[2], [-68, -23, 22, 67])
-  redraw()
+  updateWires()
   wires_changed wires
 
 
@@ -176,15 +183,15 @@ releaseKnob = ->
 # Drawing
 #
 
-redraw = ->
-  wireViews = svgSelection.select('.wire-layer').selectAll('.wire').data(wires)
+updateWires = ->
+  wireViews = getLayer('wire-layer').selectAll('.wire').data(wires)
   wireViews.enter().append('path').classed('wire', true)
   wireViews.exit().remove()
   wireViews
     .attr('d', wirePath)
     .attr('stroke', wireColor)
 
-  wireTargets = svgSelection.select('.deletion-target-layer').selectAll('.wire-mouse-target').data(wires)
+  wireTargets = getLayer('deletion-target-layer').selectAll('.wire-mouse-target').data(wires)
   wireTargets.enter()
     .append('path')
     .classed('wire-mouse-target', true)
@@ -195,7 +202,7 @@ redraw = ->
     .attr('d', wirePath)
 
   updateEndPinTargets = (layerName, endIndex) ->
-    startPinTargets = svgSelection.select('.' + layerName)
+    startPinTargets = getLayer(layerName)
       .selectAll('.wire-end-target')
       .data(w for w in wires when wireLength(w) > 45)
     startPinTargets.enter()
@@ -220,7 +227,7 @@ redraw = ->
   updateEndPinTargets 'wire-start-target-layer', 0
   updateEndPinTargets 'wire-end-target-layer', 1
 
-  redrawTraces()
+  updateTraces()
   # drawKnobs()
 
 wireEndpoints = ([p1, p2]) ->
@@ -252,6 +259,11 @@ endpointsToColor = ([x1, y1], [x2, y2], n) ->
   n or= wires.length
   cmerge(pickColor(x1, y1, x2, y2), n)
 
+
+#
+# Knobs (unused)
+#
+
 drawKnobs = ->
   drawKnob k... for k in knobs
 
@@ -262,24 +274,34 @@ drawKnob = (x, y, a, c) ->
   ctx.closePath()
   ctx.fill()
 
+knobAngle = (knob, x, y) ->
+  arctan2(x - knob[0], knob[1] - y)
+
 
 #
-# Drawing Traces
+# Traces
 #
 
-redrawTraces = ->
+updateTraces = do ->
   wireVoltageName = (wire) ->
+    # return 'float' unless typeof wire == 'number'
     switch wire.value
-      when -3 then 'low'
+      when -3 then 'negative'
       when 0 then 'ground'
       else 'float'
 
-  hasVoltage = (symbolicValue) ->
+  isVoltage = (symbolicValue) ->
     (wire) ->
       wireVoltageName(wire) == symbolicValue
 
-  addTraces = (className, endIndex) ->
-    nodes = svgSelection.select('.trace-layer').selectAll('.' + className).data(wires)
+  symbols = ['negative', 'ground', 'float']
+  values = [-3, 0, undefined]
+  cyclePinValue = (wire) ->
+    wire.value = values[(symbols.indexOf(wireVoltageName(wire)) + 1) % symbols.length]
+    updateTraces()
+
+  updateWireEndTraces = (className, endIndex) ->
+    nodes = getLayer('trace-layer').selectAll('.' + className).data(wires)
     nodes.exit().remove()
     enter = nodes.enter().append('g').classed(className, true)
       .attr('transform', (wire) ->
@@ -287,19 +309,20 @@ redrawTraces = ->
         "translate(#{pt[0] / 2}, #{pt[1] / 2})")
     enter.append('circle')
       .attr('r', 10)
-      .classed('voltage-low', hasVoltage('low'))
-      .classed('voltage-ground', hasVoltage('ground'))
-      .classed('voltage-float', hasVoltage('float'))
+      .on('click', cyclePinValue)
+    nodes
+      .classed('voltage-negative', isVoltage('negative'))
+      .classed('voltage-ground', isVoltage('ground'))
+      .classed('voltage-float', isVoltage('float'))
 
-  addTraces 'start-trace', 0
-  addTraces 'end-trace', 1
+  return ->
+    updateWireEndTraces 'start-trace', 0
+    updateWireEndTraces 'end-trace', 1
+
 
 #
-# Etc.
+# Utilities
 #
-
-knobAngle = (knob, x, y) ->
-  arctan2(x - knob[0], knob[1] - y)
 
 cmerge = (c, n) ->
   high = hexd((n >> 8) & 15)

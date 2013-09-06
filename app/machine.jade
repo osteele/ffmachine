@@ -21,7 +21,7 @@ html(lang="en", ng-app="FFMachine")
     script(src="simulator-app.js")
     script(src="simulator.js")
 
-  body(ng-controller="MachineSimulatorCtrl", ng-class="{'edit-mode': mode == 'edit', 'simulate-mode': mode == 'simulate'}")
+  body(ng-controller="MachineSimulatorCtrl", ng-class="{'edit-mode': mode == 'edit', 'simulation-mode': mode == 'simulate'}")
     include partials/toolbar
       .btn-group
         button.btn.btn-default(ng-disabled="mode == 'edit'", ng-show="editable", ng-click="mode = 'edit'") Edit
@@ -32,28 +32,37 @@ html(lang="en", ng-app="FFMachine")
       //-   a.icon-stop(ng-show="mode == 'simulate'", ng-class="{disabled: !simulaton_running}")
       //-   a.icon-pause(ng-show="mode == 'simulate'", ng-class="{disabled: !simulaton_running}")
 
-    h1
-      a(href=".") Flip Flop Machines
-      | &nbsp;» {{machine.name}}
+    .content
+      .col-md-8
+        h1
+          a(href=".") Flip Flop Machines
+          | &nbsp;» {{machine.name}}
 
-    #frame.frame
-      .ffmachine
-        img(src="img/ffmachine.png", width=900, height=1000)
-        #loading
-        svg#wirebuffer
-          defs
-            filter#drop-shadow
-              feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="2")
-              feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
-              feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
-            filter#drop-shadow-2
-              feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="1")
-              feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
-              feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
-            linearGradient#grad1(x1="0%", y1="0%", x2="100%", y2="0%")
-              stop(offset="0%", style="stop-color:rgb(255,255,0);stop-opacity:1")
-              stop(offset="100%", style="stop-color:rgb(255,0,0);stop-opacity:1")
+        #frame.frame
+          .ffmachine
+            img(src="img/ffmachine.png", width=900, height=1000)
+            #loading
+            svg#wirebuffer
+              defs
+                filter#drop-shadow
+                  feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="2")
+                  feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
+                  feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
+                filter#drop-shadow-2
+                  feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="1")
+                  feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
+                  feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
+                linearGradient#grad1(x1="0%", y1="0%", x2="100%", y2="0%")
+                  stop(offset="0%", style="stop-color:rgb(255,255,0);stop-opacity:1")
+                  stop(offset="100%", style="stop-color:rgb(255,0,0);stop-opacity:1")
 
-    #connected-users
-      h2 Current Viewers
-      ul(ng-repeat="viewer in machine.connected") {{viewer}}
+      .col-md-4
+        #connected-users
+          h3 Current Viewers
+          ul(ng-repeat="viewer in machine.connected") {{viewer}}
+
+        #legend
+          h3 Voltage Key
+          .pull-right.negative-voltage -3V
+          .pull-right.float-voltage float
+          .pull-right.ground-voltage ground
