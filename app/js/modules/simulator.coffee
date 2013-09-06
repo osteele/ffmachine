@@ -5,7 +5,7 @@
     updateWires wires, outputWireValues
 
 updateModules = (modules, wires, outputWireValues) ->
-  # modules = modules.filter (({name}) -> name == "a_1" or name == "a_0" or name == "a_2")
+  # modules = modules.filter (({name}) -> name == "a_1" or name == "a_0") # or name == "a_2")
   updateModule module, wires, outputWireValues for module in modules
 
 updateWires = (wires, outputWireValues) ->
@@ -82,7 +82,7 @@ ComponentStepFunctions =
     @state = !@state if pulsed
     @state = false if in0 == 0
     @state = true if in1 == 0
-    {'0': !@state, '1': @state, p: pulsed}
+    {'0': @state == false, '1': @state == true, p: pulsed}
 
   pa: ({'in': input}) ->
     {'+': input, '-': comp(input)}

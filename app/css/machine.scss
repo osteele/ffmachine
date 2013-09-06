@@ -53,6 +53,8 @@ body.simulation-mode .ffmachine {
 
 .ffmachine svg {
   .hole {
+    fill: none;
+
     &:hover {
       fill: blue;
       cursor: cell;
