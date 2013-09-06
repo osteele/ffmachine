@@ -16,6 +16,7 @@ app = angular.module 'FFMachine', ['firebase']
 
 app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire, angularFireAuth) ->
   $scope.mode = 'edit'
+  simulationThread = null
 
   angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
 
@@ -25,8 +26,19 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
   $scope.logout = ->
     angularFireAuth.logout()
 
-  $scope.step = ->
+  $scope.runSimulation = ->
     $scope.mode = 'simulate'
+    $scope.simulationRunning = true
+    simulationThread = window.setInterval (-> stepSimulator()), 1000 / 10
+
+  $scope.stopSimulation = ->
+    window.clearInterval simulationThread
+    $scope.simulationRunning = false
+    simulationThread = null
+
+  $scope.stepSimulation = ->
+    $scope.mode = 'simulate'
+    $scope.stopSimulation()
     stepSimulator()
 
   $scope.$watch 'user', ->
