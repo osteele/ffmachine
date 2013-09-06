@@ -41,6 +41,9 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.stopSimulation()
     stepSimulator()
 
+  $scope.$watch 'mode', ->
+    $scope.stopSimulation() unless $scope.mode == 'simulate'
+
   $scope.$watch 'user', ->
     removeCurrentViewer()
     CurrentUser = $scope.user
