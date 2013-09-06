@@ -73,8 +73,8 @@ ModuleDimensions =
 moduleComponents = ({type: moduleType, name: moduleName}) ->
   component = (type, componentTerminalNames, componentIndex='') ->
     terminals = for componentTerminalName in componentTerminalNames
-      machineTerminalName = [moduleName, componentTerminalName.replace(/(\w+)/, "$1#{componentIndex}")].join('_')
-      {componentTerminalName, machineTerminalName}
+      globalTerminalName = [moduleName, componentTerminalName.replace(/(\D+)/, "$1#{componentIndex}")].join('_')
+      {componentTerminalName, globalTerminalName}
     return {type, terminals}
 
   clock = ->
@@ -87,7 +87,7 @@ moduleComponents = ({type: moduleType, name: moduleName}) ->
   ground = (componentIndex) ->
     component('ground', ['gnd'], componentIndex)
   pa = (componentIndex) ->
-    component('pa', ['-', '+', 'in', 'gnd'])
+    component('pa', ['-', '+', 'in', 'gnd'], componentIndex)
 
   switch moduleType
     when 'ff' then [
@@ -124,7 +124,7 @@ createModules = ->
       terminals =
         for [dx, dy, moduleTerminalName] in TerminalLocations[moduleType]
           {
-            machineTerminalName: [moduleName, moduleTerminalName].join('_')
+            globalTerminalName: [moduleName, moduleTerminalName].join('_')
             moduleTerminalName
             coordinates: [x + dx / 2, y + dy / 2]
             x: x + dx / 2
@@ -139,7 +139,6 @@ createModules = ->
   [].concat rows...
 
 
-
 #
 # Terminals
 #
@@ -149,15 +148,18 @@ createModules = ->
     return terminal if dist([terminal.x, terminal.y], [x, y]) < tolerance
   return null
 
+@findTerminalByName = (globalTerminalName) ->
+  for terminal in @machineState.terminals
+    return terminal if terminal.globalTerminalName == globalTerminalName
+  console.error "Can't find terminal named #{globalTerminalName}"
+
 @xyToTerminalName = (x, y, tolerance=12) ->
-  for {x: px, y: py, machineTerminalName} in @machineState.terminals
-    return machineTerminalName if dist([px, py], [x, y]) < tolerance
+  for {x: px, y: py, globalTerminalName} in @machineState.terminals
+    return globalTerminalName if dist([px, py], [x, y]) < tolerance
   return null
 
-@getTerminalCoordinates = (machineTerminalName) ->
-  for terminal in @machineState.terminals
-    return terminal.coordinates if terminal.machineTerminalName == machineTerminalName
-  console.error "Can't find #{machineTerminalName}"
+@getTerminalCoordinates = (globalTerminalName) ->
+  findTerminalByName(globalTerminalName).coordinates
 
 @machineState = do ->
   modules = createModules()

@@ -1,28 +1,52 @@
+HistoryLength = 400  # keep this many historical values
+
+# set these to trace the simulator in the js console
+RestrictModules = 0 #['a_0', 'a_1']
+Trace = 0
+TraceComponents = 0 #['ff']
+
 @Simulator =
   step: (modules, wires) ->
     @currentTime or= 0
-    outputWireValues = {}
-    updateModules modules, wires, outputWireValues
-    updateWires wires, outputWireValues, @currentTime
+    terminals = [].concat((module.terminals for module in modules)...)
+    terminalInputs = computeTerminalValues(terminals, wires)
+    terminalOutputs = {}
+    runModules modules, terminalInputs, terminalOutputs
+    updateWireValues wires, terminalOutputs, @currentTime
     @currentTime += 1
 
-HistoryLength = 400
+runModules = (modules, terminalInputs, terminalOutputs) ->
+  modules = (m for m in modules when m.name in RestrictModules) if RestrictModules
+  updateModuleOutputs module, terminalInputs, terminalOutputs for module in modules
 
-updateModules = (modules, wires, outputWireValues) ->
-  # modules = modules.filter (({name}) -> name == "a_1" or name == "a_0") # or name == "a_2")
-  updateModule module, wires, outputWireValues for module in modules
+getWireName = (wire) ->
+  (terminal.globalTerminalName for terminal in wire).join('->')
 
-updateWires = (wires, outputWireValues, timestamp) ->
-  for wire in wires
-    wire.trace or= []
-    wire.trace.push {timestamp, value: wire.value}
-    wire.trace = wire.trace.slice(wire.trace.length - HistoryLength) if wire.trace.length > HistoryLength
-    wire.value = outputWireValues[wire] if wire of outputWireValues
+updateWireValues = (wires, terminalOutputs, timestamp) ->
+  for globalTerminalName, value of terminalOutputs
+    for wire in getConnectedWires(findTerminalByName(globalTerminalName), wires)
+      console.info getWireName(wire), '<-', value if Trace
+      wire.value = value
+      wire.timestamp = timestamp
+      wire.trace or= []
+      wire.trace.push {timestamp, value: wire.value}
+      wire.trace.splice(0, wire.trace.length - HistoryLength) if wire.trace.length > HistoryLength
 
-updateModule = (module, wires, outputWireValues) ->
-  runComponent component, wires, outputWireValues for component in module.components
+updateModuleOutputs = (module, terminalInputs, terminalOutputs) ->
+  runComponent component, terminalInputs, terminalOutputs for component in module.components
 
-runComponent = (component, wires, outputWireValues) ->
+getConnectedWires = (terminal, wires) ->
+  return (wire for wire in wires when terminal in wire)
+
+computeTerminalValues = (terminals, wires) ->
+  values = {}
+  for terminal in terminals
+    wireValues = (wire.value for wire in getConnectedWires(terminal, wires))
+    values[terminal.globalTerminalName] = wireValues[0] if wireValues.length
+  return values
+
+runComponent = (component, terminalInputs, terminalOutputs) ->
+  trace = component.type in TraceComponents
   {type: circuitType, terminals} = component
   component.state or= {
     falling: (n) ->
@@ -31,28 +55,19 @@ runComponent = (component, wires, outputWireValues) ->
       n < s
   }
 
-  terminalWires = {}
-  for {componentTerminalName, machineTerminalName} in terminals
-    connectedWires = terminalWires[componentTerminalName] = []
-    for wire in wires
-      connectedWires.push wire if wire[0] == machineTerminalName or wire[1] == machineTerminalName
-
-  wireCount = 0
-  for componentTerminalName, connectedWires of terminalWires
-    wireCount += connectedWires.length
-
-  terminalValues = {}
-  for componentTerminalName, connectedWires of terminalWires
-    terminalValues[componentTerminalName] = connectedWires[0]?.value
-
-  # skip circuits with no connected wires, for ease of debugging:
-  # return unless circuitType == 'clock' or wireCount > 0
+  moduleInputs = {}
+  for {componentTerminalName, globalTerminalName} in terminals
+    moduleInputs[componentTerminalName] = terminalInputs[globalTerminalName]
   console.error "No component step function for #{circuitType}" unless ComponentStepFunctions[circuitType]?
-  outputs = ComponentStepFunctions[circuitType].call(component.state, terminalValues)
+  moduleOutputs = ComponentStepFunctions[circuitType].call(component.state, moduleInputs)
 
-  for componentTerminalName, value of outputs
+  for {componentTerminalName, globalTerminalName} in terminals
+    continue unless componentTerminalName of moduleOutputs
+    value = moduleOutputs[componentTerminalName]
     value = boolToVolt(value) if value == true or value == false
-    outputWireValues[wire] = value for wire in terminalWires[componentTerminalName]
+    terminalOutputs[globalTerminalName] = value
+
+  console.info component.type, (t.globalTerminalName for t in terminals), moduleInputs, moduleOutputs if trace
 
 boolToVolt = (value) ->
   switch value

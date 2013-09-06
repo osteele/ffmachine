@@ -105,9 +105,13 @@ saveWires = (name, wiring) ->
   saveWires name, wires
 
 serializeWiring = (wires) ->
-  return (wire.join(' ') for wire in wires).join("\n")
+  getWireName = (wire) ->
+    return wire.map((terminal) -> terminal.globalTerminalName).join(' ')
+  return wires.map(getWireName).join("\n")
 
-unserializeWiring = (str) ->
-  wire_strings = str.replace(/\\n/g, "\n").split(/\n/)
-  wire_strings.pop() if wire_strings[wire_strings.length - 1] == ''
-  return wire_strings.map((wire) -> wire.split ' ')
+unserializeWiring = (wiringString) ->
+  wireNames = wiringString.replace(/\\n/g, "\n").split(/\n/)
+  wireNames.pop() if wireNames[wireNames.length - 1] == ''
+  wireNameToWire = (wireName) ->
+    return wireName.split(' ').map(findTerminalByName)
+  return wireNames.map(wireNameToWire)

@@ -34,7 +34,7 @@ knoboffset = null
     .selectAll('.terminal-position').data(TerminalPositions)
     .enter().append('circle')
     .classed('terminal-position', true)
-    .attr('id', (pos) -> pos.machineTerminalName)
+    .attr('id', (pos) -> pos.globalTerminalName)
     .attr('cx', (pos) -> pos.x)
     .attr('cy', (pos) -> pos.y)
     .attr('r', 3)
@@ -66,8 +66,8 @@ getLayer = (layerName) ->
   # so we don't overwrite the stored data
   document.getElementById('loading').style.display = 'none'
 
-addWire = ([t1, t2]) ->
-  wire = [t1.machineTerminalName,t2.machineTerminalName]
+addWire = (wire) ->
+  wire.name = wire.map((t) -> t.globalTerminalName).join(' ')
   wires.push wire
   updateCircuitView()
   wires_changed wires
@@ -111,7 +111,7 @@ mouseDownAddWire = ->
     unless endTerminal == newEndTerminal
       endTerminal = newEndTerminal
       svgSelection.select('.active.end').classed('active', false).classed('end', false)
-      d3.select(wirebuffer.getElementById(endTerminal.machineTerminalName))
+      d3.select(wirebuffer.getElementById(endTerminal.globalTerminalName))
         .classed('active', true).classed('end', true) if endTerminal
 
   window.onmouseup = (e) ->
@@ -123,21 +123,21 @@ mouseDownAddWire = ->
 
 closestEndIndex = (wire) ->
   [x, y] = localEvent(d3.event)
-  [p1, p2] = wire
-  d1 = dist([x,y], getTerminalCoordinates(p1))
-  d2 = dist([x,y], getTerminalCoordinates(p2))
+  [t1, t2] = wire
+  d1 = dist([x,y], t1.coordinates)
+  d2 = dist([x,y], t2.coordinates)
   (if d1 < d2 then 0 else 1)
 
 dragWireEnd = (wire) ->
   wireView = getWireView(wire)
   wireView.transition().delay(0)
-  [p1, p2] = wire
+  [t1, t2] = wire
   wireTerminalIndex = closestEndIndex(wire)
   endTerminal = null
 
   window.onmousemove = (e) ->
     mouseCoordinates = localEvent(e)
-    endpoints = [getTerminalCoordinates(p1), getTerminalCoordinates(p2)]
+    endpoints = [t1.coordinates, t2.coordinates]
     endpoints[wireTerminalIndex] = mouseCoordinates
     wireView
       .attr('d', endpointsToPath(endpoints...))
@@ -147,15 +147,15 @@ dragWireEnd = (wire) ->
     unless endTerminal == newEndTerminal
       endTerminal = newEndTerminal
       svgSelection.select('.active').classed('active', false)
-      d3.select(wirebuffer.getElementById(endTerminal.machineTerminalName))
+      d3.select(wirebuffer.getElementById(endTerminal.globalTerminalName))
         .classed('active', true) if endTerminal
 
   window.onmouseup = (e) ->
     window.onmousemove = null
     window.onmouseup = null
     svgSelection.select('.active').classed('active', false)
-    if endTerminal and wire[wireTerminalIndex] != endTerminal.machineTerminalName
-      wire[wireTerminalIndex] = endTerminal.machineTerminalName
+    if endTerminal and wire[wireTerminalIndex] != endTerminal
+      wire[wireTerminalIndex] = endTerminal
       updateCircuitView()
       wires_changed wires
     else
@@ -222,8 +222,8 @@ updateCircuitView = ->
       .append('title').text('Click to drag the wire end to another terminal.')
     startPinTargets.exit().remove()
     startPinTargets
-      .attr('cx', (wire) -> getTerminalCoordinates(wire[endIndex])[0])
-      .attr('cy', (wire) -> getTerminalCoordinates(wire[endIndex])[1])
+      .attr('cx', (wire) -> wire[endIndex].coordinates[0])
+      .attr('cy', (wire) -> wire[endIndex].coordinates[1])
 
   updateEndPinTargets 'wire-start-target-layer', 0
   updateEndPinTargets 'wire-end-target-layer', 1
@@ -231,8 +231,8 @@ updateCircuitView = ->
   updateTraces()
   # drawKnobs()
 
-wireEndpoints = ([p1, p2]) ->
-  [getTerminalCoordinates(p1), getTerminalCoordinates(p2)]
+wireEndpoints = ([t1, t2]) ->
+  [t1.coordinates, t2.coordinates]
 
 wireLength = (wire) ->
   dist(wireEndpoints(wire)...)
@@ -249,8 +249,8 @@ endpointsToPath = ([x1, y1], [x2, y2]) ->
   [dx, dy] = [0, 5] if Math.abs(y1 - y2) < 10
   ['M', x1, y1, 'Q', x1 + dx, y1 + dy, mx, my, 'T', x2, y2].join(' ')
 
-wireColor = ([p1, p2], n) ->
-  endpointsToColor(getTerminalCoordinates(p1), getTerminalCoordinates(p2), n)
+wireColor = ([t1, t2], n) ->
+  endpointsToColor(t1.coordinates, t2.coordinates, n)
 
 endpointsToColor = ([x1, y1], [x2, y2], n) ->
   n or= wires.length
@@ -308,7 +308,7 @@ updateTraces = do ->
       .classed('voltage-ground', isVoltage('ground'))
       .classed('voltage-float', isVoltage('float'))
       .attr('transform', (wire) ->
-        pt = getTerminalCoordinates(wire[endIndex])
+        pt = wire[endIndex].coordinates
         "translate(#{pt[0]}, #{pt[1]})")
 
   return ->
