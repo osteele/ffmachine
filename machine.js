@@ -16,17 +16,6 @@
     wirebuffer.width = 1800;
     wirebuffer.height = 2000;
     svgSelection = d3.select(wirebuffer);
-    createLayer('pin-target-layer', {
-      editMode: true
-    }).selectAll('.hole').data(holePositions()).enter().append('circle').classed('hole', true).attr('id', function(pos) {
-      return pos.name;
-    }).attr('cx', function(pos) {
-      return pos.x / 2;
-    }).attr('cy', function(pos) {
-      return pos.y / 2;
-    }).attr('r', 3).on('mousedown', mouseDownAddWire).append('title').text(function(pos) {
-      return "Drag " + pos.name + " to another pin to create a wire.";
-    });
     createLayer('wire-layer');
     createLayer('trace-layer', {
       simulationMode: true
@@ -34,11 +23,23 @@
     createLayer('deletion-target-layer', {
       editMode: true
     });
+    createLayer('pin-target-layer', {
+      editMode: true
+    });
     createLayer('wire-start-target-layer', {
       editMode: true
     });
     createLayer('wire-end-target-layer', {
       editMode: true
+    });
+    getLayer('pin-target-layer').selectAll('.hole').data(holePositions()).enter().append('circle').classed('hole', true).attr('id', function(pos) {
+      return pos.name;
+    }).attr('cx', function(pos) {
+      return pos.x / 2;
+    }).attr('cy', function(pos) {
+      return pos.y / 2;
+    }).attr('r', 3).on('mousedown', mouseDownAddWire).append('title').text(function(pos) {
+      return "Drag " + pos.name + " to another pin to create a wire.";
     });
     return updateWires();
   };

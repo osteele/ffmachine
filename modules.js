@@ -24,10 +24,13 @@
   };
 
   moduleComponents = function(_arg) {
-    var clock, component, gate, ground, moduleName, moduleType, pa;
+    var clock, component, gate, ground, inverter, moduleName, moduleType, pa;
     moduleType = _arg.type, moduleName = _arg.name;
     component = function(type, componentPinNames, componentIndex) {
       var componentPinName, machinePinName, pins;
+      if (componentIndex == null) {
+        componentIndex = '';
+      }
       pins = (function() {
         var _i, _len, _results;
         _results = [];
@@ -49,22 +52,19 @@
     clock = function() {
       return component('clock', ['-', '+', 'gnd']);
     };
-    gate = function(componentIndex, baseCount) {
+    inverter = function(componentIndex) {
+      return component('inverter', ['c', 'e', 'b'], componentIndex);
+    };
+    gate = function(componentIndex) {
       var bases, n;
-      if (baseCount == null) {
-        baseCount = 1;
-      }
-      bases = ['b'];
-      if (baseCount > 1) {
-        bases = (function() {
-          var _i, _results;
-          _results = [];
-          for (n = _i = 0; 0 <= baseCount ? _i <= baseCount : _i >= baseCount; n = 0 <= baseCount ? ++_i : --_i) {
-            _results.push("b" + n);
-          }
-          return _results;
-        })();
-      }
+      bases = (function() {
+        var _i, _results;
+        _results = [];
+        for (n = _i = 0; _i <= 5; n = ++_i) {
+          _results.push("b" + n);
+        }
+        return _results;
+      })();
       return component('gate', ['c', 'e'].concat(bases), componentIndex);
     };
     ground = function(componentIndex) {
@@ -75,15 +75,15 @@
     };
     switch (moduleType) {
       case 'ff':
-        return [component('ff', ['p', '0', '1', '0in', '1in', 'comp']), gate(0), gate(1), ground(1), ground(2), ground(3)];
+        return [component('ff', ['p', '0', '1', '0in', '1in', 'comp']), inverter(0), inverter(1), ground(1), ground(2), ground(3)];
       case 'clk1':
         return [clock()];
       case 'clk2':
         return [clock()];
       case 'dg':
-        return [component('clamp', ['cl0', 'cl1']), gate(0, 5), gate(1, 5)];
+        return [component('clamp', ['cl0', 'cl1']), gate(0), gate(1)];
       case 'pa':
-        return [pa(0), pa(1), gate(0), gate(1), ground(2)];
+        return [pa(0), pa(1), inverter(0), inverter(1), ground(2)];
       default:
         return console.error('unknown module type', moduleType);
     }

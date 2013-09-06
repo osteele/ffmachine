@@ -51,10 +51,14 @@
     var circuitType, componentPinName, connectedWires, machinePinName, outputs, pinValues, pinWires, pins, value, wire, wireCount, _i, _j, _len, _len1, _ref, _ref1, _results;
     circuitType = component.type, pins = component.pins;
     component.state || (component.state = {
-      falling: edgeDetector
+      falling: function(n) {
+        var s;
+        s = this.prev;
+        this.prev = n;
+        return n < s;
+      }
     });
     pinWires = {};
-    pinValues = {};
     for (_i = 0, _len = pins.length; _i < _len; _i++) {
       _ref = pins[_i], componentPinName = _ref.componentPinName, machinePinName = _ref.machinePinName;
       connectedWires = pinWires[componentPinName] = [];
@@ -69,6 +73,10 @@
     for (componentPinName in pinWires) {
       connectedWires = pinWires[componentPinName];
       wireCount += connectedWires.length;
+    }
+    pinValues = {};
+    for (componentPinName in pinWires) {
+      connectedWires = pinWires[componentPinName];
       pinValues[componentPinName] = (_ref1 = connectedWires[0]) != null ? _ref1.value : void 0;
     }
     if (ComponentStepFunctions[circuitType] == null) {
@@ -148,32 +156,47 @@
       };
     },
     ff: function(_arg) {
-      var in0, in1, p, _ref;
-      in0 = _arg['0in'], in1 = _arg['1in'], p = _arg.p;
-      if (this.falling(p)) {
-        _ref = [in0, in1], this.s0 = _ref[0], this.s1 = _ref[1];
+      var comp, in0, in1, pulsed;
+      in0 = _arg['0in'], in1 = _arg['1in'], comp = _arg.comp;
+      pulsed = this.falling(comp);
+      if (pulsed) {
+        this.state = !this.state;
+      }
+      if (in0 === 0) {
+        this.state = false;
+      }
+      if (in1 === 0) {
+        this.state = true;
       }
       return {
-        '0': this.s0,
-        '1': this.s1
+        '0': this.state === false,
+        '1': this.state === true,
+        p: pulsed
       };
     },
     pa: function(_arg) {
-      var v;
-      v = _arg['in'];
+      var input;
+      input = _arg['in'];
       return {
-        '+': v,
-        '-': comp(v)
+        '+': input,
+        '-': comp(input)
+      };
+    },
+    inverter: function(_arg) {
+      var b, e;
+      e = _arg.e, b = _arg.b;
+      return {
+        c: b < 0 ? e : -3
       };
     },
     gate: function(_arg) {
-      var b, e;
-      e = _arg.e, b = _arg.b;
-      if (this.falling(b)) {
-        this.state = e;
-      }
+      var any, b0, b1, b2, b3, b4, b5, e;
+      e = _arg.e, b0 = _arg.b0, b1 = _arg.b1, b2 = _arg.b2, b3 = _arg.b3, b4 = _arg.b4, b5 = _arg.b5;
+      any = [b0, b1, b2, b3, b4, b5].some(function(b) {
+        return b < 0;
+      });
       return {
-        c: this.state
+        c: any < 0 ? e : -3
       };
     },
     ground: function(values) {
