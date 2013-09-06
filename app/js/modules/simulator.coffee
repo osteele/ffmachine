@@ -19,7 +19,7 @@ updateModule = (module, wires, outputWireValues) ->
 
 runComponent = (component, wires, outputWireValues) ->
   {type: circuitType, pins} = component
-  component.state or= {}
+  component.state or= {falling: edgeDetector}
   pinWires = {}
   pinValues = {}
   for {componentPinName, machinePinName} in pins
@@ -77,20 +77,16 @@ ComponentStepFunctions =
 
   ff: ({'0in': in0, '1in': in1, p}) ->
     # TODO is this right? what does comp do?
-    @pulse or= edgeDetector(p)
-    if @pulse(p)
-      @in0 = in0
-      @in1 = in1
-    {'0': @in0, '1': @in1}
+    [@s0, @s1] = [in0, in1] if @falling(p)
+    {'0': @s0, '1': @s1}
 
   pa: ({'in': v}) ->
     {'+': v, '-': comp(v)}
 
   gate: ({e, b}) ->
-    @pulse or= edgeDetector(b)
-    @v = b if @pulse(b)
+    @state = e if @falling(b)
     # TODO reset the internal state if yanked
-    {c: @v}
+    {c: @state}
 
   ground: (values) ->
     {gnd: 0}
