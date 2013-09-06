@@ -305,7 +305,7 @@ updateTraces = do ->
     enter = nodes.enter().append('g').classed(className, true)
     enter.append('circle')
       .attr('r', 10)
-      .on('click', cyclePinValue)
+      .on('click', showWireTrace)
     nodes
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
@@ -317,6 +317,27 @@ updateTraces = do ->
   return ->
     updateWireEndTraces 'start-trace', 0
     updateWireEndTraces 'end-trace', 1
+    showWireTrace()
+
+showWireTrace = do ->
+  traceWire = null
+  svg = null
+  path = null
+  line = null
+  historyLength = 200
+  return (wire) ->
+    traceWire = wire if wire
+    return unless traceWire
+    values = (traceWire.trace or [])
+    unless svg
+      svg or= d3.select('#wireTrace')
+      x = d3.scale.linear().domain([-historyLength, 0]).range([0, 400])
+      y = d3.scale.linear().domain([-3, 0]).range([0, 200])
+      line = d3.svg.line()
+        .x((d) -> x(d.timestamp - Simulator.currentTime))
+        .y((d) -> y(if typeof d.value == 'number' then d.value else -3/2))
+      path = svg.append('path').datum(values).attr('class', 'line').attr('d', line)
+    svg.selectAll('path').datum(values).attr('d', line)
 
 
 #

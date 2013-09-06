@@ -53,7 +53,7 @@ body.simulation-mode .ffmachine {
 
 .ffmachine svg {
   .hole {
-    fill: none;
+    fill: rgba(0,0,0,0);
 
     &:hover {
       fill: blue;
@@ -133,7 +133,6 @@ body.simulation-mode .ffmachine {
 }
 
 #legend {
-  display: none;
   text-align: right;
 
   .negative-voltage, .ground-voltage, .float-voltage {
@@ -147,4 +146,13 @@ body.simulation-mode .ffmachine {
   .ground-voltage { background: white; }
   .float-voltage { background: blue; }
 }
-body.simulation-mode #legend { display: block; }
+
+#wireTrace {
+  text-align: right;
+
+  path {
+    stroke: blue;
+    fill: none;
+  }
+}
+

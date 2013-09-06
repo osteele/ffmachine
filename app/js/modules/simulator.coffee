@@ -1,17 +1,22 @@
 @Simulator =
   step: (modules, wires) ->
+    @currentTime or= 0
     outputWireValues = {}
     updateModules modules, wires, outputWireValues
-    updateWires wires, outputWireValues
+    updateWires wires, outputWireValues, @currentTime
+    @currentTime += 1
+
+HistoryLength = 400
 
 updateModules = (modules, wires, outputWireValues) ->
   # modules = modules.filter (({name}) -> name == "a_1" or name == "a_0") # or name == "a_2")
   updateModule module, wires, outputWireValues for module in modules
 
-updateWires = (wires, outputWireValues) ->
+updateWires = (wires, outputWireValues, timestamp) ->
   for wire in wires
     wire.trace or= []
-    wire.trace.push wire.value
+    wire.trace.push {timestamp, value: wire.value}
+    wire.trace = wire.trace.slice(wire.trace.length - HistoryLength) if wire.trace.length > HistoryLength
     wire.value = outputWireValues[wire] if wire of outputWireValues
 
 updateModule = (module, wires, outputWireValues) ->

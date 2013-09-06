@@ -62,8 +62,12 @@ html(lang="en", ng-app="FFMachine")
           h3 Current Viewers
           ul(ng-repeat="viewer in machine.connected") {{viewer}}
 
-        #legend
+        #legend(ng-show="mode == 'simulate'")
           h3 Voltage Key
           .pull-right.negative-voltage -3V
           .pull-right.float-voltage float
           .pull-right.ground-voltage ground
+
+        #trace.pull-right(ng-show="mode == 'simulate'")
+          h3 Trace
+          svg#wireTrace(width=400, height=200)
