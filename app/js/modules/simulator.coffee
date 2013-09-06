@@ -33,17 +33,26 @@ runComponent = (component, wires, outputWireValues) ->
   # skip circuits with no connected wires, for ease of debugging:
   # return unless circuitType == 'clock' or wireCount > 0
   console.error "No component step function for #{circuitType}" unless ComponentStepFunctions[circuitType]?
-  ComponentStepFunctions[circuitType].call(component.state, pinValues)
-  for componentPinName, connectedWires of pinWires
-    value = pinValues[componentPinName]
-    outputWireValues[wire] = value for wire in connectedWires
-
-# logical complement
-comp = (value) ->
-  return -3 - value
+  outputs = ComponentStepFunctions[circuitType].call(component.state, pinValues)
+  for componentPinName, value of outputs
+    value = boolToVolt(value) if value == true or value == false
+    outputWireValues[wire] = value for wire in pinWires[componentPinName]
 
 boolToVolt = (value) ->
-  if value then -3 else 0
+  switch value
+    when true then -3
+    when false then 0
+    else undefined
+
+voltToBool = (value) ->
+  switch value
+    when -3 then true
+    when 0 then false
+    else undefined
+
+# logical complement, at the voltage level
+comp = (value) ->
+  boolToVolt(!voltToBool(value))
 
 edgeDetector = (init) ->
   previous = init
@@ -52,34 +61,36 @@ edgeDetector = (init) ->
     previous = value
     return isEdge
 
-# TODO add a layer that defines these in terms of logic values instead of voltages?
+# inputs are voltages, outputs can be either voltages or booleans
 ComponentStepFunctions =
-  clamp: (values) ->
+  clamp: ->
     # TODO what does this do?
+    {}
 
-  clock: (values) ->
+  clock: ->
+    # TODO make it possible to set the frequency
+    @freq = 2
     @counter or= 0
     @counter += 1
-    # TODO make it possible to set the frequency
-    freq = 2
-    v = boolToVolt(@counter % freq >= freq / 2)
-    values['-'] = comp(v)
-    values['+'] = v
+    v = @counter % @freq >= @freq / 2
+    {'+': v, '-': not v}
 
-  ff: (values) ->
-    # TODO 'p', '0', '1', '0in', '1in', 'comp'
+  ff: ({'0in': in0, '1in': in1, p}) ->
+    # TODO is this right? what does comp do?
+    @pulse or= edgeDetector(p)
+    if @pulse(p)
+      @in0 = in0
+      @in1 = in1
+    {'0': @in0, '1': @in1}
 
-  pa: (values) ->
-    v = values['in']
-    values['-'] = comp(v)
-    values['+'] = v
+  pa: ({'in': v}) ->
+    {'+': v, '-': comp(v)}
 
-  gate: (values) ->
-    {c, e, b} = values
+  gate: ({e, b}) ->
     @pulse or= edgeDetector(b)
     @v = b if @pulse(b)
     # TODO reset the internal state if yanked
-    values.c = @v
+    {c: @v}
 
   ground: (values) ->
-    values.gnd = 0
+    {gnd: 0}
