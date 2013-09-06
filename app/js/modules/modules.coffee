@@ -76,7 +76,7 @@ modulePinNameToMachinePinName = (row, col, pinName) ->
   [getModuleName(row, col), pinName].join('_')
 
 moduleComponents = ({type: moduleType, name: moduleName}) ->
-  component = (type, componentPinNames, componentIndex) ->
+  component = (type, componentPinNames, componentIndex='') ->
     pins = for componentPinName in componentPinNames
       machinePinName = [moduleName, componentPinName.replace(/(\w+)/, "$1#{componentIndex}")].join('_')
       {componentPinName, machinePinName}
@@ -84,9 +84,10 @@ moduleComponents = ({type: moduleType, name: moduleName}) ->
 
   clock = ->
     component('clock', ['-', '+', 'gnd'])
-  gate = (componentIndex, baseCount=1) ->
-    bases = ['b']
-    bases = ("b#{n}" for n in [0..baseCount]) if baseCount > 1
+  inverter = (componentIndex) ->
+    component('inverter', ['c', 'e', 'b'], componentIndex)
+  gate = (componentIndex) ->
+    bases = ("b#{n}" for n in [0..5])
     component('gate', ['c', 'e'].concat(bases), componentIndex)
   ground = (componentIndex) ->
     component('ground', ['gnd'], componentIndex)
@@ -96,8 +97,8 @@ moduleComponents = ({type: moduleType, name: moduleName}) ->
   switch moduleType
     when 'ff' then [
       component('ff', ['p', '0', '1', '0in', '1in', 'comp'])
-      gate(0)
-      gate(1)
+      inverter(0)
+      inverter(1)
       ground(1)
       ground(2)
       ground(3)
@@ -106,14 +107,14 @@ moduleComponents = ({type: moduleType, name: moduleName}) ->
     when 'clk2' then [clock()]
     when 'dg' then [
       component('clamp', ['cl0', 'cl1'])
-      gate(0, 5)
-      gate(1, 5)
+      gate(0)
+      gate(1)
     ]
     when 'pa' then [
       pa(0)
       pa(1)
-      gate(0)
-      gate(1)
+      inverter(0)
+      inverter(1)
       ground(2)
     ]
     else console.error 'unknown module type', moduleType

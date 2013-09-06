@@ -5,7 +5,7 @@
     updateWires wires, outputWireValues
 
 updateModules = (modules, wires, outputWireValues) ->
-  # modules = modules.filter (({name}) -> name == "a_1")
+  # modules = modules.filter (({name}) -> name == "a_1" or name == "a_0" or name == "a_2")
   updateModule module, wires, outputWireValues for module in modules
 
 updateWires = (wires, outputWireValues) ->
@@ -19,9 +19,9 @@ updateModule = (module, wires, outputWireValues) ->
 
 runComponent = (component, wires, outputWireValues) ->
   {type: circuitType, pins} = component
-  component.state or= {falling: edgeDetector}
+  # component.state or= {falling: (n) -> (@d or= edgeDetector(n))(n)}
+  component.state or= {falling: (n) -> s = @prev; @prev = n; n < s}
   pinWires = {}
-  pinValues = {}
   for {componentPinName, machinePinName} in pins
     connectedWires = pinWires[componentPinName] = []
     for wire in wires
@@ -29,6 +29,8 @@ runComponent = (component, wires, outputWireValues) ->
   wireCount = 0
   for componentPinName, connectedWires of pinWires
     wireCount += connectedWires.length
+  pinValues = {}
+  for componentPinName, connectedWires of pinWires
     pinValues[componentPinName] = connectedWires[0]?.value
   # skip circuits with no connected wires, for ease of debugging:
   # return unless circuitType == 'clock' or wireCount > 0
@@ -75,18 +77,22 @@ ComponentStepFunctions =
     v = @counter % @freq >= @freq / 2
     {'+': v, '-': not v}
 
-  ff: ({'0in': in0, '1in': in1, p}) ->
-    # TODO is this right? what does comp do?
-    [@s0, @s1] = [in0, in1] if @falling(p)
-    {'0': @s0, '1': @s1}
+  ff: ({'0in': in0, '1in': in1, comp}) ->
+    pulsed = @falling(comp)
+    @state = !@state if pulsed
+    @state = false if in0 == 0
+    @state = true if in1 == 0
+    {'0': !@state, '1': @state, p: pulsed}
 
-  pa: ({'in': v}) ->
-    {'+': v, '-': comp(v)}
+  pa: ({'in': input}) ->
+    {'+': input, '-': comp(input)}
 
-  gate: ({e, b}) ->
-    @state = e if @falling(b)
-    # TODO reset the internal state if yanked
-    {c: @state}
+  inverter: ({e, b}) ->
+    {c: if b < 0 then e else -3}
+
+  gate: ({e, b0, b1, b2, b3, b4, b5}) ->
+    any = [b0, b1, b2, b3, b4, b5].some (b) -> b < 0
+    {c: if any < 0 then e else -3}
 
   ground: (values) ->
     {gnd: 0}
