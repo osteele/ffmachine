@@ -1,14 +1,18 @@
 (function() {
-  var ComponentStepFunctions, boolToVolt, comp, edgeDetector, runComponent, updateModule, updateModules, updateWires, voltToBool;
+  var ComponentStepFunctions, HistoryLength, boolToVolt, comp, edgeDetector, runComponent, updateModule, updateModules, updateWires, voltToBool;
 
   this.Simulator = {
     step: function(modules, wires) {
       var outputWireValues;
+      this.currentTime || (this.currentTime = 0);
       outputWireValues = {};
       updateModules(modules, wires, outputWireValues);
-      return updateWires(wires, outputWireValues);
+      updateWires(wires, outputWireValues, this.currentTime);
+      return this.currentTime += 1;
     }
   };
+
+  HistoryLength = 400;
 
   updateModules = function(modules, wires, outputWireValues) {
     var module, _i, _len, _results;
@@ -20,13 +24,19 @@
     return _results;
   };
 
-  updateWires = function(wires, outputWireValues) {
+  updateWires = function(wires, outputWireValues, timestamp) {
     var wire, _i, _len, _results;
     _results = [];
     for (_i = 0, _len = wires.length; _i < _len; _i++) {
       wire = wires[_i];
       wire.trace || (wire.trace = []);
-      wire.trace.push(wire.value);
+      wire.trace.push({
+        timestamp: timestamp,
+        value: wire.value
+      });
+      if (wire.trace.length > HistoryLength) {
+        wire.trace = wire.trace.slice(wire.trace.length - HistoryLength);
+      }
       if (wire in outputWireValues) {
         _results.push(wire.value = outputWireValues[wire]);
       } else {

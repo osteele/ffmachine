@@ -1,5 +1,5 @@
 (function() {
-  var addWire, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getLayer, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, releaseKnob, sin, svgSelection, updateTraces, updateWires, wireColor, wireEndpoints, wireLength, wirePath, wireView, wires,
+  var addWire, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getLayer, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, releaseKnob, showWireTrace, sin, svgSelection, updateTraces, updateWires, wireColor, wireEndpoints, wireLength, wirePath, wireView, wires,
     __slice = [].slice;
 
   knobs = [[100, 252, 288, '#f0f0f0'], [100, 382, 0, '#f0f0f0'], [1700, 252, 292, '#202020'], [1700, 382, 0, '#202020']];
@@ -339,7 +339,7 @@
       nodes = getLayer('trace-layer').selectAll('.' + className).data(wires);
       nodes.exit().remove();
       enter = nodes.enter().append('g').classed(className, true);
-      enter.append('circle').attr('r', 10).on('click', cyclePinValue);
+      enter.append('circle').attr('r', 10).on('click', showWireTrace);
       return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).attr('transform', function(wire) {
         var pt;
         pt = pinoutToXy(wire[endIndex]);
@@ -348,7 +348,39 @@
     };
     return function() {
       updateWireEndTraces('start-trace', 0);
-      return updateWireEndTraces('end-trace', 1);
+      updateWireEndTraces('end-trace', 1);
+      return showWireTrace();
+    };
+  })();
+
+  showWireTrace = (function() {
+    var historyLength, line, path, svg, traceWire;
+    traceWire = null;
+    svg = null;
+    path = null;
+    line = null;
+    historyLength = 200;
+    return function(wire) {
+      var values, x, y;
+      if (wire) {
+        traceWire = wire;
+      }
+      if (!traceWire) {
+        return;
+      }
+      values = traceWire.trace || [];
+      if (!svg) {
+        svg || (svg = d3.select('#wireTrace'));
+        x = d3.scale.linear().domain([-historyLength, 0]).range([0, 400]);
+        y = d3.scale.linear().domain([-3, 0]).range([0, 200]);
+        line = d3.svg.line().x(function(d) {
+          return x(d.timestamp - Simulator.currentTime);
+        }).y(function(d) {
+          return y(typeof d.value === 'number' ? d.value : -3 / 2);
+        });
+        path = svg.append('path').datum(values).attr('class', 'line').attr('d', line);
+      }
+      return svg.selectAll('path').datum(values).attr('d', line);
     };
   })();
 
