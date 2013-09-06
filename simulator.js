@@ -12,6 +12,11 @@
 
   updateModules = function(modules, wires, outputWireValues) {
     var module, _i, _len, _results;
+    modules = modules.filter((function(_arg) {
+      var name;
+      name = _arg.name;
+      return name === "a_1";
+    }));
     _results = [];
     for (_i = 0, _len = modules.length; _i < _len; _i++) {
       module = modules[_i];
@@ -36,19 +41,19 @@
     return _results;
   };
 
-  updateModule = function(module, wires) {
+  updateModule = function(module, wires, outputWireValues) {
     var component, _i, _len, _ref, _results;
     _ref = module.components;
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       component = _ref[_i];
-      _results.push(runComponent(component, wires));
+      _results.push(runComponent(component, wires, outputWireValues));
     }
     return _results;
   };
 
   runComponent = function(_arg, wires, outputWireValues) {
-    var circuitType, componentPinName, connectedWires, machinePinName, pinValues, pinWires, pins, value, wire, wireCount, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _results;
+    var circuitType, componentPinName, connectedWires, machinePinName, pinValues, pinWires, pins, value, wire, wireCount, _i, _j, _len, _len1, _ref, _ref1, _results;
     circuitType = _arg.type, pins = _arg.pins;
     pinWires = {};
     pinValues = {};
@@ -63,8 +68,8 @@
       }
     }
     wireCount = 0;
-    for (connectedWires = _k = 0, _len2 = pinWires.length; _k < _len2; connectedWires = ++_k) {
-      componentPinName = pinWires[connectedWires];
+    for (componentPinName in pinWires) {
+      connectedWires = pinWires[componentPinName];
       wireCount += connectedWires.length;
       pinValues[componentPinName] = (_ref1 = connectedWires[0]) != null ? _ref1.value : void 0;
     }
@@ -76,14 +81,14 @@
     }
     ComponentStepFunctions[circuitType].call(runComponent, pinValues);
     _results = [];
-    for (connectedWires = _l = 0, _len3 = pinWires.length; _l < _len3; connectedWires = ++_l) {
-      componentPinName = pinWires[connectedWires];
+    for (componentPinName in pinWires) {
+      connectedWires = pinWires[componentPinName];
       value = pinValues[componentPinName];
       _results.push((function() {
-        var _len4, _m, _results1;
+        var _k, _len2, _results1;
         _results1 = [];
-        for (_m = 0, _len4 = connectedWires.length; _m < _len4; _m++) {
-          wire = connectedWires[_m];
+        for (_k = 0, _len2 = connectedWires.length; _k < _len2; _k++) {
+          wire = connectedWires[_k];
           _results1.push(outputWireValues[wire] = value);
         }
         return _results1;
@@ -97,11 +102,15 @@
     gate: function(values) {
       var b, c, e;
       c = values.c, e = values.e, b = values.b;
-      return console.info('gate', {
+      console.info('gate', {
         c: c,
         e: e,
         b: b
       }, values);
+      if (b && !this.b) {
+        this.v = b;
+      }
+      return values.c = this.v;
     },
     ground: function(values) {
       return values.gnd = 0;

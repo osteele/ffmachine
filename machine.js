@@ -1,5 +1,5 @@
 (function() {
-  var addWire, arctan2, closestEndIndex, cmerge, cos, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, redraw, redrawTraces, releaseKnob, sin, svgSelection, wireColor, wireEndpoints, wireLength, wirePath, wireView, wires,
+  var addWire, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getLayer, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, releaseKnob, sin, svgSelection, updateTraces, updateWires, wireColor, wireEndpoints, wireLength, wirePath, wireView, wires,
     __slice = [].slice;
 
   knobs = [[100, 252, 288, '#f0f0f0'], [100, 382, 0, '#f0f0f0'], [1700, 252, 292, '#202020'], [1700, 382, 0, '#202020']];
@@ -16,7 +16,9 @@
     wirebuffer.width = 1800;
     wirebuffer.height = 2000;
     svgSelection = d3.select(wirebuffer);
-    svgSelection.append('g').classed('pin-targets', true).selectAll('.hole').data(holePositions()).enter().append('circle').classed('hole', true).attr('id', function(pos) {
+    createLayer('pin-target-layer', {
+      editMode: true
+    }).selectAll('.hole').data(holePositions()).enter().append('circle').classed('hole', true).attr('id', function(pos) {
       return pos.name;
     }).attr('cx', function(pos) {
       return pos.x / 2;
@@ -25,23 +27,41 @@
     }).attr('r', 3).on('mousedown', mouseDownAddWire).append('title').text(function(pos) {
       return "Drag " + pos.name + " to another pin to create a wire.";
     });
-    svgSelection.append('g').classed('wires', true);
-    svgSelection.append('g').classed('traces', true);
-    svgSelection.append('g').classed('deletion-targets', true);
-    svgSelection.append('g').classed('wire-end-targets', true);
-    return redraw();
+    createLayer('wire-layer');
+    createLayer('trace-layer', {
+      simulationMode: true
+    });
+    createLayer('deletion-target-layer', {
+      editMode: true
+    });
+    createLayer('wire-start-target-layer', {
+      editMode: true
+    });
+    createLayer('wire-end-target-layer', {
+      editMode: true
+    });
+    return updateWires();
   };
 
-  this.setModel = function(wires_, readonly) {
+  createLayer = function(layerName, _arg) {
+    var editMode, simulationMode, _ref;
+    _ref = _arg != null ? _arg : {}, editMode = _ref.editMode, simulationMode = _ref.simulationMode;
+    return svgSelection.append('g').classed(layerName, true).classed('edit-mode-layer', editMode).classed('simulation-mode-layer', simulationMode);
+  };
+
+  getLayer = function(layerName) {
+    return svgSelection.select('.' + layerName);
+  };
+
+  this.setModel = function(wires_) {
     wires = wires_;
-    svgSelection.classed('readonly', readonly);
-    redraw();
+    updateWires();
     return document.getElementById('loading').style.display = 'none';
   };
 
   addWire = function(wire) {
     wires.push(wire);
-    redraw();
+    updateWires();
     return wires_changed(wires);
   };
 
@@ -58,13 +78,13 @@
       }
       return _results;
     })();
-    redraw();
+    updateWires();
     return wires_changed(wires);
   };
 
   this.stepSimulator = function() {
     this.Simulator.step(this.machineState.modules, wires);
-    return redrawTraces();
+    return updateTraces();
   };
 
   mouseDownAddWire = function() {
@@ -154,10 +174,10 @@
       endPin = xyToPinout.apply(null, localEvent(e));
       if (endPin && wire[pinIndex] !== endPin) {
         wire[pinIndex] = endPin;
-        redraw();
+        updateWires();
         return wires_changed(wires);
       } else {
-        return redraw();
+        return updateWires();
       }
     };
   };
@@ -170,7 +190,7 @@
       knoboffset = mod360(knob[2] - a);
     }
     knob[2] = mod360(a + knoboffset);
-    redraw();
+    updateWires();
     return wires_changed(wires);
   };
 
@@ -183,23 +203,23 @@
     if (starty === 2) {
       knob[2] = findNearest(knob[2], [-68, -23, 22, 67]);
     }
-    redraw();
+    updateWires();
     return wires_changed(wires);
   };
 
-  redraw = function() {
+  updateWires = function() {
     var updateEndPinTargets, wireTargets, wireViews;
-    wireViews = svgSelection.select('.wires').selectAll('.wire').data(wires);
+    wireViews = getLayer('wire-layer').selectAll('.wire').data(wires);
     wireViews.enter().append('path').classed('wire', true);
     wireViews.exit().remove();
     wireViews.attr('d', wirePath).attr('stroke', wireColor);
-    wireTargets = svgSelection.select('.deletion-targets').selectAll('.wire-mouse-target').data(wires);
+    wireTargets = getLayer('deletion-target-layer').selectAll('.wire-mouse-target').data(wires);
     wireTargets.enter().append('path').classed('wire-mouse-target', true).on('mousedown', deleteWire).append('title').text('Click to delete this wire.');
     wireTargets.exit().remove();
     wireTargets.attr('d', wirePath);
-    updateEndPinTargets = function(className, endIndex) {
+    updateEndPinTargets = function(layerName, endIndex) {
       var startPinTargets, w;
-      startPinTargets = svgSelection.select('.wire-end-targets').selectAll('.' + className).data((function() {
+      startPinTargets = getLayer(layerName).selectAll('.wire-end-target').data((function() {
         var _i, _len, _results;
         _results = [];
         for (_i = 0, _len = wires.length; _i < _len; _i++) {
@@ -210,7 +230,7 @@
         }
         return _results;
       })());
-      startPinTargets.enter().append('circle').classed(className, true).attr('r', 10).on('mousedown', dragWireEnd).append('title').text('Click to drag the wire end to another pin.');
+      startPinTargets.enter().append('circle').classed('wire-end-target', true).attr('r', 10).on('mousedown', dragWireEnd).append('title').text('Click to drag the wire end to another pin.');
       startPinTargets.exit().remove();
       return startPinTargets.attr('cx', function(wire) {
         return pinoutToXy(wire[endIndex])[0] / 2;
@@ -218,8 +238,9 @@
         return pinoutToXy(wire[endIndex])[1] / 2;
       });
     };
-    updateEndPinTargets('wire-start-target', 0);
-    return updateEndPinTargets('wire-end-target', 1);
+    updateEndPinTargets('wire-start-target-layer', 0);
+    updateEndPinTargets('wire-end-target-layer', 1);
+    return updateTraces();
   };
 
   wireEndpoints = function(_arg) {
@@ -287,41 +308,48 @@
     return ctx.fill();
   };
 
-  redrawTraces = function() {
-    var addTraces, hasVoltage, wireVoltageName;
+  knobAngle = function(knob, x, y) {
+    return arctan2(x - knob[0], knob[1] - y);
+  };
+
+  updateTraces = (function() {
+    var cyclePinValue, isVoltage, symbols, updateWireEndTraces, values, wireVoltageName;
+    symbols = ['negative', 'ground', 'float'];
+    values = [-3, 0, void 0];
     wireVoltageName = function(wire) {
-      switch (wire.value) {
-        case -3:
-          return 'low';
-        case 0:
-          return 'ground';
-        default:
-          return 'float';
+      var value;
+      value = wire.value;
+      if (typeof value !== 'number') {
+        value = void 0;
       }
+      return symbols[values.indexOf(value)];
     };
-    hasVoltage = function(symbolicValue) {
+    isVoltage = function(symbolicValue) {
       return function(wire) {
         return wireVoltageName(wire) === symbolicValue;
       };
     };
-    addTraces = function(className, endIndex) {
+    cyclePinValue = function(wire) {
+      wire.value = values[(symbols.indexOf(wireVoltageName(wire)) + 1) % symbols.length];
+      return updateTraces();
+    };
+    updateWireEndTraces = function(className, endIndex) {
       var enter, nodes;
-      nodes = svgSelection.select('.traces').selectAll('.' + className).data(wires);
+      nodes = getLayer('trace-layer').selectAll('.' + className).data(wires);
       nodes.exit().remove();
       enter = nodes.enter().append('g').classed(className, true).attr('transform', function(wire) {
         var pt;
         pt = pinoutToXy(wire[endIndex]);
         return "translate(" + (pt[0] / 2) + ", " + (pt[1] / 2) + ")";
       });
-      return enter.append('circle').attr('r', 10).classed('voltage-low', hasVoltage('low')).classed('voltage-ground', hasVoltage('ground')).classed('voltage-float', hasVoltage('float'));
+      enter.append('circle').attr('r', 10).on('click', cyclePinValue);
+      return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float'));
     };
-    addTraces('start-trace', 0);
-    return addTraces('end-trace', 1);
-  };
-
-  knobAngle = function(knob, x, y) {
-    return arctan2(x - knob[0], knob[1] - y);
-  };
+    return function() {
+      updateWireEndTraces('start-trace', 0);
+      return updateWireEndTraces('end-trace', 1);
+    };
+  })();
 
   cmerge = function(c, n) {
     var high, low, mid;

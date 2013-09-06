@@ -43,7 +43,7 @@
     $scope.message = "Loading...";
     angularFireAuth.initialize(firebaseRootRef, {
       scope: $scope,
-      name: "user"
+      name: 'user'
     });
     angularFire(machineListRef, $scope, 'machines', {});
     $scope.$watch(function() {
