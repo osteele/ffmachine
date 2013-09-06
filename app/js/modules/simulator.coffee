@@ -23,27 +23,36 @@ updateModule = (module, wires, outputWireValues) ->
   runComponent component, wires, outputWireValues for component in module.components
 
 runComponent = (component, wires, outputWireValues) ->
-  {type: circuitType, pins} = component
-  # component.state or= {falling: (n) -> (@d or= edgeDetector(n))(n)}
-  component.state or= {falling: (n) -> s = @prev; @prev = n; n < s}
-  pinWires = {}
-  for {componentPinName, machinePinName} in pins
-    connectedWires = pinWires[componentPinName] = []
+  {type: circuitType, terminals} = component
+  component.state or= {
+    falling: (n) ->
+      s = @prev
+      @prev = n
+      n < s
+  }
+
+  terminalWires = {}
+  for {componentTerminalName, machineTerminalName} in terminals
+    connectedWires = terminalWires[componentTerminalName] = []
     for wire in wires
-      connectedWires.push wire if wire[0] == machinePinName or wire[1] == machinePinName
+      connectedWires.push wire if wire[0] == machineTerminalName or wire[1] == machineTerminalName
+
   wireCount = 0
-  for componentPinName, connectedWires of pinWires
+  for componentTerminalName, connectedWires of terminalWires
     wireCount += connectedWires.length
-  pinValues = {}
-  for componentPinName, connectedWires of pinWires
-    pinValues[componentPinName] = connectedWires[0]?.value
+
+  terminalValues = {}
+  for componentTerminalName, connectedWires of terminalWires
+    terminalValues[componentTerminalName] = connectedWires[0]?.value
+
   # skip circuits with no connected wires, for ease of debugging:
   # return unless circuitType == 'clock' or wireCount > 0
   console.error "No component step function for #{circuitType}" unless ComponentStepFunctions[circuitType]?
-  outputs = ComponentStepFunctions[circuitType].call(component.state, pinValues)
-  for componentPinName, value of outputs
+  outputs = ComponentStepFunctions[circuitType].call(component.state, terminalValues)
+
+  for componentTerminalName, value of outputs
     value = boolToVolt(value) if value == true or value == false
-    outputWireValues[wire] = value for wire in pinWires[componentPinName]
+    outputWireValues[wire] = value for wire in terminalWires[componentTerminalName]
 
 boolToVolt = (value) ->
   switch value
@@ -71,23 +80,21 @@ edgeDetector = (init) ->
 # inputs are voltages, outputs can be either voltages or booleans
 ComponentStepFunctions =
   clamp: ->
-    # TODO what does this do?
     {}
 
   clock: ->
-    # TODO make it possible to set the frequency
-    @freq = 2
+    @frequency or= 2
     @counter or= 0
     @counter += 1
-    v = @counter % @freq >= @freq / 2
+    v = @counter % @frequency >= @frequency / 2
     {'+': v, '-': not v}
 
   ff: ({'0in': in0, '1in': in1, comp}) ->
-    pulsed = @falling(comp)
-    @state = !@state if pulsed
+    edge = @falling(comp)
+    @state = !@state if edge
     @state = false if in0 == 0
     @state = true if in1 == 0
-    {'0': @state == false, '1': @state == true, p: pulsed}
+    {'0': @state == false, '1': @state == true, p: edge}
 
   pa: ({'in': input}) ->
     {'+': input, '-': comp(input)}
@@ -99,5 +106,5 @@ ComponentStepFunctions =
     any = [b0, b1, b2, b3, b4, b5].some (b) -> b < 0
     {c: if any < 0 then e else -3}
 
-  ground: (values) ->
+  ground: ->
     {gnd: 0}

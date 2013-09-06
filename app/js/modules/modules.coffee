@@ -5,7 +5,7 @@ ModuleLocationMap = [
   ['ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff']
 ]
 
-ModulePinLocations = {
+TerminalLocations = {
   # 201 flip-flop
   ff: [
     [100, 166, 'p'],
@@ -61,8 +61,9 @@ ModulePinLocations = {
   ]
 }
 
-ModuleWidth = 200
-ModuleHeight = 500
+ModuleDimensions =
+  width: 200
+  height: 500
 
 
 #
@@ -72,15 +73,15 @@ ModuleHeight = 500
 getModuleName = (row, col) ->
   [String.fromCharCode(97 + row), col].join('_')
 
-modulePinNameToMachinePinName = (row, col, pinName) ->
-  [getModuleName(row, col), pinName].join('_')
+moduleTerminalNameToMachineTerminalName = (row, col, moduleTerminalName) ->
+  [getModuleName(row, col), moduleTerminalName].join('_')
 
 moduleComponents = ({type: moduleType, name: moduleName}) ->
-  component = (type, componentPinNames, componentIndex='') ->
-    pins = for componentPinName in componentPinNames
-      machinePinName = [moduleName, componentPinName.replace(/(\w+)/, "$1#{componentIndex}")].join('_')
-      {componentPinName, machinePinName}
-    return {type, pins}
+  component = (type, componentTerminalNames, componentIndex='') ->
+    terminals = for componentTerminalName in componentTerminalNames
+      machineTerminalName = [moduleName, componentTerminalName.replace(/(\w+)/, "$1#{componentIndex}")].join('_')
+      {componentTerminalName, machineTerminalName}
+    return {type, terminals}
 
   clock = ->
     component('clock', ['-', '+', 'gnd'])
@@ -123,16 +124,16 @@ createModules = ->
   rows = for moduleRow, row in ModuleLocationMap
     for moduleType, col in moduleRow
       moduleName = getModuleName(row, col)
-      x = col * ModuleWidth
-      y = row * ModuleHeight
-      modulePinNames = ModulePinLocations[moduleType]
-      pins =
-        for [dx, dy, modulePinName] in ModulePinLocations[moduleType]
-          {x: x + dx, y: y + dy, name: modulePinNameToMachinePinName(row, col, modulePinName)}
+      x = col * ModuleDimensions.width
+      y = row * ModuleDimensions.height
+      moduleTerminalNames = TerminalLocations[moduleType]
+      terminals =
+        for [dx, dy, moduleTerminalName] in TerminalLocations[moduleType]
+          {x: x + dx, y: y + dy, name: moduleTerminalNameToMachineTerminalName(row, col, moduleTerminalName)}
       {
         name: moduleName
         type: moduleType
-        pins
+        terminals
         components: moduleComponents(type: moduleType, name: moduleName)
         x
         y
@@ -145,19 +146,19 @@ createModules = ->
 # Holes
 #
 
-@xyToPinout = (x, y, tolerance=12) ->
-  for {x: px, y: py, name} in @machineState.pins
+@xyToTerminalName = (x, y, tolerance=12) ->
+  for {x: px, y: py, name} in @machineState.terminals
     return name if dist([px, py], [x, y]) < tolerance
   return null
 
-@pinoutToXy = (machinePinName) ->
-  for {x, y, name} in @machineState.pins
-    return [x,y] if name == machinePinName
+@getTerminalCoordinates = (machineTerminalName) ->
+  for {x, y, name} in @machineState.terminals
+    return [x,y] if name == machineTerminalName
   console.error "Can't find #{pinName} in module of type #{moduleType}" unless pos
-
-@holePositions = ->
-  @machineState.pins
 
 @machineState = do ->
   modules = createModules()
-  {modules, pins: [].concat (pins for {pins} in modules)...}
+  {modules, terminals: [].concat (terminals for {terminals} in modules)...}
+
+@TerminalPositions =
+  @machineState.terminals
