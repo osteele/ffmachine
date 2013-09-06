@@ -301,7 +301,7 @@ updateTraces = do ->
     nodes.exit().remove()
     enter = nodes.enter().append('g').classed(className, true)
     enter.append('circle')
-      .attr('r', 10)
+      .attr('r', 5)
       .on('click', showWireTrace)
     nodes
       .classed('voltage-negative', isVoltage('negative'))

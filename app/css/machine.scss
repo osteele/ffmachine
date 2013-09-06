@@ -103,13 +103,12 @@ body.simulation-mode .ffmachine {
 
   .trace-layer {
     .start-trace, .end-trace {
-      opacity: 0.5;
+      stroke-width: 0;
 
       &:hover {
-        opacity: 1;
+        stroke-width: 5px;
       }
 
-      circle { stroke-width:5px; }
       &.voltage-negative circle { fill: black; stroke: black; }
       &.voltage-ground circle { fill: white; stroke: white; }
       &.voltage-float circle { fill: blue; stroke: blue; }
