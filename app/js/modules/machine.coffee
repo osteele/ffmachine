@@ -23,8 +23,14 @@ knoboffset = null
   wirebuffer.height = 2000
 
   svgSelection = d3.select(wirebuffer)
-
+  createLayer('wire-layer')
+  createLayer('trace-layer', simulationMode: true)
+  createLayer('deletion-target-layer', editMode: true)
   createLayer('pin-target-layer', editMode: true)
+  createLayer('wire-start-target-layer', editMode: true)
+  createLayer('wire-end-target-layer', editMode: true)
+
+  getLayer('pin-target-layer')
     .selectAll('.hole').data(holePositions())
     .enter().append('circle')
     .classed('hole', true)
@@ -35,12 +41,6 @@ knoboffset = null
     .on('mousedown', mouseDownAddWire)
     .append('title')
       .text((pos) -> "Drag #{pos.name} to another pin to create a wire.")
-
-  createLayer('wire-layer')
-  createLayer('trace-layer', simulationMode: true)
-  createLayer('deletion-target-layer', editMode: true)
-  createLayer('wire-start-target-layer', editMode: true)
-  createLayer('wire-end-target-layer', editMode: true)
 
   updateWires()
 
