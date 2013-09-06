@@ -75,7 +75,7 @@
     };
     switch (moduleType) {
       case 'ff':
-        return [gate(0), gate(1), ground(1), ground(2), ground(3)];
+        return [component('ff', ['p', '0', '1', '0in', '1in', 'comp']), gate(0), gate(1), ground(1), ground(2), ground(3)];
       case 'clk1':
         return [clock()];
       case 'clk2':

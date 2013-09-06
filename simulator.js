@@ -1,5 +1,5 @@
 (function() {
-  var ComponentStepFunctions, boolToVolt, comp, edgeDetector, runComponent, updateModule, updateModules, updateWires;
+  var ComponentStepFunctions, boolToVolt, comp, edgeDetector, runComponent, updateModule, updateModules, updateWires, voltToBool;
 
   this.Simulator = {
     step: function(modules, wires) {
@@ -48,7 +48,7 @@
   };
 
   runComponent = function(component, wires, outputWireValues) {
-    var circuitType, componentPinName, connectedWires, machinePinName, pinValues, pinWires, pins, value, wire, wireCount, _i, _j, _len, _len1, _ref, _ref1, _results;
+    var circuitType, componentPinName, connectedWires, machinePinName, outputs, pinValues, pinWires, pins, value, wire, wireCount, _i, _j, _len, _len1, _ref, _ref1, _results;
     circuitType = component.type, pins = component.pins;
     component.state || (component.state = {});
     pinWires = {};
@@ -72,16 +72,19 @@
     if (ComponentStepFunctions[circuitType] == null) {
       console.error("No component step function for " + circuitType);
     }
-    ComponentStepFunctions[circuitType].call(component.state, pinValues);
+    outputs = ComponentStepFunctions[circuitType].call(component.state, pinValues);
     _results = [];
-    for (componentPinName in pinWires) {
-      connectedWires = pinWires[componentPinName];
-      value = pinValues[componentPinName];
+    for (componentPinName in outputs) {
+      value = outputs[componentPinName];
+      if (value === true || value === false) {
+        value = boolToVolt(value);
+      }
       _results.push((function() {
-        var _k, _len2, _results1;
+        var _k, _len2, _ref2, _results1;
+        _ref2 = pinWires[componentPinName];
         _results1 = [];
-        for (_k = 0, _len2 = connectedWires.length; _k < _len2; _k++) {
-          wire = connectedWires[_k];
+        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+          wire = _ref2[_k];
           _results1.push(outputWireValues[wire] = value);
         }
         return _results1;
@@ -90,16 +93,30 @@
     return _results;
   };
 
-  comp = function(value) {
-    return -3 - value;
+  boolToVolt = function(value) {
+    switch (value) {
+      case true:
+        return -3;
+      case false:
+        return 0;
+      default:
+        return void 0;
+    }
   };
 
-  boolToVolt = function(value) {
-    if (value) {
-      return -3;
-    } else {
-      return 0;
+  voltToBool = function(value) {
+    switch (value) {
+      case -3:
+        return true;
+      case 0:
+        return false;
+      default:
+        return void 0;
     }
+  };
+
+  comp = function(value) {
+    return boolToVolt(!voltToBool(value));
   };
 
   edgeDetector = function(init) {
@@ -114,33 +131,56 @@
   };
 
   ComponentStepFunctions = {
-    clamp: function(values) {},
-    clock: function(values) {
-      var freq, v;
+    clamp: function() {
+      return {};
+    },
+    clock: function() {
+      var v;
+      this.freq = 2;
       this.counter || (this.counter = 0);
       this.counter += 1;
-      freq = 2;
-      v = boolToVolt(this.counter % freq >= freq / 2);
-      values['-'] = comp(v);
-      return values['+'] = v;
+      v = this.counter % this.freq >= this.freq / 2;
+      return {
+        '+': v,
+        '-': !v
+      };
     },
-    pa: function(values) {
+    ff: function(_arg) {
+      var in0, in1, p;
+      in0 = _arg['0in'], in1 = _arg['1in'], p = _arg.p;
+      this.pulse || (this.pulse = edgeDetector(p));
+      if (this.pulse(p)) {
+        this.in0 = in0;
+        this.in1 = in1;
+      }
+      return {
+        '0': this.in0,
+        '1': this.in1
+      };
+    },
+    pa: function(_arg) {
       var v;
-      v = values['in'];
-      values['-'] = comp(v);
-      return values['+'] = v;
+      v = _arg['in'];
+      return {
+        '+': v,
+        '-': comp(v)
+      };
     },
-    gate: function(values) {
-      var b, c, e;
-      c = values.c, e = values.e, b = values.b;
+    gate: function(_arg) {
+      var b, e;
+      e = _arg.e, b = _arg.b;
       this.pulse || (this.pulse = edgeDetector(b));
       if (this.pulse(b)) {
         this.v = b;
       }
-      return values.c = this.v;
+      return {
+        c: this.v
+      };
     },
     ground: function(values) {
-      return values.gnd = 0;
+      return {
+        gnd: 0
+      };
     }
   };
 
