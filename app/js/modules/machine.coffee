@@ -283,19 +283,18 @@ knobAngle = (knob, x, y) ->
 #
 
 updateTraces = do ->
+  symbols = ['negative', 'ground', 'float']
+  values = [-3, 0, undefined]
+
   wireVoltageName = (wire) ->
-    # return 'float' unless typeof wire == 'number'
-    switch wire.value
-      when -3 then 'negative'
-      when 0 then 'ground'
-      else 'float'
+    value = wire.value
+    value = undefined unless typeof value == 'number'
+    return symbols[values.indexOf(value)]
 
   isVoltage = (symbolicValue) ->
     (wire) ->
       wireVoltageName(wire) == symbolicValue
 
-  symbols = ['negative', 'ground', 'float']
-  values = [-3, 0, undefined]
   cyclePinValue = (wire) ->
     wire.value = values[(symbols.indexOf(wireVoltageName(wire)) + 1) % symbols.length]
     updateTraces()

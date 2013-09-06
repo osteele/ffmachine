@@ -25,16 +25,19 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
   $scope.logout = ->
     angularFireAuth.logout()
 
+  $scope.step = ->
+    $scope.mode = 'simulate'
+    stepSimulator()
+
   $scope.$watch 'user', ->
     removeCurrentViewer()
     CurrentUser = $scope.user
     addCurrentViewer()
 
   $scope.$watch 'user + machine', ->
-    wasEditable = $scope.editable
     $scope.editable = CurrentMachine and CurrentUser and CurrentMachine.creator.id == CurrentUser.id
     $scope.mode = 'view' if $scope.mode == 'edit' and not $scope.editable
-    $scope.mode = 'edit' if $scope.editable and not wasEditable
+    $scope.mode = 'edit' if $scope.mode == 'view' and $scope.editable
 
   MachineChangedHooks.push (machine) ->
     $scope.$apply ->
