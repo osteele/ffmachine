@@ -163,27 +163,25 @@
   };
 
   serializeWiring = function(wires) {
-    var wire;
-    return ((function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = wires.length; _i < _len; _i++) {
-        wire = wires[_i];
-        _results.push(wire.join(' '));
-      }
-      return _results;
-    })()).join("\n");
+    var getWireName;
+    getWireName = function(wire) {
+      return wire.map(function(terminal) {
+        return terminal.globalTerminalName;
+      }).join(' ');
+    };
+    return wires.map(getWireName).join("\n");
   };
 
-  unserializeWiring = function(str) {
-    var wire_strings;
-    wire_strings = str.replace(/\\n/g, "\n").split(/\n/);
-    if (wire_strings[wire_strings.length - 1] === '') {
-      wire_strings.pop();
+  unserializeWiring = function(wiringString) {
+    var wireNameToWire, wireNames;
+    wireNames = wiringString.replace(/\\n/g, "\n").split(/\n/);
+    if (wireNames[wireNames.length - 1] === '') {
+      wireNames.pop();
     }
-    return wire_strings.map(function(wire) {
-      return wire.split(' ');
-    });
+    wireNameToWire = function(wireName) {
+      return wireName.split(' ').map(findTerminalByName);
+    };
+    return wireNames.map(wireNameToWire);
   };
 
 }).call(this);

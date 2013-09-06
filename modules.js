@@ -1,9 +1,9 @@
 (function() {
-  var ModuleHeight, ModuleLocationMap, ModulePinLocations, ModuleWidth, createModules, getModuleName, moduleComponents, modulePinNameToMachinePinName;
+  var ModuleDimensions, ModuleLocationMap, TerminalLocations, createModules, moduleComponents;
 
   ModuleLocationMap = [['clk1', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'clk2'], ['ff', 'ff', 'ff', 'ff', 'ff', 'dg', 'ff', 'ff', 'ff'], ['ff', 'ff', 'ff', 'ff', 'ff', 'pa', 'ff', 'ff', 'ff'], ['ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff']];
 
-  ModulePinLocations = {
+  TerminalLocations = {
     ff: [[100, 166, 'p'], [66, 190, '0'], [134, 190, '1'], [66, 252, '0in'], [134, 252, '1in'], [100, 266, 'comp'], [66, 290, 'c0'], [66, 336, 'e0'], [40, 314, 'b0'], [134, 290, 'c1'], [134, 336, 'e1'], [160, 314, 'b1'], [66, 372, 'gnd1'], [100, 372, 'gnd2'], [134, 372, 'gnd3']],
     clk1: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
     clk2: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
@@ -11,42 +11,35 @@
     dg: [[61, 126, 'cl0'], [141, 126, 'cl1'], [61, 158, 'c0'], [61, 204, 'e0'], [60, 275, 'b00'], [49, 300, 'b01'], [60, 325, 'b02'], [49, 350, 'b03'], [60, 375, 'b04'], [49, 400, 'b05'], [141, 158, 'c1'], [141, 204, 'e1'], [141, 275, 'b10'], [152, 300, 'b11'], [141, 325, 'b12'], [152, 350, 'b13'], [141, 375, 'b14'], [152, 400, 'b15']]
   };
 
-  ModuleWidth = 200;
-
-  ModuleHeight = 500;
-
-  getModuleName = function(row, col) {
-    return [String.fromCharCode(97 + row), col].join('_');
-  };
-
-  modulePinNameToMachinePinName = function(row, col, pinName) {
-    return [getModuleName(row, col), pinName].join('_');
+  ModuleDimensions = {
+    width: 200,
+    height: 500
   };
 
   moduleComponents = function(_arg) {
     var clock, component, gate, ground, inverter, moduleName, moduleType, pa;
     moduleType = _arg.type, moduleName = _arg.name;
-    component = function(type, componentPinNames, componentIndex) {
-      var componentPinName, machinePinName, pins;
+    component = function(type, componentTerminalNames, componentIndex) {
+      var componentTerminalName, globalTerminalName, terminals;
       if (componentIndex == null) {
         componentIndex = '';
       }
-      pins = (function() {
+      terminals = (function() {
         var _i, _len, _results;
         _results = [];
-        for (_i = 0, _len = componentPinNames.length; _i < _len; _i++) {
-          componentPinName = componentPinNames[_i];
-          machinePinName = [moduleName, componentPinName.replace(/(\w+)/, "$1" + componentIndex)].join('_');
+        for (_i = 0, _len = componentTerminalNames.length; _i < _len; _i++) {
+          componentTerminalName = componentTerminalNames[_i];
+          globalTerminalName = [moduleName, componentTerminalName.replace(/(\D+)/, "$1" + componentIndex)].join('_');
           _results.push({
-            componentPinName: componentPinName,
-            machinePinName: machinePinName
+            componentTerminalName: componentTerminalName,
+            globalTerminalName: globalTerminalName
           });
         }
         return _results;
       })();
       return {
         type: type,
-        pins: pins
+        terminals: terminals
       };
     };
     clock = function() {
@@ -71,7 +64,7 @@
       return component('ground', ['gnd'], componentIndex);
     };
     pa = function(componentIndex) {
-      return component('pa', ['-', '+', 'in', 'gnd']);
+      return component('pa', ['-', '+', 'in', 'gnd'], componentIndex);
     };
     switch (moduleType) {
       case 'ff':
@@ -90,31 +83,33 @@
   };
 
   createModules = function() {
-    var col, dx, dy, moduleName, modulePinName, modulePinNames, moduleRow, moduleType, pins, row, rows, x, y, _ref;
+    var colIndex, dx, dy, moduleName, moduleRow, moduleTerminalName, moduleTerminalNames, moduleType, rowIndex, rows, terminals, x, y, _ref;
     rows = (function() {
       var _i, _len, _results;
       _results = [];
-      for (row = _i = 0, _len = ModuleLocationMap.length; _i < _len; row = ++_i) {
-        moduleRow = ModuleLocationMap[row];
+      for (rowIndex = _i = 0, _len = ModuleLocationMap.length; _i < _len; rowIndex = ++_i) {
+        moduleRow = ModuleLocationMap[rowIndex];
         _results.push((function() {
           var _j, _len1, _results1;
           _results1 = [];
-          for (col = _j = 0, _len1 = moduleRow.length; _j < _len1; col = ++_j) {
-            moduleType = moduleRow[col];
-            moduleName = getModuleName(row, col);
-            x = col * ModuleWidth;
-            y = row * ModuleHeight;
-            modulePinNames = ModulePinLocations[moduleType];
-            pins = (function() {
+          for (colIndex = _j = 0, _len1 = moduleRow.length; _j < _len1; colIndex = ++_j) {
+            moduleType = moduleRow[colIndex];
+            moduleName = [String.fromCharCode(97 + rowIndex), colIndex].join('_');
+            x = colIndex * ModuleDimensions.width / 2;
+            y = rowIndex * ModuleDimensions.height / 2;
+            moduleTerminalNames = TerminalLocations[moduleType];
+            terminals = (function() {
               var _k, _len2, _ref, _ref1, _results2;
-              _ref = ModulePinLocations[moduleType];
+              _ref = TerminalLocations[moduleType];
               _results2 = [];
               for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
-                _ref1 = _ref[_k], dx = _ref1[0], dy = _ref1[1], modulePinName = _ref1[2];
+                _ref1 = _ref[_k], dx = _ref1[0], dy = _ref1[1], moduleTerminalName = _ref1[2];
                 _results2.push({
-                  x: x + dx,
-                  y: y + dy,
-                  name: modulePinNameToMachinePinName(row, col, modulePinName)
+                  globalTerminalName: [moduleName, moduleTerminalName].join('_'),
+                  moduleTerminalName: moduleTerminalName,
+                  coordinates: [x + dx / 2, y + dy / 2],
+                  x: x + dx / 2,
+                  y: y + dy / 2
                 });
               }
               return _results2;
@@ -122,13 +117,11 @@
             _results1.push({
               name: moduleName,
               type: moduleType,
-              pins: pins,
+              terminals: terminals,
               components: moduleComponents({
                 type: moduleType,
                 name: moduleName
-              }),
-              x: x,
-              y: y
+              })
             });
           }
           return _results1;
@@ -139,54 +132,69 @@
     return (_ref = []).concat.apply(_ref, rows);
   };
 
-  this.xyToPinout = function(x, y, tolerance) {
-    var name, px, py, _i, _len, _ref, _ref1;
+  this.findNearbyTerminal = function(x, y, tolerance) {
+    var terminal, _i, _len, _ref;
     if (tolerance == null) {
       tolerance = 12;
     }
-    _ref = this.machineState.pins;
+    _ref = this.machineState.terminals;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      _ref1 = _ref[_i], px = _ref1.x, py = _ref1.y, name = _ref1.name;
-      if (dist([px, py], [x, y]) < tolerance) {
-        return name;
+      terminal = _ref[_i];
+      if (dist([terminal.x, terminal.y], [x, y]) < tolerance) {
+        return terminal;
       }
     }
     return null;
   };
 
-  this.pinoutToXy = function(machinePinName) {
-    var name, x, y, _i, _len, _ref, _ref1;
-    _ref = this.machineState.pins;
+  this.findTerminalByName = function(globalTerminalName) {
+    var terminal, _i, _len, _ref;
+    _ref = this.machineState.terminals;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      _ref1 = _ref[_i], x = _ref1.x, y = _ref1.y, name = _ref1.name;
-      if (name === machinePinName) {
-        return [x, y];
+      terminal = _ref[_i];
+      if (terminal.globalTerminalName === globalTerminalName) {
+        return terminal;
       }
     }
-    if (!pos) {
-      return console.error("Can't find " + pinName + " in module of type " + moduleType);
-    }
+    return console.error("Can't find terminal named " + globalTerminalName);
   };
 
-  this.holePositions = function() {
-    return this.machineState.pins;
+  this.xyToTerminalName = function(x, y, tolerance) {
+    var globalTerminalName, px, py, _i, _len, _ref, _ref1;
+    if (tolerance == null) {
+      tolerance = 12;
+    }
+    _ref = this.machineState.terminals;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      _ref1 = _ref[_i], px = _ref1.x, py = _ref1.y, globalTerminalName = _ref1.globalTerminalName;
+      if (dist([px, py], [x, y]) < tolerance) {
+        return globalTerminalName;
+      }
+    }
+    return null;
+  };
+
+  this.getTerminalCoordinates = function(globalTerminalName) {
+    return findTerminalByName(globalTerminalName).coordinates;
   };
 
   this.machineState = (function() {
-    var modules, pins, _ref;
+    var modules, terminals, _ref;
     modules = createModules();
     return {
       modules: modules,
-      pins: (_ref = []).concat.apply(_ref, (function() {
+      terminals: (_ref = []).concat.apply(_ref, (function() {
         var _i, _len, _results;
         _results = [];
         for (_i = 0, _len = modules.length; _i < _len; _i++) {
-          pins = modules[_i].pins;
-          _results.push(pins);
+          terminals = modules[_i].terminals;
+          _results.push(terminals);
         }
         return _results;
       })())
     };
   })();
+
+  this.TerminalPositions = this.machineState.terminals;
 
 }).call(this);

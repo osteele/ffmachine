@@ -1,5 +1,5 @@
 (function() {
-  var addWire, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getLayer, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, releaseKnob, showWireTrace, sin, svgSelection, updateTraces, updateWires, wireColor, wireEndpoints, wireLength, wirePath, wireView, wires,
+  var addWire, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getLayer, getWireView, hexd, knobAngle, knoboffset, knobs, localEvent, localx, localy, mod360, mouseDownAddWire, pickColor, releaseKnob, showWireTrace, sin, svgSelection, updateCircuitView, updateTraces, wireColor, wireEndpoints, wireLength, wirePath, wires,
     __slice = [].slice;
 
   knobs = [[100, 252, 288, '#f0f0f0'], [100, 382, 0, '#f0f0f0'], [1700, 252, 292, '#202020'], [1700, 382, 0, '#202020']];
@@ -23,7 +23,7 @@
     createLayer('deletion-target-layer', {
       editMode: true
     });
-    createLayer('pin-target-layer', {
+    createLayer('terminal-target-layer', {
       editMode: true
     });
     createLayer('wire-start-target-layer', {
@@ -32,16 +32,16 @@
     createLayer('wire-end-target-layer', {
       editMode: true
     });
-    getLayer('pin-target-layer').selectAll('.hole').data(holePositions()).enter().append('circle').classed('hole', true).attr('id', function(pos) {
-      return pos.name;
+    getLayer('terminal-target-layer').selectAll('.terminal-position').data(TerminalPositions).enter().append('circle').classed('terminal-position', true).attr('id', function(pos) {
+      return pos.globalTerminalName;
     }).attr('cx', function(pos) {
-      return pos.x / 2;
+      return pos.x;
     }).attr('cy', function(pos) {
-      return pos.y / 2;
+      return pos.y;
     }).attr('r', 3).on('mousedown', mouseDownAddWire).append('title').text(function(pos) {
-      return "Drag " + pos.name + " to another pin to create a wire.";
+      return "Drag " + pos.name + " to another terminal to create a wire.";
     });
-    return updateWires();
+    return updateCircuitView();
   };
 
   createLayer = function(layerName, _arg) {
@@ -56,13 +56,16 @@
 
   this.setModel = function(wires_) {
     wires = wires_;
-    updateWires();
+    updateCircuitView();
     return document.getElementById('loading').style.display = 'none';
   };
 
   addWire = function(wire) {
+    wire.name = wire.map(function(t) {
+      return t.globalTerminalName;
+    }).join(' ');
     wires.push(wire);
-    updateWires();
+    updateCircuitView();
     return wires_changed(wires);
   };
 
@@ -79,7 +82,7 @@
       }
       return _results;
     })();
-    updateWires();
+    updateCircuitView();
     return wires_changed(wires);
   };
 
@@ -88,49 +91,54 @@
     return updateTraces();
   };
 
+  getWireView = function(wire) {
+    return svgSelection.selectAll('.wire').filter(function(d) {
+      return d === wire;
+    });
+  };
+
   mouseDownAddWire = function() {
-    var lastEndPin, startpin, view;
-    startpin = xyToPinout.apply(null, localEvent(d3.event));
-    if (!startpin) {
+    var endTerminal, startTerminal, wireView;
+    startTerminal = findNearbyTerminal.apply(null, localEvent(d3.event));
+    endTerminal = null;
+    if (!startTerminal) {
       return;
     }
-    lastEndPin = null;
-    view = svgSelection.append('path').classed('wire', true).classed('dragging', true).attr('stroke', 'red');
+    wireView = svgSelection.append('path').classed('wire', true).classed('dragging', true);
     window.onmousemove = function(e) {
-      var endpin, endpoints;
-      endpoints = [pinoutToXy(startpin), localEvent(e)];
-      endpin = xyToPinout.apply(null, localEvent(e));
-      if (endpin === startpin) {
-        endpin = null;
+      var mouseCoordinates, newEndTerminal, wireEndCoordinates;
+      mouseCoordinates = localEvent(e);
+      wireEndCoordinates = [startTerminal.coordinates, mouseCoordinates];
+      wireView.attr('d', endpointsToPath.apply(null, wireEndCoordinates)).attr('stroke', endpointsToColor.apply(null, wireEndCoordinates));
+      newEndTerminal = findNearbyTerminal.apply(null, mouseCoordinates);
+      if (newEndTerminal === startTerminal) {
+        newEndTerminal = null;
       }
-      if (lastEndPin !== endpin) {
-        lastEndPin = endpin;
+      if (endTerminal !== newEndTerminal) {
+        endTerminal = newEndTerminal;
         svgSelection.select('.active.end').classed('active', false).classed('end', false);
-        if (endpin) {
-          d3.select(wirebuffer.getElementById(endpin)).classed('active', true).classed('end', true);
+        if (endTerminal) {
+          return d3.select(wirebuffer.getElementById(endTerminal.globalTerminalName)).classed('active', true).classed('end', true);
         }
       }
-      return view.attr('d', endpointsToPath.apply(null, endpoints)).attr('stroke', endpointsToColor.apply(null, endpoints));
     };
     return window.onmouseup = function(e) {
-      var endpin;
       window.onmousemove = null;
       window.onmouseup = null;
-      view.remove();
+      wireView.remove();
       svgSelection.select('.active').classed('active', false).classed('end', false);
-      endpin = xyToPinout.apply(null, localEvent(e));
-      if (endpin && endpin !== startpin) {
-        return addWire([startpin, endpin]);
+      if (endTerminal) {
+        return addWire([startTerminal, endTerminal]);
       }
     };
   };
 
   closestEndIndex = function(wire) {
-    var d1, d2, p1, p2, x, y, _ref;
+    var d1, d2, t1, t2, x, y, _ref;
     _ref = localEvent(d3.event), x = _ref[0], y = _ref[1];
-    p1 = wire[0], p2 = wire[1];
-    d1 = dist([x, y], pinoutToXy(p1));
-    d2 = dist([x, y], pinoutToXy(p2));
+    t1 = wire[0], t2 = wire[1];
+    d1 = dist([x, y], t1.coordinates);
+    d2 = dist([x, y], t2.coordinates);
     if (d1 < d2) {
       return 0;
     } else {
@@ -138,47 +146,38 @@
     }
   };
 
-  wireView = function(wire) {
-    return svgSelection.selectAll('.wire').filter(function(d) {
-      return d === wire;
-    });
-  };
-
   dragWireEnd = function(wire) {
-    var lastEndPin, p1, p2, pinIndex, view;
-    view = wireView(wire);
-    view.transition().delay(0);
-    p1 = wire[0], p2 = wire[1];
-    pinIndex = closestEndIndex(wire);
-    lastEndPin = null;
+    var endTerminal, t1, t2, wireTerminalIndex, wireView;
+    wireView = getWireView(wire);
+    wireView.transition().delay(0);
+    t1 = wire[0], t2 = wire[1];
+    wireTerminalIndex = closestEndIndex(wire);
+    endTerminal = null;
     window.onmousemove = function(e) {
-      var endPin, endpoints;
-      endpoints = [pinoutToXy(p1), pinoutToXy(p2)];
-      endpoints[pinIndex] = localEvent(e);
-      endPin = xyToPinout.apply(null, localEvent(e));
-      if (lastEndPin !== endPin) {
-        lastEndPin = endPin;
+      var endpoints, mouseCoordinates, newEndTerminal;
+      mouseCoordinates = localEvent(e);
+      endpoints = [t1.coordinates, t2.coordinates];
+      endpoints[wireTerminalIndex] = mouseCoordinates;
+      wireView.attr('d', endpointsToPath.apply(null, endpoints)).attr('stroke', endpointsToColor.apply(null, endpoints));
+      newEndTerminal = findNearbyTerminal.apply(null, mouseCoordinates);
+      if (endTerminal !== newEndTerminal) {
+        endTerminal = newEndTerminal;
         svgSelection.select('.active').classed('active', false);
-        if (endPin) {
-          d3.select(wirebuffer.getElementById(endPin)).classed('active', true);
+        if (endTerminal) {
+          return d3.select(wirebuffer.getElementById(endTerminal.globalTerminalName)).classed('active', true);
         }
       }
-      view.attr('stroke', 'blue');
-      return view.attr('d', endpointsToPath.apply(null, endpoints)).attr('stroke', endpointsToColor.apply(null, endpoints));
     };
     return window.onmouseup = function(e) {
-      var endPin;
-      view.classed('repinning', false);
-      svgSelection.select('.active').classed('active', false);
       window.onmousemove = null;
       window.onmouseup = null;
-      endPin = xyToPinout.apply(null, localEvent(e));
-      if (endPin && wire[pinIndex] !== endPin) {
-        wire[pinIndex] = endPin;
-        updateWires();
+      svgSelection.select('.active').classed('active', false);
+      if (endTerminal && wire[wireTerminalIndex] !== endTerminal) {
+        wire[wireTerminalIndex] = endTerminal;
+        updateCircuitView();
         return wires_changed(wires);
       } else {
-        return updateWires();
+        return updateCircuitView();
       }
     };
   };
@@ -191,7 +190,7 @@
       knoboffset = mod360(knob[2] - a);
     }
     knob[2] = mod360(a + knoboffset);
-    updateWires();
+    updateCircuitView();
     return wires_changed(wires);
   };
 
@@ -204,11 +203,11 @@
     if (starty === 2) {
       knob[2] = findNearest(knob[2], [-68, -23, 22, 67]);
     }
-    updateWires();
+    updateCircuitView();
     return wires_changed(wires);
   };
 
-  updateWires = function() {
+  updateCircuitView = function() {
     var updateEndPinTargets, wireTargets, wireViews;
     wireViews = getLayer('wire-layer').selectAll('.wire').data(wires);
     wireViews.enter().append('path').classed('wire', true);
@@ -231,12 +230,12 @@
         }
         return _results;
       })());
-      startPinTargets.enter().append('circle').classed('wire-end-target', true).attr('r', 10).on('mousedown', dragWireEnd).append('title').text('Click to drag the wire end to another pin.');
+      startPinTargets.enter().append('circle').classed('wire-end-target', true).attr('r', 10).on('mousedown', dragWireEnd).append('title').text('Click to drag the wire end to another terminal.');
       startPinTargets.exit().remove();
       return startPinTargets.attr('cx', function(wire) {
-        return pinoutToXy(wire[endIndex])[0] / 2;
+        return wire[endIndex].coordinates[0];
       }).attr('cy', function(wire) {
-        return pinoutToXy(wire[endIndex])[1] / 2;
+        return wire[endIndex].coordinates[1];
       });
     };
     updateEndPinTargets('wire-start-target-layer', 0);
@@ -245,9 +244,9 @@
   };
 
   wireEndpoints = function(_arg) {
-    var p1, p2;
-    p1 = _arg[0], p2 = _arg[1];
-    return [pinoutToXy(p1), pinoutToXy(p2)];
+    var t1, t2;
+    t1 = _arg[0], t2 = _arg[1];
+    return [t1.coordinates, t2.coordinates];
   };
 
   wireLength = function(wire) {
@@ -262,10 +261,6 @@
     var dx, dy, mx, my, x1, x2, y1, y2, _ref;
     x1 = _arg[0], y1 = _arg[1];
     x2 = _arg1[0], y2 = _arg1[1];
-    x1 /= 2;
-    y1 /= 2;
-    x2 /= 2;
-    y2 /= 2;
     mx = (x1 + x2) / 2;
     my = (y1 + y2) / 2;
     dx = (x2 - x1) / 5;
@@ -278,9 +273,9 @@
   };
 
   wireColor = function(_arg, n) {
-    var p1, p2;
-    p1 = _arg[0], p2 = _arg[1];
-    return endpointsToColor(pinoutToXy(p1), pinoutToXy(p2), n);
+    var t1, t2;
+    t1 = _arg[0], t2 = _arg[1];
+    return endpointsToColor(t1.coordinates, t2.coordinates, n);
   };
 
   endpointsToColor = function(_arg, _arg1, n) {
@@ -339,11 +334,11 @@
       nodes = getLayer('trace-layer').selectAll('.' + className).data(wires);
       nodes.exit().remove();
       enter = nodes.enter().append('g').classed(className, true);
-      enter.append('circle').attr('r', 10).on('click', showWireTrace);
+      enter.append('circle').attr('r', 5).on('click', showWireTrace);
       return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).attr('transform', function(wire) {
         var pt;
-        pt = pinoutToXy(wire[endIndex]);
-        return "translate(" + (pt[0] / 2) + ", " + (pt[1] / 2) + ")";
+        pt = wire[endIndex].coordinates;
+        return "translate(" + pt[0] + ", " + pt[1] + ")";
       });
     };
     return function() {
@@ -397,7 +392,7 @@
     dx = x2 - x1;
     dy = y2 - y1;
     len = Math.sqrt(dx * dx + dy * dy);
-    i = Math.round(len / 100);
+    i = Math.round(len / 50);
     colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0'];
     return (_ref = colors[i]) != null ? _ref : '#d02090';
   };
@@ -455,11 +450,11 @@
   })('0123456789abcdef');
 
   localx = function(gx) {
-    return (gx - wirebuffer.getBoundingClientRect().left) * 1800 / 900;
+    return gx - wirebuffer.getBoundingClientRect().left;
   };
 
   localy = function(gy) {
-    return (gy - wirebuffer.getBoundingClientRect().top) * 2000 / 1000;
+    return gy - wirebuffer.getBoundingClientRect().top;
   };
 
   localEvent = function(e) {

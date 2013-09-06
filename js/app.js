@@ -303,7 +303,7 @@
     })();
     added_wires = wiring_diff(wires_string, previous_wires_string);
     deleted_wires = wiring_diff(previous_wires_string, wires_string);
-    _ref = [1800, 2000], viewport_width = _ref[0], viewport_height = _ref[1];
+    _ref = [1800 / 2, 2000 / 2], viewport_width = _ref[0], viewport_height = _ref[1];
     canvas_width_breakpoint = 200;
     background_image_url = 'url(img/ffmachine.png)';
     _ref1 = [4, 9], module_rows = _ref1[0], module_cols = _ref1[1];
@@ -316,7 +316,7 @@
     line_colors = ['#804010', '#f00000', '#f0a000', '#f0f000', '#00f000', '#0000f0', '#d02090'];
     line_color = function(x0, y0, x1, y1) {
       var color_index, _ref3;
-      color_index = round(line_length(x1 - x0, y1 - y0) / 100);
+      color_index = round(line_length(x1 - x0, y1 - y0) / 50);
       return (_ref3 = line_colors[color_index]) != null ? _ref3 : line_colors[line_colors.length - 1];
     };
     draw_module_rects = function() {
@@ -390,8 +390,8 @@
     for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
       wire = _ref3[_i];
       s0 = wire[0], s1 = wire[1];
-      _ref4 = pinoutToXy(s0), x0 = _ref4[0], y0 = _ref4[1];
-      _ref5 = pinoutToXy(s1), x1 = _ref5[0], y1 = _ref5[1];
+      _ref4 = getTerminalCoordinates(s0), x0 = _ref4[0], y0 = _ref4[1];
+      _ref5 = getTerminalCoordinates(s1), x1 = _ref5[0], y1 = _ref5[1];
       ctx.strokeStyle = line_color(x0, y0, x1, y1);
       ctx.lineCap = 'round';
       ctx.lineWidth = lineWidth;
