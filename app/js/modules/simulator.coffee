@@ -1,7 +1,7 @@
 HistoryLength = 400  # keep this many historical values
 
 # set these to trace the simulator in the js console
-RestrictModules = 0 # ['a_8']
+RestrictModules = 0 # ['b_5']
 Trace = 0
 TraceComponents = 0 # []
 
@@ -43,6 +43,7 @@ updateTerminalValues = (terminals, moduleOutputs, timestamp) ->
       trace = terminal.trace or= []
       trace.push {timestamp, value}
       trace.splice(0, trace.length - HistoryLength) if trace.length > HistoryLength
+      console.info "#{terminal.globalTerminalName} <- #{value}" if Trace
 
 updateWireValues = (wires, moduleOutputs, timestamp) ->
   propogatedTerminals = []
@@ -58,7 +59,7 @@ updateWireValues = (wires, moduleOutputs, timestamp) ->
     strongValues = (value for value in values when not isWeak(value))
     values = strongValues if strongValues.length
     value = fromWeak(values[0])
-    console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if Trace and value != undefined
+    console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if Trace
     for wire in wires
       wire.value = value
     for terminal in terminals
@@ -136,7 +137,7 @@ weak = (value) ->
   value = boolToVolt(value) if value == true or value == false
   new Weak(value)
 
-fromWeak = (value) ->
+@fromWeak = (value) ->
   value = value.value if value instanceof Weak
   return value
 

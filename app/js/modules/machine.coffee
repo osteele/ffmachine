@@ -302,7 +302,7 @@ updateTraces = do ->
   values = [-3, 0, undefined]
 
   terminalVoltageName = (terminal) ->
-    value = terminal.value
+    value = fromWeak(terminal.value)
     value = undefined unless typeof value == 'number'
     return symbols[values.indexOf(value)]
 
@@ -319,8 +319,9 @@ updateTraces = do ->
     nodes.exit().remove()
     enter = nodes.enter().append('g').classed(className, true)
     enter.append('circle')
-      .attr('r', 5)
+      .attr('r', 3)
       .on('click', updateTerminalTraceView)
+      .append('title').text((d) -> "Click to trace #{d.globalTerminalName}")
     nodes
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
@@ -349,7 +350,7 @@ updateTerminalTraceView = do ->
       y = d3.scale.linear().domain([-3, 0]).range([0, 200])
       line = d3.svg.line()
         .x((d) -> x(d.timestamp - Simulator.timestamp))
-        .y((d) -> y(if typeof d.value == 'number' then d.value else -3/2))
+        .y((d) -> y(if typeof fromWeak(d.value) == 'number' then fromWeak(d.value) else -3/2))
       path = svg.append('path').datum(values).attr('class', 'line').attr('d', line)
     svg.selectAll('path').datum(values).attr('d', line)
 
