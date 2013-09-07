@@ -301,55 +301,54 @@ updateTraces = do ->
   symbols = ['negative', 'ground', 'float']
   values = [-3, 0, undefined]
 
-  wireVoltageName = (wire) ->
-    value = wire.value
+  terminalVoltageName = (terminal) ->
+    value = terminal.value
     value = undefined unless typeof value == 'number'
     return symbols[values.indexOf(value)]
 
   isVoltage = (symbolicValue) ->
-    (wire) ->
-      wireVoltageName(wire) == symbolicValue
+    (terminal) ->
+      terminalVoltageName(terminal) == symbolicValue
 
-  cyclePinValue = (wire) ->
-    wire.value = values[(symbols.indexOf(wireVoltageName(wire)) + 1) % symbols.length]
+  cyclePinValue = (terminal) ->
+    terminal.value = values[(symbols.indexOf(terminalVoltageName(terminal)) + 1) % symbols.length]
     updateTraces()
 
-  updateWireEndTraces = (className, endIndex) ->
-    nodes = getLayer('trace-layer').selectAll('.' + className).data(MachineConfiguration.wires)
+  updateTerminalTraces = (className, endIndex) ->
+    nodes = getLayer('trace-layer').selectAll('.start-trace').data(MachineConfiguration.terminals)
     nodes.exit().remove()
     enter = nodes.enter().append('g').classed(className, true)
     enter.append('circle')
       .attr('r', 5)
-      .on('click', showWireTrace)
+      .on('click', updateTerminalTraceView)
     nodes
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
       .classed('voltage-float', isVoltage('float'))
-      .attr('transform', (wire) ->
-        pt = wire.terminals[endIndex].coordinates
+      .attr('transform', (terminal) ->
+        pt = terminal.coordinates
         "translate(#{pt[0]}, #{pt[1]})")
 
   return ->
-    updateWireEndTraces 'start-trace', 0
-    updateWireEndTraces 'end-trace', 1
-    showWireTrace()
+    updateTerminalTraces 'start-trace', 0
+    updateTerminalTraceView()
 
-showWireTrace = do ->
-  traceWire = null
+updateTerminalTraceView = do ->
+  traceTerminal = null
   svg = null
   path = null
   line = null
   historyLength = 200
-  return (wire) ->
-    traceWire = wire if wire
-    return unless traceWire
-    values = (traceWire.trace or [])
+  return (terminal) ->
+    traceTerminal = terminal if terminal
+    return unless traceTerminal
+    values = (traceTerminal.trace or [])
     unless svg
       svg or= d3.select('#wireTrace')
       x = d3.scale.linear().domain([-historyLength, 0]).range([0, 400])
       y = d3.scale.linear().domain([-3, 0]).range([0, 200])
       line = d3.svg.line()
-        .x((d) -> x(d.timestamp - Simulator.currentTime))
+        .x((d) -> x(d.timestamp - Simulator.timestamp))
         .y((d) -> y(if typeof d.value == 'number' then d.value else -3/2))
       path = svg.append('path').datum(values).attr('class', 'line').attr('d', line)
     svg.selectAll('path').datum(values).attr('d', line)

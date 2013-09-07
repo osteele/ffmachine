@@ -7,16 +7,16 @@ TraceComponents = 0 # []
 
 class @SimulatorClass
   constructor: (@configuration) ->
-    @currentTime = 0
+    @timestamp = 0
 
   step: ->
     {modules, terminals, wires} = @configuration
     moduleInputs = computeTerminalValues(terminals, wires)
     moduleOutputs = {}
     runModules modules, moduleInputs, moduleOutputs
-    updateTerminalValues terminals, moduleOutputs
-    updateWireValues wires, moduleOutputs, @currentTime
-    @currentTime += 1
+    updateTerminalValues terminals, moduleOutputs, @timestamp
+    updateWireValues wires, moduleOutputs, @timestamp
+    @timestamp += 1
 
 runModules = (modules, moduleInputs, moduleOutputs) ->
   modules = (m for m in modules when m.name in RestrictModules) if RestrictModules.length
@@ -36,12 +36,17 @@ collectBusses = (wires) ->
     wireSets.push bus unless bus in wireSets
   return ({wires, terminals: _.chain(wires).pluck('terminals').flatten().uniq().value()} for wires in wireSets)
 
-updateTerminalValues = (terminals, moduleOutputs) ->
+updateTerminalValues = (terminals, moduleOutputs, timestamp) ->
   for terminal in terminals
     if terminal.globalTerminalName of moduleOutputs
-      terminal.value = moduleOutputs[terminal.globalTerminalName]
+      terminal.value = value = moduleOutputs[terminal.globalTerminalName]
+      trace = terminal.trace or= []
+      trace.push {timestamp, value}
+      trace.splice(0, trace.length - HistoryLength) if trace.length > HistoryLength
 
 updateWireValues = (wires, moduleOutputs, timestamp) ->
+  propogatedTerminals = []
+  propogatedOutputs = {}
   for {wires, terminals} in collectBusses(wires)
     # optimization and debuggability: skip unless something changed
     continue unless terminals.some (terminal) -> terminal.globalTerminalName of moduleOutputs
@@ -56,10 +61,11 @@ updateWireValues = (wires, moduleOutputs, timestamp) ->
     console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if Trace and value != undefined
     for wire in wires
       wire.value = value
-      wire.timestamp = timestamp
-      wire.trace or= []
-      wire.trace.push {timestamp, value: wire.value}
-      wire.trace.splice(0, wire.trace.length - HistoryLength) if wire.trace.length > HistoryLength
+    for terminal in terminals
+      unless terminal.globalTerminalName of moduleOutputs or terminal in propogatedTerminals
+        propogatedTerminals.push terminal
+        propogatedOutputs[terminal.globalTerminalName] = value
+  updateTerminalValues propogatedTerminals, propogatedOutputs, timestamp
 
 updateModuleOutputs = (module, moduleInputs, moduleOutputs) ->
   runComponent component, moduleInputs, moduleOutputs for component in module.components
