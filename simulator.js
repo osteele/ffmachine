@@ -1,5 +1,5 @@
 (function() {
-  var ComponentStepFunctions, HistoryLength, RestrictModules, Trace, TraceComponents, boolToVolt, comp, computeTerminalValues, edgeDetector, getConnectedWires, getWireName, runComponent, runModules, updateModuleOutputs, updateWireValues, voltToBool,
+  var ComponentStepFunctions, HistoryLength, RestrictModules, Trace, TraceComponents, Weak, boolToVolt, comp, computeTerminalValues, getConnectedWires, getWireName, runComponent, runModules, updateModuleOutputs, updateWireValues, voltToBool, weak,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   HistoryLength = 400;
@@ -149,7 +149,7 @@
   };
 
   runComponent = function(component, terminalInputs, terminalOutputs) {
-    var circuitType, componentTerminalName, globalTerminalName, moduleInputs, moduleOutputs, t, terminals, trace, value, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+    var circuitType, componentTerminalName, globalTerminalName, moduleInputs, moduleOutputs, t, targetName, terminals, trace, value, voltage, _i, _j, _len, _len1, _ref, _ref1, _ref2;
     trace = (_ref = component.type, __indexOf.call(TraceComponents, _ref) >= 0);
     circuitType = component.type, terminals = component.terminals;
     component.state || (component.state = {
@@ -163,7 +163,10 @@
     moduleInputs = {};
     for (_i = 0, _len = terminals.length; _i < _len; _i++) {
       _ref1 = terminals[_i], componentTerminalName = _ref1.componentTerminalName, globalTerminalName = _ref1.globalTerminalName;
-      moduleInputs[componentTerminalName] = terminalInputs[globalTerminalName];
+      targetName = componentTerminalName.replace(/^(\d+)(.+)/, '$2$1');
+      voltage = terminalInputs[globalTerminalName];
+      moduleInputs[targetName] = voltage;
+      moduleInputs[targetName + '_v'] = voltToBool(voltage);
     }
     if (ComponentStepFunctions[circuitType] == null) {
       console.error("No component step function for " + circuitType);
@@ -175,6 +178,9 @@
         continue;
       }
       value = moduleOutputs[componentTerminalName];
+      if (value instanceof Weak) {
+        value = value.value;
+      }
       if (value === true || value === false) {
         value = boolToVolt(value);
       }
@@ -219,20 +225,24 @@
     return boolToVolt(!voltToBool(value));
   };
 
-  edgeDetector = function(init) {
-    var previous;
-    previous = init;
-    return function(value) {
-      var isEdge;
-      isEdge = value && !previous;
-      previous = value;
-      return isEdge;
-    };
+  Weak = (function() {
+    function Weak(value) {
+      this.value = value;
+    }
+
+    return Weak;
+
+  })();
+
+  weak = function(value) {
+    return new Weak(value);
   };
 
   ComponentStepFunctions = {
     clamp: function() {
-      return {};
+      return {
+        cl: weak(true)
+      };
     },
     clock: function() {
       var v;
@@ -246,9 +256,9 @@
       };
     },
     ff: function(_arg) {
-      var comp, edge, in0, in1;
-      in0 = _arg['0in'], in1 = _arg['1in'], comp = _arg.comp;
-      edge = this.falling(comp);
+      var comp_v, edge, in0, in1;
+      in0 = _arg.in0, in1 = _arg.in1, comp_v = _arg.comp_v;
+      edge = this.falling(comp_v);
       if (edge) {
         this.state = !this.state;
       }
@@ -269,24 +279,24 @@
       input = _arg['in'];
       return {
         '+': input,
-        '-': comp(input)
+        '-': !input
       };
     },
     inverter: function(_arg) {
       var b, e;
       e = _arg.e, b = _arg.b;
       return {
-        c: b < 0 ? e : -3
+        c: b ? e : true
       };
     },
     gate: function(_arg) {
       var any, b0, b1, b2, b3, b4, b5, e;
       e = _arg.e, b0 = _arg.b0, b1 = _arg.b1, b2 = _arg.b2, b3 = _arg.b3, b4 = _arg.b4, b5 = _arg.b5;
       any = [b0, b1, b2, b3, b4, b5].some(function(b) {
-        return b < 0;
+        return b;
       });
       return {
-        c: any < 0 ? e : -3
+        c: any ? e : -3
       };
     },
     ground: function() {

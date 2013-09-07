@@ -74,7 +74,7 @@
       case 'clk2':
         return [clock()];
       case 'dg':
-        return [component('clamp', ['cl0', 'cl1']), gate(0), gate(1)];
+        return [component('clamp', ['cl'], 0), component('clamp', ['cl'], 1), gate(0), gate(1)];
       case 'pa':
         return [pa(0), pa(1), inverter(0), inverter(1), ground(2)];
       default:
