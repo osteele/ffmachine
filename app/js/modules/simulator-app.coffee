@@ -85,7 +85,7 @@ loadWires = (name) ->
     @setModel wires
     addCurrentViewer()
 
-saveWires = (name, wiring) ->
+saveWires = (wiring) ->
   user = CurrentUser
   previous_wiring = CurrentMachine.wiring
   wiring = serializeWiring(wiring)
@@ -102,16 +102,16 @@ saveWires = (name, wiring) ->
   CurrentMachineRef.child('history').push {user: user?.email, wiring, previous_wiring, modified_at}
 
 @wires_changed = (wires) ->
-  saveWires name, wires
+  saveWires wires
 
 serializeWiring = (wires) ->
-  getWireName = (wire) ->
-    return wire.map((terminal) -> terminal.globalTerminalName).join(' ')
-  return wires.map(getWireName).join("\n")
+  serializatonWire = (wire) ->
+    return wire.terminals.map((terminal) -> terminal.globalTerminalName).join(' ')
+  return wires.map(serializatonWire).join("\n")
 
 unserializeWiring = (wiringString) ->
+  unserializeWire = (wireString) ->
+    return createWire(wireString.split(' ').map(findTerminalByName)...)
   wireNames = wiringString.replace(/\\n/g, "\n").split(/\n/)
   wireNames.pop() if wireNames[wireNames.length - 1] == ''
-  wireNameToWire = (wireName) ->
-    return wireName.split(' ').map(findTerminalByName)
-  return wireNames.map(wireNameToWire)
+  return wireNames.map(unserializeWire)

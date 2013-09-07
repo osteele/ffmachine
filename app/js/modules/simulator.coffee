@@ -19,18 +19,15 @@ runModules = (modules, terminalInputs, terminalOutputs) ->
   modules = (m for m in modules when m.name in RestrictModules) if RestrictModules
   updateModuleOutputs module, terminalInputs, terminalOutputs for module in modules
 
-getWireName = (wire) ->
-  (terminal.globalTerminalName for terminal in wire).join('->')
-
 updateWireValues = (wires, terminalValues, timestamp) ->
   for wire in wires
-    values = (terminalValues[terminal.globalTerminalName] for terminal in wire)
+    values = (terminalValues[terminal.globalTerminalName] for terminal in wire.terminals)
     # console.info (terminal.globalTerminalName for terminal in wires) #, values
     continue unless values.length
     strongValues = (value for value in values when not isWeak(value))
     values = strongValues if strongValues.length
     value = fromWeak(values[0])
-    console.info getWireName(wire), '<-', value if Trace
+    console.info wire.name, '<-', value if Trace
     wire.value = value
     wire.timestamp = timestamp
     wire.trace or= []
@@ -41,7 +38,7 @@ updateModuleOutputs = (module, terminalInputs, terminalOutputs) ->
   runComponent component, terminalInputs, terminalOutputs for component in module.components
 
 getConnectedWires = (terminal, wires) ->
-  return (wire for wire in wires when terminal in wire)
+  return (wire for wire in wires when terminal in wire.terminals)
 
 computeTerminalValues = (terminals, wires) ->
   values = {}
