@@ -1,5 +1,5 @@
 (function() {
-  var ComponentStepFunctions, HistoryLength, RestrictModules, Trace, TraceComponents, Weak, boolToVolt, comp, computeTerminalValues, getConnectedWires, getWireName, runComponent, runModules, updateModuleOutputs, updateWireValues, voltToBool, weak,
+  var ComponentEquations, HistoryLength, RestrictModules, Trace, TraceComponents, Weak, boolToVolt, computeTerminalValues, fromWeak, getConnectedWires, getWireName, isWeak, runComponent, runModules, updateModuleOutputs, updateWireValues, voltToBool, weak,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   HistoryLength = 400;
@@ -67,35 +67,53 @@
     })()).join('->');
   };
 
-  updateWireValues = function(wires, terminalOutputs, timestamp) {
-    var globalTerminalName, value, wire, _results;
+  updateWireValues = function(wires, terminalValues, timestamp) {
+    var strongValues, terminal, value, values, wire, _i, _len, _results;
     _results = [];
-    for (globalTerminalName in terminalOutputs) {
-      value = terminalOutputs[globalTerminalName];
-      _results.push((function() {
-        var _i, _len, _ref, _results1;
-        _ref = getConnectedWires(findTerminalByName(globalTerminalName), wires);
+    for (_i = 0, _len = wires.length; _i < _len; _i++) {
+      wire = wires[_i];
+      values = (function() {
+        var _j, _len1, _results1;
         _results1 = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          wire = _ref[_i];
-          if (Trace) {
-            console.info(getWireName(wire), '<-', value);
-          }
-          wire.value = value;
-          wire.timestamp = timestamp;
-          wire.trace || (wire.trace = []);
-          wire.trace.push({
-            timestamp: timestamp,
-            value: wire.value
-          });
-          if (wire.trace.length > HistoryLength) {
-            _results1.push(wire.trace.splice(0, wire.trace.length - HistoryLength));
-          } else {
-            _results1.push(void 0);
+        for (_j = 0, _len1 = wire.length; _j < _len1; _j++) {
+          terminal = wire[_j];
+          _results1.push(terminalValues[terminal.globalTerminalName]);
+        }
+        return _results1;
+      })();
+      if (!values.length) {
+        continue;
+      }
+      strongValues = (function() {
+        var _j, _len1, _results1;
+        _results1 = [];
+        for (_j = 0, _len1 = values.length; _j < _len1; _j++) {
+          value = values[_j];
+          if (!isWeak(value)) {
+            _results1.push(value);
           }
         }
         return _results1;
-      })());
+      })();
+      if (strongValues.length) {
+        values = strongValues;
+      }
+      value = fromWeak(values[0]);
+      if (Trace) {
+        console.info(getWireName(wire), '<-', value);
+      }
+      wire.value = value;
+      wire.timestamp = timestamp;
+      wire.trace || (wire.trace = []);
+      wire.trace.push({
+        timestamp: timestamp,
+        value: wire.value
+      });
+      if (wire.trace.length > HistoryLength) {
+        _results.push(wire.trace.splice(0, wire.trace.length - HistoryLength));
+      } else {
+        _results.push(void 0);
+      }
     }
     return _results;
   };
@@ -168,19 +186,16 @@
       moduleInputs[targetName] = voltage;
       moduleInputs[targetName + '_v'] = voltToBool(voltage);
     }
-    if (ComponentStepFunctions[circuitType] == null) {
+    if (ComponentEquations[circuitType] == null) {
       console.error("No component step function for " + circuitType);
     }
-    moduleOutputs = ComponentStepFunctions[circuitType].call(component.state, moduleInputs);
+    moduleOutputs = ComponentEquations[circuitType].call(component.state, moduleInputs);
     for (_j = 0, _len1 = terminals.length; _j < _len1; _j++) {
       _ref2 = terminals[_j], componentTerminalName = _ref2.componentTerminalName, globalTerminalName = _ref2.globalTerminalName;
       if (!(componentTerminalName in moduleOutputs)) {
         continue;
       }
       value = moduleOutputs[componentTerminalName];
-      if (value instanceof Weak) {
-        value = value.value;
-      }
       if (value === true || value === false) {
         value = boolToVolt(value);
       }
@@ -221,10 +236,6 @@
     }
   };
 
-  comp = function(value) {
-    return boolToVolt(!voltToBool(value));
-  };
-
   Weak = (function() {
     function Weak(value) {
       this.value = value;
@@ -235,10 +246,24 @@
   })();
 
   weak = function(value) {
+    if (value === true || value === false) {
+      value = boolToVolt(value);
+    }
     return new Weak(value);
   };
 
-  ComponentStepFunctions = {
+  fromWeak = function(value) {
+    if (value instanceof Weak) {
+      value = value.value;
+    }
+    return value;
+  };
+
+  isWeak = function(value) {
+    return value instanceof Weak;
+  };
+
+  ComponentEquations = {
     clamp: function() {
       return {
         cl: weak(true)
