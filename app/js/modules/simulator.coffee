@@ -11,15 +11,16 @@ class @SimulatorClass
 
   step: ->
     {modules, terminals, wires} = @configuration
-    terminalInputs = computeTerminalValues(terminals, wires)
-    terminalOutputs = {}
-    runModules modules, terminalInputs, terminalOutputs
-    updateWireValues wires, terminalOutputs, @currentTime
+    moduleInputs = computeTerminalValues(terminals, wires)
+    moduleOutputs = {}
+    runModules modules, moduleInputs, moduleOutputs
+    updateTerminalValues terminals, moduleOutputs
+    updateWireValues wires, moduleOutputs, @currentTime
     @currentTime += 1
 
-runModules = (modules, terminalInputs, terminalOutputs) ->
+runModules = (modules, moduleInputs, moduleOutputs) ->
   modules = (m for m in modules when m.name in RestrictModules) if RestrictModules.length
-  updateModuleOutputs module, terminalInputs, terminalOutputs for module in modules
+  updateModuleOutputs module, moduleInputs, moduleOutputs for module in modules
 
 collectBusses = (wires) ->
   bussesByTerminal = {}
@@ -33,17 +34,23 @@ collectBusses = (wires) ->
   wireSets = []
   for __, bus of bussesByTerminal
     wireSets.push bus unless bus in wireSets
-  console.info wireSets
   return ({wires, terminals: _.chain(wires).pluck('terminals').flatten().uniq().value()} for wires in wireSets)
 
-updateWireValues = (wires, terminalValues, timestamp) ->
+updateTerminalValues = (terminals, moduleOutputs) ->
+  for terminal in terminals
+    if terminal.globalTerminalName of moduleOutputs
+      terminal.value = moduleOutputs[terminal.globalTerminalName]
+
+updateWireValues = (wires, moduleOutputs, timestamp) ->
   for {wires, terminals} in collectBusses(wires)
-    values = (terminalValues[terminal.globalTerminalName] for terminal in terminals)
-    continue unless values.length
+    # optimization and debuggability: skip unless something changed
+    continue unless terminals.some (terminal) -> terminal.globalTerminalName of moduleOutputs
+    values = (terminal.value for terminal in terminals)
+    # remove floating values
     values = (value for value in values when value != undefined)
     values = [undefined] if values.length == 0
+    # remove weak values if this leaves any strong ones
     strongValues = (value for value in values when not isWeak(value))
-    # console.info values, strongValues
     values = strongValues if strongValues.length
     value = fromWeak(values[0])
     console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if Trace and value != undefined
@@ -54,8 +61,8 @@ updateWireValues = (wires, terminalValues, timestamp) ->
       wire.trace.push {timestamp, value: wire.value}
       wire.trace.splice(0, wire.trace.length - HistoryLength) if wire.trace.length > HistoryLength
 
-updateModuleOutputs = (module, terminalInputs, terminalOutputs) ->
-  runComponent component, terminalInputs, terminalOutputs for component in module.components
+updateModuleOutputs = (module, moduleInputs, moduleOutputs) ->
+  runComponent component, moduleInputs, moduleOutputs for component in module.components
 
 getConnectedWires = (terminal, wires) ->
   return (wire for wire in wires when terminal in wire.terminals)
@@ -67,7 +74,7 @@ computeTerminalValues = (terminals, wires) ->
     values[terminal.globalTerminalName] = wireValues[0] if wireValues.length
   return values
 
-runComponent = (component, terminalInputs, terminalOutputs) ->
+runComponent = (component, moduleInputs, moduleOutputs) ->
   trace = TraceComponents == 1 or TraceComponents == true or component.type in TraceComponents
   {type: circuitType, terminals} = component
   component.state or= {
@@ -77,22 +84,22 @@ runComponent = (component, terminalInputs, terminalOutputs) ->
       n < s
   }
 
-  moduleInputs = {}
+  componentInputs = {}
   for {componentTerminalName, globalTerminalName} in terminals
     targetName = componentTerminalName.replace(/^(\d+)(.+)/, '$2$1')
-    voltage = terminalInputs[globalTerminalName]
-    moduleInputs[targetName] = voltage
-    moduleInputs[targetName + '_v'] = voltToBool(voltage)
+    voltage = moduleInputs[globalTerminalName]
+    componentInputs[targetName] = voltage
+    componentInputs[targetName + '_v'] = voltToBool(voltage)
   console.error "No component step function for #{circuitType}" unless ComponentEquations[circuitType]?
-  moduleOutputs = ComponentEquations[circuitType].call(component.state, moduleInputs)
+  componentOutputs = ComponentEquations[circuitType].call(component.state, componentInputs)
 
   for {componentTerminalName, globalTerminalName} in terminals
-    continue unless componentTerminalName of moduleOutputs
-    value = moduleOutputs[componentTerminalName]
+    continue unless componentTerminalName of componentOutputs
+    value = componentOutputs[componentTerminalName]
     value = boolToVolt(value) if value == true or value == false
-    terminalOutputs[globalTerminalName] = value
+    moduleOutputs[globalTerminalName] = value
 
-  console.info component.type, (t.globalTerminalName for t in terminals), moduleInputs, moduleOutputs if trace
+  console.info component.type, (t.globalTerminalName for t in terminals), componentInputs, componentOutputs if trace
 
 
 #
