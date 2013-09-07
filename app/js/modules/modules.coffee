@@ -101,7 +101,8 @@ moduleComponents = ({type: moduleType, name: moduleName}) ->
     when 'clk1' then [clock()]
     when 'clk2' then [clock()]
     when 'dg' then [
-      component('clamp', ['cl0', 'cl1'])
+      component('clamp', ['cl'], 0)
+      component('clamp', ['cl'], 1)
       gate(0)
       gate(1)
     ]
