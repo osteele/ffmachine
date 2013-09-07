@@ -5,10 +5,12 @@ RestrictModules = 0 #['a_0', 'a_1']
 Trace = 0
 TraceComponents = 0 #['ff']
 
-@Simulator =
-  step: (modules, wires) ->
-    @currentTime or= 0
-    terminals = [].concat((module.terminals for module in modules)...)
+class @SimulatorClass
+  constructor: (@configuration) ->
+    @currentTime = 0
+
+  step: ->
+    {modules, terminals, wires} = @configuration
     terminalInputs = computeTerminalValues(terminals, wires)
     terminalOutputs = {}
     runModules modules, terminalInputs, terminalOutputs

@@ -145,26 +145,26 @@ createModules = ->
 #
 
 @findNearbyTerminal = (x, y, tolerance=12) ->
-  for terminal in @machineState.terminals
-    return terminal if dist([terminal.x, terminal.y], [x, y]) < tolerance
+  for terminal in MachineHardware.terminals
+    return terminal if lineLength(terminal.coordinates, [x, y]) < tolerance
   return null
 
 @findTerminalByName = (globalTerminalName) ->
-  for terminal in @machineState.terminals
+  for terminal in MachineHardware.terminals
     return terminal if terminal.globalTerminalName == globalTerminalName
   console.error "Can't find terminal named #{globalTerminalName}"
 
 @xyToTerminalName = (x, y, tolerance=12) ->
-  for {x: px, y: py, globalTerminalName} in @machineState.terminals
-    return globalTerminalName if dist([px, py], [x, y]) < tolerance
+  for {x: px, y: py, globalTerminalName} in MachineHardware.terminals
+    return globalTerminalName if lineLength([px, py], [x, y]) < tolerance
   return null
 
 @getTerminalCoordinates = (globalTerminalName) ->
   findTerminalByName(globalTerminalName).coordinates
 
-@machineState = do ->
+@MachineHardware = do ->
   modules = createModules()
-  {modules, terminals: [].concat (terminals for {terminals} in modules)...}
-
-@TerminalPositions =
-  @machineState.terminals
+  {
+    modules
+    terminals: [].concat (terminals for {terminals} in modules)...
+  }

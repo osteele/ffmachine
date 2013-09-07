@@ -16,7 +16,7 @@ app = angular.module 'FFMachine', ['firebase']
 
 app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire, angularFireAuth) ->
   $scope.mode = 'edit'
-  simulationThread = null
+  simulator = new SimulatorThread
 
   angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
 
@@ -27,19 +27,18 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     angularFireAuth.logout()
 
   $scope.runSimulation = ->
+    simulator.start()
     $scope.mode = 'simulate'
-    $scope.simulationRunning = true
-    simulationThread = window.setInterval (-> stepSimulator()), 1000 / 10
+    $scope.simulationRunning = simulator.running
 
   $scope.stopSimulation = ->
-    window.clearInterval simulationThread
-    $scope.simulationRunning = false
-    simulationThread = null
+    simulator.stop()
+    $scope.simulationRunning = simulator.running
 
   $scope.stepSimulation = ->
+    simulator.step()
     $scope.mode = 'simulate'
-    $scope.stopSimulation()
-    stepSimulator()
+    $scope.simulationRunning = simulator.running
 
   $scope.$watch 'mode', ->
     $scope.stopSimulation() unless $scope.mode == 'simulate'
@@ -60,8 +59,25 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
 
   name = $location.search().name
   $window.location.href = '.' unless name
-  setupCanvas()
-  loadWires name
+  initializeMachineView()
+  loadMachine name
+
+class SimulatorThread
+  constructor: ->
+    @simulationThread = null
+
+  start: ->
+    @simulationThread or= window.setInterval (-> stepSimulator()), 1000 / 10
+    @running = true
+
+  stop: ->
+    window.clearInterval @simulationThread if @simulationThread
+    @simulationThread = null
+    @running = false
+
+  step: ->
+    @stop()
+    stepSimulator()
 
 addCurrentViewer = ->
   user = CurrentUser
@@ -75,20 +91,20 @@ removeCurrentViewer = ->
   onlineRef = CurrentMachineRef.child('connected').child(CurrentUser.id)
   onlineRef.remove()
 
-loadWires = (name) ->
+loadMachine = (name) ->
   CurrentMachineRef = MachineListRef.child(name)
   CurrentMachineRef.on 'value', (snapshot) ->
     CurrentMachine = snapshot.val()
     console.error "No machine named #{name}" unless CurrentMachine
-    wires = unserializeWiring(snapshot.val().wiring)
+    configuration = unserializeConfiguration(snapshot.val().wiring)
     setTimeout (-> hook(CurrentMachine)), 10 for hook in MachineChangedHooks
-    @setModel wires
+    @updateMachineConfiguration configuration
     addCurrentViewer()
 
-saveWires = (wiring) ->
+saveMachine = (configuration) ->
   user = CurrentUser
   previous_wiring = CurrentMachine.wiring
-  wiring = serializeWiring(wiring)
+  wiring = serializeMachineConfiguration(configuration)
   return if previous_wiring == wiring
   if CurrentMachine.protected
     console.error "#{CurrentMachine.name} is read-only"
@@ -101,17 +117,17 @@ saveWires = (wiring) ->
   CurrentMachineRef.child('modified_at').set modified_at
   CurrentMachineRef.child('history').push {user: user?.email, wiring, previous_wiring, modified_at}
 
-@wires_changed = (wires) ->
-  saveWires wires
+@machineConfigurationChanged = (configuration) ->
+  saveMachine configuration
 
-serializeWiring = (wires) ->
+serializeMachineConfiguration = (configuration) ->
   serializatonWire = (wire) ->
     return wire.terminals.map((terminal) -> terminal.globalTerminalName).join(' ')
-  return wires.map(serializatonWire).join("\n")
+  return configuration.wires.map(serializatonWire).join("\n")
 
-unserializeWiring = (wiringString) ->
+unserializeConfiguration = (configurationString) ->
   unserializeWire = (wireString) ->
     return createWire(wireString.split(' ').map(findTerminalByName)...)
-  wireNames = wiringString.replace(/\\n/g, "\n").split(/\n/)
+  wireNames = configurationString.replace(/\\n/g, "\n").split(/\n/)
   wireNames.pop() if wireNames[wireNames.length - 1] == ''
-  return wireNames.map(unserializeWire)
+  return {wires: wireNames.map(unserializeWire)}

@@ -42,7 +42,7 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
         #frame.frame
           .ffmachine
             img(src="img/ffmachine.png", width=900, height=1000)
-            #loading
+            #loading(ng-hide="machine")
             svg#wirebuffer
               defs
                 filter#drop-shadow

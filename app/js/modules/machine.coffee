@@ -2,7 +2,7 @@
 # Constants
 #
 
-knobs = [
+Knobs = [
   [100, 252, 288, '#f0f0f0']
   [100, 382, 0, '#f0f0f0']
   [1700, 252, 292, '#202020']
@@ -13,11 +13,17 @@ knobs = [
 # Globals
 #
 
+MachineConfiguration =
+  modules: []
+  terminals: []
+  wires: []
+
+Simulator = null
+
 svgSelection = null
-wires = []
 knoboffset = null
 
-@setupCanvas = () ->
+@initializeMachineView = () ->
   wirebuffer = document.getElementById('wirebuffer')
   wirebuffer.width = 1800
   wirebuffer.height = 2000
@@ -29,18 +35,6 @@ knoboffset = null
   createLayer('terminal-target-layer', editMode: true)
   createLayer('wire-start-target-layer', editMode: true)
   createLayer('wire-end-target-layer', editMode: true)
-
-  getLayer('terminal-target-layer')
-    .selectAll('.terminal-position').data(TerminalPositions)
-    .enter().append('circle')
-    .classed('terminal-position', true)
-    .attr('id', (pos) -> pos.globalTerminalName)
-    .attr('cx', (pos) -> pos.x)
-    .attr('cy', (pos) -> pos.y)
-    .attr('r', 3)
-    .on('mousedown', mouseDownAddWire)
-    .append('title')
-      .text((pos) -> "Drag #{pos.name} to another terminal to create a wire.")
 
   updateCircuitView()
 
@@ -59,12 +53,15 @@ getLayer = (layerName) ->
 #
 
 # The storage interface calls this
-@setModel = (wires_) ->
-  wires = wires_
+@updateMachineConfiguration = (configuration) ->
+  MachineConfiguration.wires = configuration.wires
+  MachineConfiguration.modules = configuration.modules ? MachineHardware.modules
+  MachineConfiguration.terminals = configuration.terminals ? MachineHardware.terminals
   updateCircuitView()
-  # prevent clicks until the machine is loaded
-  # so we don't overwrite the stored data
-  document.getElementById('loading').style.display = 'none'
+
+# This calls the storage interface
+notifyMachineConfigurationSubscribers = ->
+  machineConfigurationChanged MachineConfiguration
 
 @createWire = (t1, t2) ->
   terminals = [t1, t2]
@@ -74,17 +71,18 @@ getLayer = (layerName) ->
   }
 
 addWire = (wire) ->
-  wires.push wire
+  MachineConfiguration.wires.push wire
   updateCircuitView()
-  wires_changed wires
+  notifyMachineConfigurationSubscribers()
 
 deleteWire = (wire) ->
-  wires = (w for w in wires when w != wire)
+  MachineConfiguration.wires = (w for w in MachineConfiguration.wires when w != wire)
   updateCircuitView()
-  wires_changed wires
+  notifyMachineConfigurationSubscribers()
 
 @stepSimulator = ->
-  @Simulator.step @machineState.modules, wires
+  Simulator or= new SimulatorClass(MachineConfiguration)
+  Simulator.step()
   updateTraces()
 
 
@@ -130,8 +128,8 @@ mouseDownAddWire = ->
 closestEndIndex = (wire) ->
   [x, y] = localEvent(d3.event)
   [t1, t2] = wire.terminals
-  d1 = dist([x,y], t1.coordinates)
-  d2 = dist([x,y], t2.coordinates)
+  d1 = lineLength([x,y], t1.coordinates)
+  d2 = lineLength([x,y], t2.coordinates)
   (if d1 < d2 then 0 else 1)
 
 dragWireEnd = (wire) ->
@@ -163,27 +161,27 @@ dragWireEnd = (wire) ->
     if endTerminal and wire.terminals[wireTerminalIndex] != endTerminal
       wire.terminals[wireTerminalIndex] = endTerminal
       updateCircuitView()
-      wires_changed wires
+      notifyMachineConfigurationSubscribers()
     else
       # restore the wire position and color
       updateCircuitView()
 
 dragKnob = (e) ->
-  knob = knobs[starty]
+  knob = Knobs[starty]
   a = knobAngle(knob, localEvent(e)...)
   knoboffset = mod360(knob[2] - a) unless moved
   knob[2] = mod360(a + knoboffset)
   updateCircuitView()
-  wires_changed wires
+  notifyMachineConfigurationSubscribers()
 
 releaseKnob = ->
-  knob = knobs[starty]
+  knob = Knobs[starty]
   if starty == 0
     knob[2] = findNearest(knob[2], [-72, -36, 0, 36, 72])
   if starty == 2
     knob[2] = findNearest(knob[2], [-68, -23, 22, 67])
   updateCircuitView()
-  wires_changed wires
+  notifyMachineConfigurationSubscribers()
 
 
 #
@@ -191,14 +189,27 @@ releaseKnob = ->
 #
 
 updateCircuitView = ->
-  wireViews = getLayer('wire-layer').selectAll('.wire').data(wires)
+  terminalTargets = getLayer('terminal-target-layer')
+    .selectAll('.terminal-position').data(MachineConfiguration.terminals)
+  terminalTargets.enter().append('circle').classed('terminal-position', true)
+  terminalTargets.exit().remove()
+  terminalTargets
+    .attr('id', (pos) -> pos.globalTerminalName)
+    .attr('cx', (pos) -> pos.x)
+    .attr('cy', (pos) -> pos.y)
+    .attr('r', 3)
+    .on('mousedown', mouseDownAddWire)
+    .append('title')
+      .text((pos) -> "Drag #{pos.name} to another terminal to create a wire.")
+
+  wireViews = getLayer('wire-layer').selectAll('.wire').data(MachineConfiguration.wires)
   wireViews.enter().append('path').classed('wire', true)
   wireViews.exit().remove()
   wireViews
     .attr('d', wirePath)
     .attr('stroke', wireColor)
 
-  wireTargets = getLayer('deletion-target-layer').selectAll('.wire-mouse-target').data(wires)
+  wireTargets = getLayer('deletion-target-layer').selectAll('.wire-mouse-target').data(MachineConfiguration.wires)
   wireTargets.enter()
     .append('path')
     .classed('wire-mouse-target', true)
@@ -211,7 +222,7 @@ updateCircuitView = ->
   updateEndPinTargets = (layerName, endIndex) ->
     startPinTargets = getLayer(layerName)
       .selectAll('.wire-end-target')
-      .data(w for w in wires when wireLength(w) > 45)
+      .data(w for w in MachineConfiguration.wires when wireLength(w) > 45)
     startPinTargets.enter()
       .append('circle')
       .classed('wire-end-target', true)
@@ -238,11 +249,10 @@ updateCircuitView = ->
   # drawKnobs()
 
 wireEndpoints = (wire) ->
-  [t1, t2] = wire.terminals
-  [t1.coordinates, t2.coordinates]
+  (terminal.coordinates for terminal in wire.terminals)
 
 wireLength = (wire) ->
-  dist(wireEndpoints(wire)...)
+  lineLength(wireEndpoints(wire)...)
 
 wirePath = (wire) ->
   endpointsToPath(wireEndpoints(wire)...)
@@ -261,7 +271,7 @@ wireColor = (wire, n) ->
   endpointsToColor(t1.coordinates, t2.coordinates, n)
 
 endpointsToColor = ([x1, y1], [x2, y2], n) ->
-  n or= wires.length
+  n or= MachineConfiguration.wires.length
   cmerge(pickColor(x1, y1, x2, y2), n)
 
 
@@ -270,7 +280,7 @@ endpointsToColor = ([x1, y1], [x2, y2], n) ->
 #
 
 drawKnobs = ->
-  drawKnob k... for k in knobs
+  drawKnob k... for k in Knobs
 
 drawKnob = (x, y, a, c) ->
   ctx.fillStyle = c
@@ -305,7 +315,7 @@ updateTraces = do ->
     updateTraces()
 
   updateWireEndTraces = (className, endIndex) ->
-    nodes = getLayer('trace-layer').selectAll('.' + className).data(wires)
+    nodes = getLayer('trace-layer').selectAll('.' + className).data(MachineConfiguration.wires)
     nodes.exit().remove()
     enter = nodes.enter().append('g').classed(className, true)
     enter.append('circle')
@@ -379,7 +389,7 @@ mod360 = (n) ->
   n -= 360 if n > 180
   return n
 
-@dist = (a, b) ->
+@lineLength = (a, b) ->
   dx = b[0] - a[0]
   dy = b[1] - a[1]
   Math.sqrt(dx * dx + dy * dy)
