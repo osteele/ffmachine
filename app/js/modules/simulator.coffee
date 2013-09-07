@@ -22,15 +22,20 @@ runModules = (modules, terminalInputs, terminalOutputs) ->
 getWireName = (wire) ->
   (terminal.globalTerminalName for terminal in wire).join('->')
 
-updateWireValues = (wires, terminalOutputs, timestamp) ->
-  for globalTerminalName, value of terminalOutputs
-    for wire in getConnectedWires(findTerminalByName(globalTerminalName), wires)
-      console.info getWireName(wire), '<-', value if Trace
-      wire.value = value
-      wire.timestamp = timestamp
-      wire.trace or= []
-      wire.trace.push {timestamp, value: wire.value}
-      wire.trace.splice(0, wire.trace.length - HistoryLength) if wire.trace.length > HistoryLength
+updateWireValues = (wires, terminalValues, timestamp) ->
+  for wire in wires
+    values = (terminalValues[terminal.globalTerminalName] for terminal in wire)
+    # console.info (terminal.globalTerminalName for terminal in wires) #, values
+    continue unless values.length
+    strongValues = (value for value in values when not isWeak(value))
+    values = strongValues if strongValues.length
+    value = fromWeak(values[0])
+    console.info getWireName(wire), '<-', value if Trace
+    wire.value = value
+    wire.timestamp = timestamp
+    wire.trace or= []
+    wire.trace.push {timestamp, value: wire.value}
+    wire.trace.splice(0, wire.trace.length - HistoryLength) if wire.trace.length > HistoryLength
 
 updateModuleOutputs = (module, terminalInputs, terminalOutputs) ->
   runComponent component, terminalInputs, terminalOutputs for component in module.components
@@ -61,17 +66,21 @@ runComponent = (component, terminalInputs, terminalOutputs) ->
     voltage = terminalInputs[globalTerminalName]
     moduleInputs[targetName] = voltage
     moduleInputs[targetName + '_v'] = voltToBool(voltage)
-  console.error "No component step function for #{circuitType}" unless ComponentStepFunctions[circuitType]?
-  moduleOutputs = ComponentStepFunctions[circuitType].call(component.state, moduleInputs)
+  console.error "No component step function for #{circuitType}" unless ComponentEquations[circuitType]?
+  moduleOutputs = ComponentEquations[circuitType].call(component.state, moduleInputs)
 
   for {componentTerminalName, globalTerminalName} in terminals
     continue unless componentTerminalName of moduleOutputs
     value = moduleOutputs[componentTerminalName]
-    value = value.value if value instanceof Weak
     value = boolToVolt(value) if value == true or value == false
     terminalOutputs[globalTerminalName] = value
 
   console.info component.type, (t.globalTerminalName for t in terminals), moduleInputs, moduleOutputs if trace
+
+
+#
+# Logic <-> Voltage
+#
 
 boolToVolt = (value) ->
   switch value
@@ -85,21 +94,36 @@ voltToBool = (value) ->
     when 0 then false
     else undefined
 
-# logical complement, at the voltage level
-comp = (value) ->
-  boolToVolt(!voltToBool(value))
+
+#
+# Weak assertions
+#
 
 class Weak
   constructor: (@value) ->
 
-weak = (value) -> new Weak(value)
+weak = (value) ->
+  value = boolToVolt(value) if value == true or value == false
+  new Weak(value)
+
+fromWeak = (value) ->
+  value = value.value if value instanceof Weak
+  return value
+
+isWeak = (value) ->
+  value instanceof Weak
+
+
+#
+# Chacteristic equations
+#
 
 # These methods implement the characteristic equations for each component type.
 # Inputs are booleans decoded as negative logic levels, unless suffixed by _v.
 # Outputs can be either voltage levels (numbers); booleans that are then
 # translated to negative logic voltage levels; or weak(value) where value is
 # one of the above.
-ComponentStepFunctions =
+ComponentEquations =
   clamp: ->
     {cl: weak(true)}
 
