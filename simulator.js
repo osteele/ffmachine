@@ -1,5 +1,5 @@
 (function() {
-  var ComponentEquations, HistoryLength, RestrictModules, Trace, TraceComponents, Weak, boolToVolt, computeTerminalValues, fromWeak, getConnectedWires, getWireName, isWeak, runComponent, runModules, updateModuleOutputs, updateWireValues, voltToBool, weak,
+  var ComponentEquations, HistoryLength, RestrictModules, Trace, TraceComponents, Weak, boolToVolt, collectBusses, computeTerminalValues, getConnectedWires, isWeak, runComponent, runModules, updateModuleOutputs, updateTerminalValues, updateWireValues, voltToBool, weak,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   HistoryLength = 400;
@@ -10,30 +10,30 @@
 
   TraceComponents = 0;
 
-  this.Simulator = {
-    step: function(modules, wires) {
-      var module, terminalInputs, terminalOutputs, terminals, _ref;
-      this.currentTime || (this.currentTime = 0);
-      terminals = (_ref = []).concat.apply(_ref, (function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = modules.length; _i < _len; _i++) {
-          module = modules[_i];
-          _results.push(module.terminals);
-        }
-        return _results;
-      })());
-      terminalInputs = computeTerminalValues(terminals, wires);
-      terminalOutputs = {};
-      runModules(modules, terminalInputs, terminalOutputs);
-      updateWireValues(wires, terminalOutputs, this.currentTime);
-      return this.currentTime += 1;
+  this.SimulatorClass = (function() {
+    function SimulatorClass(configuration) {
+      this.configuration = configuration;
+      this.timestamp = 0;
     }
-  };
 
-  runModules = function(modules, terminalInputs, terminalOutputs) {
+    SimulatorClass.prototype.step = function() {
+      var moduleInputs, moduleOutputs, modules, terminals, wires, _ref;
+      _ref = this.configuration, modules = _ref.modules, terminals = _ref.terminals, wires = _ref.wires;
+      moduleInputs = computeTerminalValues(terminals, wires);
+      moduleOutputs = {};
+      runModules(modules, moduleInputs, moduleOutputs);
+      updateTerminalValues(terminals, moduleOutputs, this.timestamp);
+      updateWireValues(wires, moduleOutputs, this.timestamp);
+      return this.timestamp += 1;
+    };
+
+    return SimulatorClass;
+
+  })();
+
+  runModules = function(modules, moduleInputs, moduleOutputs) {
     var m, module, _i, _len, _results;
-    if (RestrictModules) {
+    if (RestrictModules.length) {
       modules = (function() {
         var _i, _len, _ref, _results;
         _results = [];
@@ -49,68 +49,82 @@
     _results = [];
     for (_i = 0, _len = modules.length; _i < _len; _i++) {
       module = modules[_i];
-      _results.push(updateModuleOutputs(module, terminalInputs, terminalOutputs));
+      _results.push(updateModuleOutputs(module, moduleInputs, moduleOutputs));
     }
     return _results;
   };
 
-  getWireName = function(wire) {
-    var terminal;
-    return ((function() {
-      var _i, _len, _results;
-      _results = [];
-      for (_i = 0, _len = wire.length; _i < _len; _i++) {
-        terminal = wire[_i];
-        _results.push(terminal.globalTerminalName);
-      }
-      return _results;
-    })()).join('->');
-  };
-
-  updateWireValues = function(wires, terminalValues, timestamp) {
-    var strongValues, terminal, value, values, wire, _i, _len, _results;
-    _results = [];
+  collectBusses = function(wires) {
+    var bus, busses, bussesByTerminal, terminal, wire, wireSets, __, _i, _j, _len, _len1, _ref;
+    bussesByTerminal = {};
     for (_i = 0, _len = wires.length; _i < _len; _i++) {
       wire = wires[_i];
-      values = (function() {
-        var _j, _len1, _results1;
-        _results1 = [];
-        for (_j = 0, _len1 = wire.length; _j < _len1; _j++) {
-          terminal = wire[_j];
-          _results1.push(terminalValues[terminal.globalTerminalName]);
+      busses = _.compact((function() {
+        var _j, _len1, _ref, _results;
+        _ref = wire.terminals;
+        _results = [];
+        for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+          terminal = _ref[_j];
+          _results.push(bussesByTerminal[terminal.globalTerminalName]);
         }
-        return _results1;
-      })();
-      if (!values.length) {
-        continue;
-      }
-      strongValues = (function() {
-        var _j, _len1, _results1;
-        _results1 = [];
-        for (_j = 0, _len1 = values.length; _j < _len1; _j++) {
-          value = values[_j];
-          if (!isWeak(value)) {
-            _results1.push(value);
-          }
+        return _results;
+      })());
+      bus = (function() {
+        var _ref;
+        switch (busses.length) {
+          case 0:
+            return [wire];
+          default:
+            return (_ref = [wire]).concat.apply(_ref, busses);
         }
-        return _results1;
       })();
-      if (strongValues.length) {
-        values = strongValues;
+      _ref = wire.terminals;
+      for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+        terminal = _ref[_j];
+        bussesByTerminal[terminal.globalTerminalName] = bus;
       }
-      value = fromWeak(values[0]);
-      if (Trace) {
-        console.info(getWireName(wire), '<-', value);
+    }
+    wireSets = [];
+    for (__ in bussesByTerminal) {
+      bus = bussesByTerminal[__];
+      if (__indexOf.call(wireSets, bus) < 0) {
+        wireSets.push(bus);
       }
-      wire.value = value;
-      wire.timestamp = timestamp;
-      wire.trace || (wire.trace = []);
-      wire.trace.push({
-        timestamp: timestamp,
-        value: wire.value
-      });
-      if (wire.trace.length > HistoryLength) {
-        _results.push(wire.trace.splice(0, wire.trace.length - HistoryLength));
+    }
+    return (function() {
+      var _k, _len2, _results;
+      _results = [];
+      for (_k = 0, _len2 = wireSets.length; _k < _len2; _k++) {
+        wires = wireSets[_k];
+        _results.push({
+          wires: wires,
+          terminals: _.chain(wires).pluck('terminals').flatten().uniq().value()
+        });
+      }
+      return _results;
+    })();
+  };
+
+  updateTerminalValues = function(terminals, moduleOutputs, timestamp) {
+    var terminal, trace, value, _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = terminals.length; _i < _len; _i++) {
+      terminal = terminals[_i];
+      if (terminal.globalTerminalName in moduleOutputs) {
+        terminal.value = value = moduleOutputs[terminal.globalTerminalName];
+        trace = terminal.trace || (terminal.trace = []);
+        trace.push({
+          timestamp: timestamp,
+          value: value
+        });
+        if (trace.length > HistoryLength) {
+          trace.splice(0, trace.length - HistoryLength);
+        }
+        if (Trace) {
+          _results.push(console.info("" + terminal.globalTerminalName + " <- " + value));
+        } else {
+          _results.push(void 0);
+        }
       } else {
         _results.push(void 0);
       }
@@ -118,13 +132,81 @@
     return _results;
   };
 
-  updateModuleOutputs = function(module, terminalInputs, terminalOutputs) {
+  updateWireValues = function(wires, moduleOutputs, timestamp) {
+    var propogatedOutputs, propogatedTerminals, strongValues, terminal, terminals, value, values, wire, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
+    propogatedTerminals = [];
+    propogatedOutputs = {};
+    _ref = collectBusses(wires);
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      _ref1 = _ref[_i], wires = _ref1.wires, terminals = _ref1.terminals;
+      if (!terminals.some(function(terminal) {
+        return terminal.globalTerminalName in moduleOutputs;
+      })) {
+        continue;
+      }
+      values = (function() {
+        var _j, _len1, _results;
+        _results = [];
+        for (_j = 0, _len1 = terminals.length; _j < _len1; _j++) {
+          terminal = terminals[_j];
+          _results.push(terminal.value);
+        }
+        return _results;
+      })();
+      values = (function() {
+        var _j, _len1, _results;
+        _results = [];
+        for (_j = 0, _len1 = values.length; _j < _len1; _j++) {
+          value = values[_j];
+          if (value !== void 0) {
+            _results.push(value);
+          }
+        }
+        return _results;
+      })();
+      if (values.length === 0) {
+        values = [void 0];
+      }
+      strongValues = (function() {
+        var _j, _len1, _results;
+        _results = [];
+        for (_j = 0, _len1 = values.length; _j < _len1; _j++) {
+          value = values[_j];
+          if (!isWeak(value)) {
+            _results.push(value);
+          }
+        }
+        return _results;
+      })();
+      if (strongValues.length) {
+        values = strongValues;
+      }
+      value = fromWeak(values[0]);
+      if (Trace) {
+        console.info("" + (_.pluck(wires, 'name').join(',')) + " <- " + value);
+      }
+      for (_j = 0, _len1 = wires.length; _j < _len1; _j++) {
+        wire = wires[_j];
+        wire.value = value;
+      }
+      for (_k = 0, _len2 = terminals.length; _k < _len2; _k++) {
+        terminal = terminals[_k];
+        if (!(terminal.globalTerminalName in moduleOutputs || __indexOf.call(propogatedTerminals, terminal) >= 0)) {
+          propogatedTerminals.push(terminal);
+          propogatedOutputs[terminal.globalTerminalName] = value;
+        }
+      }
+    }
+    return updateTerminalValues(propogatedTerminals, propogatedOutputs, timestamp);
+  };
+
+  updateModuleOutputs = function(module, moduleInputs, moduleOutputs) {
     var component, _i, _len, _ref, _results;
     _ref = module.components;
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       component = _ref[_i];
-      _results.push(runComponent(component, terminalInputs, terminalOutputs));
+      _results.push(runComponent(component, moduleInputs, moduleOutputs));
     }
     return _results;
   };
@@ -136,7 +218,7 @@
       _results = [];
       for (_i = 0, _len = wires.length; _i < _len; _i++) {
         wire = wires[_i];
-        if (__indexOf.call(wire, terminal) >= 0) {
+        if (__indexOf.call(wire.terminals, terminal) >= 0) {
           _results.push(wire);
         }
       }
@@ -166,9 +248,9 @@
     return values;
   };
 
-  runComponent = function(component, terminalInputs, terminalOutputs) {
-    var circuitType, componentTerminalName, globalTerminalName, moduleInputs, moduleOutputs, t, targetName, terminals, trace, value, voltage, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-    trace = (_ref = component.type, __indexOf.call(TraceComponents, _ref) >= 0);
+  runComponent = function(component, moduleInputs, moduleOutputs) {
+    var circuitType, componentInputs, componentOutputs, componentTerminalName, globalTerminalName, t, targetName, terminals, trace, value, voltage, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+    trace = TraceComponents === 1 || TraceComponents === true || (_ref = component.type, __indexOf.call(TraceComponents, _ref) >= 0);
     circuitType = component.type, terminals = component.terminals;
     component.state || (component.state = {
       falling: function(n) {
@@ -178,28 +260,28 @@
         return n < s;
       }
     });
-    moduleInputs = {};
+    componentInputs = {};
     for (_i = 0, _len = terminals.length; _i < _len; _i++) {
       _ref1 = terminals[_i], componentTerminalName = _ref1.componentTerminalName, globalTerminalName = _ref1.globalTerminalName;
       targetName = componentTerminalName.replace(/^(\d+)(.+)/, '$2$1');
-      voltage = terminalInputs[globalTerminalName];
-      moduleInputs[targetName] = voltage;
-      moduleInputs[targetName + '_v'] = voltToBool(voltage);
+      voltage = moduleInputs[globalTerminalName];
+      componentInputs[targetName] = voltage;
+      componentInputs[targetName + '_v'] = voltToBool(voltage);
     }
     if (ComponentEquations[circuitType] == null) {
       console.error("No component step function for " + circuitType);
     }
-    moduleOutputs = ComponentEquations[circuitType].call(component.state, moduleInputs);
+    componentOutputs = ComponentEquations[circuitType].call(component.state, componentInputs);
     for (_j = 0, _len1 = terminals.length; _j < _len1; _j++) {
       _ref2 = terminals[_j], componentTerminalName = _ref2.componentTerminalName, globalTerminalName = _ref2.globalTerminalName;
-      if (!(componentTerminalName in moduleOutputs)) {
+      if (!(componentTerminalName in componentOutputs)) {
         continue;
       }
-      value = moduleOutputs[componentTerminalName];
+      value = componentOutputs[componentTerminalName];
       if (value === true || value === false) {
         value = boolToVolt(value);
       }
-      terminalOutputs[globalTerminalName] = value;
+      moduleOutputs[globalTerminalName] = value;
     }
     if (trace) {
       return console.info(component.type, (function() {
@@ -210,7 +292,7 @@
           _results.push(t.globalTerminalName);
         }
         return _results;
-      })(), moduleInputs, moduleOutputs);
+      })(), componentInputs, componentOutputs);
     }
   };
 
@@ -252,7 +334,7 @@
     return new Weak(value);
   };
 
-  fromWeak = function(value) {
+  this.fromWeak = function(value) {
     if (value instanceof Weak) {
       value = value.value;
     }

@@ -1,5 +1,5 @@
 (function() {
-  var CurrentMachine, CurrentMachineRef, CurrentUser, FirebaseRootRef, MachineChangedHooks, MachineListRef, ReloadAppSeed, addCurrentViewer, app, loadWires, removeCurrentViewer, saveWires, serializeWiring, unserializeWiring;
+  var CurrentMachine, CurrentMachineRef, CurrentUser, FirebaseRootRef, MachineChangedHooks, MachineListRef, ReloadAppSeed, SimulatorThread, addCurrentViewer, app, loadMachine, removeCurrentViewer, saveMachine, serializeMachineConfiguration, unserializeConfiguration;
 
   FirebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
 
@@ -27,9 +27,9 @@
   app = angular.module('FFMachine', ['firebase']);
 
   app.controller('MachineSimulatorCtrl', function($scope, $location, $window, angularFire, angularFireAuth) {
-    var name, simulationThread;
+    var name, simulator;
     $scope.mode = 'edit';
-    simulationThread = null;
+    simulator = new SimulatorThread;
     angularFireAuth.initialize(FirebaseRootRef, {
       scope: $scope,
       name: 'user'
@@ -43,21 +43,18 @@
       return angularFireAuth.logout();
     };
     $scope.runSimulation = function() {
+      simulator.start();
       $scope.mode = 'simulate';
-      $scope.simulationRunning = true;
-      return simulationThread = window.setInterval((function() {
-        return stepSimulator();
-      }), 1000 / 10);
+      return $scope.simulationRunning = simulator.running;
     };
     $scope.stopSimulation = function() {
-      window.clearInterval(simulationThread);
-      $scope.simulationRunning = false;
-      return simulationThread = null;
+      simulator.stop();
+      return $scope.simulationRunning = simulator.running;
     };
     $scope.stepSimulation = function() {
+      simulator.step();
       $scope.mode = 'simulate';
-      $scope.stopSimulation();
-      return stepSimulator();
+      return $scope.simulationRunning = simulator.running;
     };
     $scope.$watch('mode', function() {
       if ($scope.mode !== 'simulate') {
@@ -87,9 +84,38 @@
     if (!name) {
       $window.location.href = '.';
     }
-    setupCanvas();
-    return loadWires(name);
+    initializeMachineView();
+    return loadMachine(name);
   });
+
+  SimulatorThread = (function() {
+    function SimulatorThread() {
+      this.simulationThread = null;
+    }
+
+    SimulatorThread.prototype.start = function() {
+      this.simulationThread || (this.simulationThread = window.setInterval((function() {
+        return stepSimulator();
+      }), 1000 / 10));
+      return this.running = true;
+    };
+
+    SimulatorThread.prototype.stop = function() {
+      if (this.simulationThread) {
+        window.clearInterval(this.simulationThread);
+      }
+      this.simulationThread = null;
+      return this.running = false;
+    };
+
+    SimulatorThread.prototype.step = function() {
+      this.stop();
+      return stepSimulator();
+    };
+
+    return SimulatorThread;
+
+  })();
 
   addCurrentViewer = function() {
     var onlineRef, user;
@@ -111,31 +137,31 @@
     return onlineRef.remove();
   };
 
-  loadWires = function(name) {
+  loadMachine = function(name) {
     CurrentMachineRef = MachineListRef.child(name);
     return CurrentMachineRef.on('value', function(snapshot) {
-      var hook, wires, _i, _len;
+      var configuration, hook, _i, _len;
       CurrentMachine = snapshot.val();
       if (!CurrentMachine) {
         console.error("No machine named " + name);
       }
-      wires = unserializeWiring(snapshot.val().wiring);
+      configuration = unserializeConfiguration(snapshot.val().wiring);
       for (_i = 0, _len = MachineChangedHooks.length; _i < _len; _i++) {
         hook = MachineChangedHooks[_i];
         setTimeout((function() {
           return hook(CurrentMachine);
         }), 10);
       }
-      this.setModel(wires);
+      this.updateMachineConfiguration(configuration);
       return addCurrentViewer();
     });
   };
 
-  saveWires = function(name, wiring) {
-    var modified_at, previous_wiring, user;
+  saveMachine = function(configuration) {
+    var modified_at, previous_wiring, user, wiring;
     user = CurrentUser;
     previous_wiring = CurrentMachine.wiring;
-    wiring = serializeWiring(wiring);
+    wiring = serializeMachineConfiguration(configuration);
     if (previous_wiring === wiring) {
       return;
     }
@@ -158,30 +184,32 @@
     });
   };
 
-  this.wires_changed = function(wires) {
-    return saveWires(name, wires);
+  this.machineConfigurationChanged = function(configuration) {
+    return saveMachine(configuration);
   };
 
-  serializeWiring = function(wires) {
-    var getWireName;
-    getWireName = function(wire) {
-      return wire.map(function(terminal) {
+  serializeMachineConfiguration = function(configuration) {
+    var serializatonWire;
+    serializatonWire = function(wire) {
+      return wire.terminals.map(function(terminal) {
         return terminal.globalTerminalName;
       }).join(' ');
     };
-    return wires.map(getWireName).join("\n");
+    return configuration.wires.map(serializatonWire).join("\n");
   };
 
-  unserializeWiring = function(wiringString) {
-    var wireNameToWire, wireNames;
-    wireNames = wiringString.replace(/\\n/g, "\n").split(/\n/);
+  unserializeConfiguration = function(configurationString) {
+    var unserializeWire, wireNames;
+    unserializeWire = function(wireString) {
+      return createWire.apply(null, wireString.split(' ').map(findTerminalByName));
+    };
+    wireNames = configurationString.replace(/\\n/g, "\n").split(/\n/);
     if (wireNames[wireNames.length - 1] === '') {
       wireNames.pop();
     }
-    wireNameToWire = function(wireName) {
-      return wireName.split(' ').map(findTerminalByName);
+    return {
+      wires: wireNames.map(unserializeWire)
     };
-    return wireNames.map(wireNameToWire);
   };
 
 }).call(this);

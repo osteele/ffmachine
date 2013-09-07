@@ -4,7 +4,7 @@
   ModuleLocationMap = [['clk1', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'clk2'], ['ff', 'ff', 'ff', 'ff', 'ff', 'dg', 'ff', 'ff', 'ff'], ['ff', 'ff', 'ff', 'ff', 'ff', 'pa', 'ff', 'ff', 'ff'], ['ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff']];
 
   TerminalLocations = {
-    ff: [[100, 166, 'p'], [66, 190, '0'], [134, 190, '1'], [66, 252, '0in'], [134, 252, '1in'], [100, 266, 'comp'], [66, 290, 'c0'], [66, 336, 'e0'], [40, 314, 'b0'], [134, 290, 'c1'], [134, 336, 'e1'], [160, 314, 'b1'], [66, 372, 'gnd1'], [100, 372, 'gnd2'], [134, 372, 'gnd3']],
+    ff: [[100.5, 166, 'p'], [66.5, 190.5, '0'], [134.5, 190.5, '1'], [66, 252, '0in'], [134, 252, '1in'], [100, 266, 'comp'], [66, 290, 'c0'], [66, 336, 'e0'], [40, 314, 'b0'], [134, 290, 'c1'], [134, 336, 'e1'], [160, 314, 'b1'], [66.5, 372.5, 'gnd1'], [100.5, 372.5, 'gnd2'], [134.5, 372.5, 'gnd3']],
     clk1: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
     clk2: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
     pa: [[160, 90, '-0'], [160, 136, '+0'], [66, 113, 'in0'], [160, 167, 'gnd0'], [160, 240, '-1'], [160, 286, '+1'], [66, 263, 'in1'], [160, 317, 'gnd1'], [66, 143, 'c0'], [66, 189, 'e0'], [40, 167, 'b0'], [66, 293, 'c1'], [66, 339, 'e1'], [40, 317, 'b1'], [40, 360, 'gnd2']],
@@ -137,10 +137,10 @@
     if (tolerance == null) {
       tolerance = 12;
     }
-    _ref = this.machineState.terminals;
+    _ref = MachineHardware.terminals;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       terminal = _ref[_i];
-      if (dist([terminal.x, terminal.y], [x, y]) < tolerance) {
+      if (lineLength(terminal.coordinates, [x, y]) < tolerance) {
         return terminal;
       }
     }
@@ -149,7 +149,7 @@
 
   this.findTerminalByName = function(globalTerminalName) {
     var terminal, _i, _len, _ref;
-    _ref = this.machineState.terminals;
+    _ref = MachineHardware.terminals;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       terminal = _ref[_i];
       if (terminal.globalTerminalName === globalTerminalName) {
@@ -164,10 +164,10 @@
     if (tolerance == null) {
       tolerance = 12;
     }
-    _ref = this.machineState.terminals;
+    _ref = MachineHardware.terminals;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       _ref1 = _ref[_i], px = _ref1.x, py = _ref1.y, globalTerminalName = _ref1.globalTerminalName;
-      if (dist([px, py], [x, y]) < tolerance) {
+      if (lineLength([px, py], [x, y]) < tolerance) {
         return globalTerminalName;
       }
     }
@@ -178,7 +178,7 @@
     return findTerminalByName(globalTerminalName).coordinates;
   };
 
-  this.machineState = (function() {
+  this.MachineHardware = (function() {
     var modules, terminals, _ref;
     modules = createModules();
     return {
@@ -194,7 +194,5 @@
       })())
     };
   })();
-
-  this.TerminalPositions = this.machineState.terminals;
 
 }).call(this);
