@@ -28,9 +28,9 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
         button.btn.btn-default(ng-show="editable", ng-disabled="mode == 'edit'", ng-show="editable", ng-click="mode = 'edit'") Edit
         button.btn.btn-default(ng-disabled="mode == 'simulate'", ng-click="mode = 'simulate'") Simulate
       .btn-group
-        a.icon-step-forward.btn.btn-default(ng-disabled="simulatonRunning", ng-click="stepSimulation()")
-        a.icon-play.btn.btn-default(ng-disabled="simulationRunning", ng-click="runSimulation()")
-        a.icon-stop.btn.btn-default(ng-disabled="!simulationRunning", ng-click="stopSimulation()")
+        a.icon-step-forward.btn.btn-default(ng-disabled="simulatonRunning", ng-click="stepSimulation()", title="Click to step the simulation")
+        a.icon-play.btn.btn-default(ng-disabled="simulationRunning", ng-click="runSimulation()", title="Click to start the simulation")
+        a.icon-pause.btn.btn-default(ng-disabled="!simulationRunning", ng-click="stopSimulation()", title="Click to pause the simulation")
         //- a.icon-pause.btn.btn-default(ng-show="mode == 'simulate'", ng-disabled="!simulaton_running")
 
     .content
