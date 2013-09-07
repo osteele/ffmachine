@@ -1,7 +1,7 @@
 doctype 5
-html(lang="en", ng-app="FFMachine")
+html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
   head
-    title Flip Flop Machine
+    title(ng:bind-template="{{machine.name}}") Flip Flop Machine
     meta(charset="utf-8")
 
     link(href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc2/css/bootstrap.min.css", rel="stylesheet", type="text/css")
@@ -21,7 +21,7 @@ html(lang="en", ng-app="FFMachine")
     script(src="simulator-app.js")
     script(src="simulator.js")
 
-  body(ng-controller="MachineSimulatorCtrl", ng-class="{'edit-mode': mode == 'edit', 'simulation-mode': mode == 'simulate'}")
+  body(ng-class="{'edit-mode': mode == 'edit', 'simulation-mode': mode == 'simulate'}")
     include partials/toolbar
       .btn-group
         button.btn.btn-default(ng-hide="editable", ng-disabled="mode == 'view'", ng-click="mode = 'view'") View
