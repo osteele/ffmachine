@@ -103,15 +103,20 @@ body.simulation-mode .ffmachine {
 
   .trace-layer {
     .start-trace, .end-trace {
-      stroke-width: 0;
-
-      &:hover {
-        stroke-width: 5px;
+      circle {
+        transition: fill 0.1s;
+        -moz-transition: fill 0.1s;
+        -webkit-transition: fill 0.1s;
       }
 
-      &.voltage-negative circle { fill: black; stroke: black; }
-      &.voltage-ground circle { fill: white; stroke: white; }
-      &.voltage-float circle { fill: blue; stroke: blue; }
+      &:hover circle {
+        stroke-width: 2px;
+        stroke: lightBlue;
+      }
+
+      &.voltage-negative circle { fill: black; }
+      &.voltage-ground circle { fill: white; }
+      &.voltage-float circle { fill: gray; }
     }
   }
 }
@@ -143,7 +148,7 @@ body.simulation-mode .ffmachine {
 
   .negative-voltage { background: black; color: white; }
   .ground-voltage { background: white; }
-  .float-voltage { background: blue; }
+  .float-voltage { background: gray; }
 }
 
 #wireTrace {

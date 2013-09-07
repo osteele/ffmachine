@@ -66,8 +66,8 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
         #legend(ng-show="mode == 'simulate'")
           h3 Voltage Key
           .pull-right.negative-voltage -3V
-          .pull-right.float-voltage float
-          .pull-right.ground-voltage ground
+          .pull-right.ground-voltage 0V
+          .pull-right.float-voltage undefined
 
         #trace.pull-right(ng-show="mode == 'simulate'")
           h3 Trace
