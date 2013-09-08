@@ -15,9 +15,11 @@ class @SimulatorClass
     moduleInputs = computeTerminalValues(terminals, wires)
     moduleOutputs = {}
     runModules modules, moduleInputs, moduleOutputs
+    terminal.output = terminal.identifier of moduleOutputs for terminal in terminals
     updateTerminalValues terminals, moduleOutputs, @timestamp
     updateWireValues wires, moduleOutputs, @timestamp
     @timestamp += 1
+    # console.info getTerminalByIdentifier('a_8_+').output, getTerminalByIdentifier('b_8_b1').output
 
 runModules = (modules, moduleInputs, moduleOutputs) ->
   modules = (m for m in modules when m.name in RestrictModules) if RestrictModules.length

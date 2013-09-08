@@ -80,10 +80,15 @@ deleteWire = (wire) ->
   updateCircuitView()
   notifyMachineConfigurationSubscribers()
 
-@stepSimulator = ->
-  Simulator or= new SimulatorClass(MachineConfiguration)
-  Simulator.step()
-  updateTraces()
+@stepSimulator = do ->
+  AnimationLength = 6
+  animationCounter = 0
+  return ->
+    Simulator or= new SimulatorClass(MachineConfiguration)
+    Simulator.step()
+    updateTraces()
+    animationCounter = (animationCounter + 1) % AnimationLength
+    # svgSelection.classed("animation-phase-#{i}", animationCounter == i) for i in [0...AnimationLength]
 
 
 #
@@ -343,6 +348,7 @@ updateTraces = do ->
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
       .classed('voltage-float', isVoltage('float'))
+      .classed('reversed', (w) -> !w.terminals[0].output)
 
   return ->
     updateWireTraces()

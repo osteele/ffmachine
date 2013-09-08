@@ -139,6 +139,11 @@ body.simulation-mode .ffmachine {
       stroke-dasharray: 2, 4;
     }
   }
+
+  @for $i from 0 through 5 {
+    &.animation-phase-#{$i} .trace-layer .wire { stroke-dashoffset: $i; }
+    &.animation-phase-#{$i} .trace-layer .wire.reversed { stroke-dashoffset: 5 - $i; }
+  }
 }
 
 #connected-users {

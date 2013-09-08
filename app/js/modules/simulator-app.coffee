@@ -127,7 +127,7 @@ serializeMachineConfiguration = (configuration) ->
 
 unserializeConfiguration = (configurationString) ->
   unserializeWire = (wireString) ->
-    return createWire(wireString.split(' ').map(findTerminalByName)...)
+    return createWire(wireString.split(' ').map(getTerminalByIdentifier)...)
   wireNames = configurationString.replace(/\\n/g, "\n").split(/\n/)
   wireNames.pop() if wireNames[wireNames.length - 1] == ''
   return {wires: wireNames.map(unserializeWire)}

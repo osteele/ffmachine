@@ -149,7 +149,7 @@ createModules = ->
     return terminal if lineLength(terminal.coordinates, [x, y]) < tolerance
   return null
 
-@findTerminalByName = (identifier) ->
+@getTerminalByIdentifier = (identifier) ->
   MachineHardware.terminals[identifier] ? throw Exception("Can't find terminal named #{identifier}")
 
 @xyToTerminalName = (x, y, tolerance=12) ->
@@ -158,7 +158,7 @@ createModules = ->
   return null
 
 @getTerminalCoordinates = (identifier) ->
-  findTerminalByName(identifier).coordinates
+  getTerminalByIdentifier(identifier).coordinates
 
 @MachineHardware = do ->
   modules = createModules()
