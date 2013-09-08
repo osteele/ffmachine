@@ -114,8 +114,9 @@ body.simulation-mode .ffmachine {
   }
 
   .trace-layer {
-    .start-trace, .end-trace {
+    .terminal-trace {
       circle {
+        cursor: help;
         transition: fill 0.1s;
         -moz-transition: fill 0.1s;
         -webkit-transition: fill 0.1s;

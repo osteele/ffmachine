@@ -193,6 +193,9 @@ releaseKnob = ->
 # Drawing
 #
 
+wireName = (w) ->
+  (t.identifier for t in w.terminals).join(' ↔ ')
+
 updateCircuitView = ->
   terminalTargets = getLayer('terminal-target-layer')
     .selectAll('.terminal-position').data(MachineConfiguration.terminals)
@@ -214,12 +217,15 @@ updateCircuitView = ->
     .attr('d', wirePath)
     .attr('stroke', wireColor)
 
-  wireTargets = getLayer('deletion-target-layer').selectAll('.wire-mouse-target').data(MachineConfiguration.wires)
+  wireTitle = (w) ->
+    "Wire #{wireName(w)}\nClick to delete this wire."
+  wireTargets = getLayer('deletion-target-layer').selectAll('.wire-mouse-target')
+    .data(MachineConfiguration.wires)
   wireTargets.enter()
     .append('path')
     .classed('wire-mouse-target', true)
     .on('mousedown', deleteWire)
-    .append('title').text('Click to delete this wire.')
+    .append('title').text(wireTitle)
   wireTargets.exit().remove()
   wireTargets
     .attr('d', wirePath)
@@ -241,7 +247,7 @@ updateCircuitView = ->
       #   targetView.transition().delay(0).attr('d', endpointsToPath(endpoints...))
       #   )
       # .on('mouseout', (wire) -> getWireView(wire).transition().delay(0).attr('d', wirePath(wire)) )
-      .append('title').text('Click to drag the wire end to another terminal.')
+      .append('title').text((w) -> "Click to drag this end of #{wireName(w)} to another terminal.")
     startPinTargets.exit().remove()
     startPinTargets
       .attr('cx', (wire) -> wire.terminals[endIndex].coordinates[0])
@@ -319,10 +325,15 @@ updateTraces = do ->
     terminal.value = values[(symbols.indexOf(terminalVoltageName(terminal)) + 1) % symbols.length]
     updateTraces()
 
+  voltageParenthetical = (wireOrTerminal) ->
+    value = fromWeak(wireOrTerminal.value)
+    return '' if value == undefined
+    return "(#{value}V)" unless value == undefined
+
   updateTerminalTraces = ->
-    nodes = getLayer('trace-layer').selectAll('.start-trace').data(MachineConfiguration.terminals)
+    nodes = getLayer('trace-layer').selectAll('.terminal-trace').data(MachineConfiguration.terminals)
     nodes.exit().remove()
-    enter = nodes.enter().append('g').classed('start-trace', true)
+    enter = nodes.enter().append('g').classed('terminal-trace', true)
     enter.append('circle')
       .attr('r', 3)
       .on('click', updateTerminalTraceView)
@@ -334,12 +345,14 @@ updateTraces = do ->
       .attr('transform', (terminal) ->
         pt = terminal.coordinates
         "translate(#{pt[0]}, #{pt[1]})")
-      .select('title').text((d) -> "Terminal #{d.identifier}\nVoltage #{d.value}\nClick to trace")
+      .select('title').text((t) ->
+        "Terminal #{t.identifier} #{voltageParenthetical(t)}\nClick to trace this terminal.")
 
   updateWireTraces = ->
     wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires)
       .classed('wire', true)
     wires.enter().append('path').classed('wire', true)
+      .append('title').text((w) -> "Wire #{wireName(w)}#{voltageParenthetical(w)}")
     wires.exit().remove()
     wires
       .attr('d', wirePath)
