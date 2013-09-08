@@ -20,13 +20,14 @@ MachineConfiguration =
 
 Simulator = null
 
+machineViewElement = null
 svgSelection = null
 knoboffset = null
 
 @initializeMachineView = () ->
-  wirebuffer = document.getElementById('wirebuffer')
+  machineViewElement = document.getElementById('machineView')
 
-  svgSelection = d3.select(wirebuffer)
+  svgSelection = d3.select(machineViewElement)
   createLayer('wire-layer')
   createLayer('trace-layer', simulationMode: true)
   createLayer('deletion-target-layer', editMode: true)
@@ -118,7 +119,7 @@ mouseDownAddWire = ->
     unless endTerminal == newEndTerminal
       endTerminal = newEndTerminal
       svgSelection.select('.active.end').classed('active', false).classed('end', false)
-      d3.select(wirebuffer.getElementById(endTerminal.identifier))
+      d3.select(machineViewElement.getElementById(endTerminal.identifier))
         .classed('active', true).classed('end', true) if endTerminal
 
   window.onmouseup = (e) ->
@@ -154,7 +155,7 @@ dragWireEnd = (wire) ->
     unless endTerminal == newEndTerminal
       endTerminal = newEndTerminal
       svgSelection.select('.active').classed('active', false)
-      d3.select(wirebuffer.getElementById(endTerminal.identifier))
+      d3.select(machineViewElement.getElementById(endTerminal.identifier))
         .classed('active', true) if endTerminal
 
   window.onmouseup = (e) ->
@@ -245,7 +246,7 @@ updateCircuitView = ->
       #   targetView.transition().delay(0).attr('d', endpointsToPath(endpoints...))
       #   )
       # .on('mouseout', (wire) -> getWireView(wire).transition().delay(0).attr('d', wirePath(wire)) )
-      .append('title').text((w) -> "Click to drag this end of #{wireName(w)} to another terminal.")
+      .append('title').text((w) -> "Drag this end of #{wireName(w)} to move it to terminal.")
     startPinTargets.exit().remove()
     startPinTargets
       .attr('cx', (wire) -> wire.terminals[endIndex].coordinates[0])
@@ -432,6 +433,6 @@ arctan2 = (x, y) -> Math.atan2(x, y) * 180 / Math.PI
 hexd = do (hexdigits='0123456789abcdef') ->
   (n) -> hexdigits[n]
 
-localx = (gx) -> (gx - wirebuffer.getBoundingClientRect().left)
-localy = (gy) -> (gy - wirebuffer.getBoundingClientRect().top)
+localx = (gx) -> (gx - machineViewElement.getBoundingClientRect().left)
+localy = (gy) -> (gy - machineViewElement.getBoundingClientRect().top)
 localEvent = (e) -> [localx(e.clientX), localy(e.clientY)]

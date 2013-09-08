@@ -42,22 +42,21 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
     .content
 
       .col-md-8
-        #frame.frame
-          .ffmachine(ng-show="machine")
-            svg#wirebuffer
-              defs
-                filter#drop-shadow
-                  feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="2")
-                  feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
-                  feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
-                filter#drop-shadow-2
-                  feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="1")
-                  feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
-                  feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
-                linearGradient#grad1(x1="0%", y1="0%", x2="100%", y2="0%")
-                  stop(offset="0%", style="stop-color:rgb(255,255,0);stop-opacity:1")
-                  stop(offset="100%", style="stop-color:rgb(255,0,0);stop-opacity:1")
-              image(xlink:href="img/ffmachine.png", width=900, height=1000)
+        .ffmachine(ng-show="machine")
+          svg#machineView
+            defs
+              filter#drop-shadow
+                feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="2")
+                feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
+                feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
+              filter#drop-shadow-2
+                feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="1")
+                feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
+                feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
+              linearGradient#grad1(x1="0%", y1="0%", x2="100%", y2="0%")
+                stop(offset="0%", style="stop-color:rgb(255,255,0);stop-opacity:1")
+                stop(offset="100%", style="stop-color:rgb(255,0,0);stop-opacity:1")
+            image(xlink:href="img/ffmachine.png", width="100%", height="100%")
 
       #sidebar.col-md-4
         .panel.panel-default(ng-show="mode != 'simulate' && machine.description")
