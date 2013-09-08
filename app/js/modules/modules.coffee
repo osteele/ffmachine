@@ -62,8 +62,8 @@ TerminalLocations = {
 }
 
 ModuleDimensions =
-  width: 200
-  height: 500
+  width: 100
+  height: 250
 
 
 #
@@ -119,8 +119,8 @@ createModules = ->
   rows = for moduleRow, rowIndex in ModuleLocationMap
     for moduleType, colIndex in moduleRow
       moduleName = [String.fromCharCode(97 + rowIndex), colIndex].join('_')
-      x = colIndex * ModuleDimensions.width / 2
-      y = rowIndex * ModuleDimensions.height / 2
+      x = colIndex * ModuleDimensions.width
+      y = rowIndex * ModuleDimensions.height
       moduleTerminalNames = TerminalLocations[moduleType]
       terminals =
         for [dx, dy, moduleTerminalName] in TerminalLocations[moduleType]
@@ -150,9 +150,7 @@ createModules = ->
   return null
 
 @findTerminalByName = (identifier) ->
-  for terminal in MachineHardware.terminals
-    return terminal if terminal.identifier == identifier
-  throw Exception("Can't find terminal named #{identifier}")
+  MachineHardware.terminals[identifier] ? throw Exception("Can't find terminal named #{identifier}")
 
 @xyToTerminalName = (x, y, tolerance=12) ->
   for {x: px, y: py, identifier} in MachineHardware.terminals
@@ -164,7 +162,9 @@ createModules = ->
 
 @MachineHardware = do ->
   modules = createModules()
+  terminals = [].concat (terminals for {terminals} in modules)...
+  terminals[terminal.identifier] = terminal for terminal in terminals
   {
     modules
-    terminals: [].concat (terminals for {terminals} in modules)...
+    terminals
   }
