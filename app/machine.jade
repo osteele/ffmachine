@@ -26,20 +26,21 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
   body(ng-class="{'edit-mode': mode == 'edit', 'simulation-mode': mode == 'simulate'}")
     include partials/toolbar
       .btn-group
-        button.btn.btn-default(ng-hide="editable", ng-disabled="mode == 'view'", ng-click="mode = 'view'") View
-        button.btn.btn-default(ng-show="editable", ng-disabled="mode == 'edit'", ng-show="editable", ng-click="mode = 'edit'") Edit
-        button.btn.btn-default(ng-disabled="mode == 'simulate'", ng-click="mode = 'simulate'") Simulate
+        button.icon-book.icon-large.btn.btn-default(href=".") &nbsp;Directory
       .btn-group
-        button.icon-step-forward.btn.btn-default(ng-disabled="simulatonRunning", ng-click="stepSimulation()", title="Click to step the simulation")
-        button.icon-play.btn.btn-default(ng-disabled="simulationRunning", ng-click="runSimulation()", title="Click to start the simulation")
-        button.icon-pause.btn.btn-default(ng-disabled="!simulationRunning", ng-click="stopSimulation()", title="Click to pause the simulation")
+        //- button.icon-home.btn.btn-default(href=".") &nbsp;Home
+        button.icon-eye-open.icon-large.btn.btn-default(ng-hide="editable", ng-disabled="mode == 'view'", ng-click="mode = 'view'") &nbsp;View
+        button.icon-wrench.icon-large.btn.btn-default(ng-show="editable", ng-disabled="mode == 'edit'", ng-show="editable", ng-click="mode = 'edit'") &nbsp;Edit
+        button.icon-bolt.icon-large.btn.btn-default(ng-disabled="mode == 'simulate'", ng-click="mode = 'simulate'") &nbsp;Simulate
+      .btn-group
+        button.icon-step-forward.icon-large.btn.btn-default(ng-disabled="simulatonRunning", ng-click="stepSimulation()", title="Click to step the simulation")
+        button.icon-play.icon-large.btn.btn-default(ng-disabled="simulationRunning", ng-click="runSimulation()", title="Click to start the simulation")
+        button.icon-pause.icon-large.btn.btn-default(ng-disabled="!simulationRunning", ng-click="stopSimulation()", title="Click to pause the simulation")
         //- a.icon-pause.btn.btn-default(ng-show="mode == 'simulate'", ng-disabled="!simulaton_running")
 
     .content
       .col-md-8
-        h1.machine-name
-          a(href=".") Flip Flop Machines
-          | &nbsp;»&nbsp; {{machine.name || 'Loading…'}}
+        h1.machine-name {{machine.name || 'Loading…'}}
 
         #frame.frame
           .ffmachine
