@@ -65,7 +65,9 @@
 
   this.createWire = function(t1, t2) {
     var terminals, wire;
-    terminals = [t1, t2];
+    terminals = [t1, t2].sort(function(t1, t2) {
+      return t1.globalTerminalName > t2.globalTerminalName;
+    });
     return wire = {
       name: terminals.map(function(t) {
         return t.globalTerminalName;

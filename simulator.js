@@ -1,14 +1,15 @@
 (function() {
-  var ComponentEquations, HistoryLength, RestrictModules, Trace, TraceComponents, Weak, boolToVolt, collectBusses, computeTerminalValues, getConnectedWires, isWeak, runComponent, runModules, updateModuleOutputs, updateTerminalValues, updateWireValues, voltToBool, weak,
+  var ComponentEquations, HistoryLength, RestrictModules, Trace, Weak, boolToVolt, collectBusses, computeTerminalValues, getConnectedWires, isWeak, runComponent, runModules, updateModuleOutputs, updateTerminalValues, updateWireValues, voltToBool, weak,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   HistoryLength = 400;
 
   RestrictModules = 0;
 
-  Trace = 0;
-
-  TraceComponents = 0;
+  Trace = {
+    components: 0,
+    voltageAssignments: 0
+  };
 
   this.SimulatorClass = (function() {
     function SimulatorClass(configuration) {
@@ -55,7 +56,7 @@
   };
 
   collectBusses = function(wires) {
-    var bus, busses, bussesByTerminal, terminal, wire, wireSets, __, _i, _j, _len, _len1, _ref;
+    var bus, busses, bussesByTerminal, terminal, w, wire, wireSets, __, _i, _j, _k, _len, _len1, _len2, _ref;
     bussesByTerminal = {};
     for (_i = 0, _len = wires.length; _i < _len; _i++) {
       wire = wires[_i];
@@ -78,10 +79,13 @@
             return (_ref = [wire]).concat.apply(_ref, busses);
         }
       })();
-      _ref = wire.terminals;
-      for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-        terminal = _ref[_j];
-        bussesByTerminal[terminal.globalTerminalName] = bus;
+      for (_j = 0, _len1 = bus.length; _j < _len1; _j++) {
+        w = bus[_j];
+        _ref = w.terminals;
+        for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
+          terminal = _ref[_k];
+          bussesByTerminal[terminal.globalTerminalName] = bus;
+        }
       }
     }
     wireSets = [];
@@ -92,10 +96,10 @@
       }
     }
     return (function() {
-      var _k, _len2, _results;
+      var _l, _len3, _results;
       _results = [];
-      for (_k = 0, _len2 = wireSets.length; _k < _len2; _k++) {
-        wires = wireSets[_k];
+      for (_l = 0, _len3 = wireSets.length; _l < _len3; _l++) {
+        wires = wireSets[_l];
         _results.push({
           wires: wires,
           terminals: _.chain(wires).pluck('terminals').flatten().uniq().value()
@@ -120,7 +124,7 @@
         if (trace.length > HistoryLength) {
           trace.splice(0, trace.length - HistoryLength);
         }
-        if (Trace) {
+        if (Trace.voltageAssignments) {
           _results.push(console.info("" + terminal.globalTerminalName + " <- " + value));
         } else {
           _results.push(void 0);
@@ -145,20 +149,11 @@
         continue;
       }
       values = (function() {
-        var _j, _len1, _results;
+        var _j, _len1, _ref2, _results;
         _results = [];
         for (_j = 0, _len1 = terminals.length; _j < _len1; _j++) {
           terminal = terminals[_j];
-          _results.push(terminal.value);
-        }
-        return _results;
-      })();
-      values = (function() {
-        var _j, _len1, _results;
-        _results = [];
-        for (_j = 0, _len1 = terminals.length; _j < _len1; _j++) {
-          terminal = terminals[_j];
-          _results.push(moduleOutputs[terminal.globalTerminalName]);
+          _results.push((_ref2 = moduleOutputs[terminal.globalTerminalName]) != null ? _ref2 : weak(terminal.value));
         }
         return _results;
       })();
@@ -191,7 +186,7 @@
         values = strongValues;
       }
       value = fromWeak(values[0]);
-      if (Trace) {
+      if (Trace.voltageAssignments) {
         console.info("" + (_.pluck(wires, 'name').join(',')) + " <- " + value);
       }
       for (_j = 0, _len1 = wires.length; _j < _len1; _j++) {
@@ -259,7 +254,7 @@
 
   runComponent = function(component, moduleInputs, moduleOutputs) {
     var circuitType, componentInputs, componentOutputs, componentTerminalName, globalTerminalName, t, targetName, terminals, trace, value, voltage, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-    trace = TraceComponents === 1 || TraceComponents === true || (_ref = component.type, __indexOf.call(TraceComponents, _ref) >= 0);
+    trace = Trace.components === 1 || Trace.components === true || (_ref = component.type, __indexOf.call(Trace.components, _ref) >= 0);
     circuitType = component.type, terminals = component.terminals;
     component.state || (component.state = {
       falling: function(n) {
@@ -337,6 +332,9 @@
   })();
 
   weak = function(value) {
+    if (value instanceof Weak) {
+      return value;
+    }
     if (value === true || value === false) {
       value = boolToVolt(value);
     }
