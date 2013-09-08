@@ -256,7 +256,7 @@ updateCircuitView = ->
   updateEndPinTargets 'wire-start-target-layer', 0
   updateEndPinTargets 'wire-end-target-layer', 1
 
-  updateTraces()
+  updateTraces(true)
   # drawKnobs()
 
 wireEndpoints = (wire) ->
@@ -336,35 +336,36 @@ updateTraces = do ->
     enter = nodes.enter().append('g').classed('terminal-trace', true)
     enter.append('circle')
       .attr('r', 3)
+      .attr('transform', (terminal) ->
+        pt = terminal.coordinates
+        "translate(#{pt[0]}, #{pt[1]})")
       .on('click', traceTerminal)
       .append('title').text((d) -> "Terminal #{d.identifier}\nClick to trace")
     nodes
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
       .classed('voltage-float', isVoltage('float'))
-      .attr('transform', (terminal) ->
-        pt = terminal.coordinates
-        "translate(#{pt[0]}, #{pt[1]})")
       .select('title').text((t) ->
         "Terminal #{t.identifier} #{voltageParenthetical(t)}\nClick to trace this terminal.")
 
-  updateWireTraces = ->
+  updateWireTraces = (updateWirePositions) ->
     wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires)
       .classed('wire', true)
     wires.enter().append('path').classed('wire', true)
       .append('title').text((w) -> "Wire #{wireName(w)}#{voltageParenthetical(w)}")
     wires.exit().remove()
-    wires
-      .attr('d', wirePath)
-      .attr('stroke', wireColor)
+    if updateWirePositions
+      wires
+        .attr('d', wirePath)
+        .attr('stroke', wireColor)
     wires
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
       .classed('voltage-float', isVoltage('float'))
       .classed('reversed', (w) -> !w.terminals[0].output)
 
-  return ->
-    updateWireTraces()
+  return (updateWirePositions) ->
+    updateWireTraces(updateWirePositions)
     updateTerminalTraces()
     updateTerminalTraceViews()
 
