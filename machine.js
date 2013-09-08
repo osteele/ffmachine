@@ -342,7 +342,7 @@
   };
 
   updateTraces = (function() {
-    var cyclePinValue, isVoltage, symbols, terminalVoltageName, updateTerminalTraces, values;
+    var cyclePinValue, isVoltage, symbols, terminalVoltageName, updateTerminalTraces, updateWireTraces, values;
     symbols = ['negative', 'ground', 'float'];
     values = [-3, 0, void 0];
     terminalVoltageName = function(terminal) {
@@ -362,22 +362,33 @@
       terminal.value = values[(symbols.indexOf(terminalVoltageName(terminal)) + 1) % symbols.length];
       return updateTraces();
     };
-    updateTerminalTraces = function(className, endIndex) {
+    updateTerminalTraces = function() {
       var enter, nodes;
       nodes = getLayer('trace-layer').selectAll('.start-trace').data(MachineConfiguration.terminals);
       nodes.exit().remove();
-      enter = nodes.enter().append('g').classed(className, true);
+      enter = nodes.enter().append('g').classed('start-trace', true);
       enter.append('circle').attr('r', 3).on('click', updateTerminalTraceView).append('title').text(function(d) {
-        return "Click to trace " + d.globalTerminalName;
+        return "Terminal " + d.globalTerminalName + "\nClick to trace";
       });
       return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).attr('transform', function(terminal) {
         var pt;
         pt = terminal.coordinates;
         return "translate(" + pt[0] + ", " + pt[1] + ")";
+      }).select('title').text(function(d) {
+        return "Terminal " + d.globalTerminalName + "\nVoltage " + d.value + "\nClick to trace";
       });
     };
+    updateWireTraces = function() {
+      var wires;
+      wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires).classed('wire', true);
+      wires.enter().append('path').classed('wire', true);
+      wires.exit().remove();
+      wires.attr('d', wirePath).attr('stroke', wireColor);
+      return wires.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float'));
+    };
     return function() {
-      updateTerminalTraces('start-trace', 0);
+      updateWireTraces();
+      updateTerminalTraces();
       return updateTerminalTraceView();
     };
   })();
