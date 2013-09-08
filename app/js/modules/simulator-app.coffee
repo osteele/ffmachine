@@ -57,6 +57,10 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.$apply ->
       $scope.machine = machine
 
+  window.traceTerminal = (terminal) ->
+    $scope.$apply ->
+      $scope.tracedTerminals = [terminal]
+
   name = $location.search().name
   $window.location.href = '.' unless name
   initializeMachineView()

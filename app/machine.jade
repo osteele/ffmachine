@@ -64,10 +64,10 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
           .panel-body
             {{machine.description}}
 
-        #trace.panel.panel-default(ng-show="mode == 'simulate'")
-          .panel-heading Trace
+        .terminal-trace-view.panel.panel-default(ng-show="mode == 'simulate'", ng-repeat="terminal in tracedTerminals")
+          .panel-heading Trace for {{terminal.identifier}}
           .panel-body
-            svg#wireTrace(width=400, height=200)
+            svg(width=400, height=200)
 
         #connected-users.panel.panel-default(ng-show="machine.connected")
           .panel-heading Current Viewers
