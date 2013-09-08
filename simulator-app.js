@@ -92,16 +92,20 @@
         return $scope.mode = 'edit';
       }
     });
+    $scope.$watch('tracedTerminals', function() {
+      return updateTerminalTraceViews();
+    });
     MachineChangedHooks.push(function(machine) {
       return $scope.$apply(function() {
         return $scope.machine = machine;
       });
     });
     window.traceTerminal = function(terminal) {
+      if (__indexOf.call($scope.tracedTerminals, terminal) >= 0) {
+        return;
+      }
       return $scope.$apply(function() {
-        if (__indexOf.call($scope.tracedTerminals, terminal) < 0) {
-          return $scope.tracedTerminals.push(terminal);
-        }
+        return $scope.tracedTerminals.push(terminal);
       });
     };
     name = $location.search().name;

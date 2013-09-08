@@ -108,7 +108,7 @@
       Simulator.step();
       animationCounter = (animationCounter + 1) % AnimationLength;
       updateTraces();
-      return updateTerminalTraceView();
+      return updateTerminalTraceViews();
     };
   })();
 
@@ -424,13 +424,13 @@
     return function() {
       updateWireTraces();
       updateTerminalTraces();
-      return updateTerminalTraceView();
+      return updateTerminalTraceViews();
     };
   })();
 
   TraceHistoryLength = 200;
 
-  this.updateTerminalTraceView = function() {
+  this.updateTerminalTraceViews = function() {
     var element, line, scope, svg, terminal, values, x, y, _i, _len, _ref, _results;
     _ref = document.querySelectorAll('.terminal-trace-view');
     _results = [];
@@ -441,9 +441,9 @@
       values = terminal.trace || [];
       svg = scope.svg;
       if (!svg) {
-        svg = scope.svg = d3.select(element).select('svg');
-        x = d3.scale.linear().domain([-TraceHistoryLength, 0]).range([0, 400]);
-        y = d3.scale.linear().domain([-3, 0]).range([0, 20]);
+        svg = scope.svg = d3.select(element);
+        x = d3.scale.linear().domain([-TraceHistoryLength, 0]).range([0, Number(element.width.baseVal.value)]);
+        y = d3.scale.linear().domain([-3, 0]).range([0, Number(element.height.baseVal.value)]);
         line = scope.line = d3.svg.line().x(function(d) {
           return x(d.timestamp - Simulator.timestamp);
         }).y(function(d) {
@@ -451,7 +451,7 @@
         });
         svg.append('path').datum(values).attr('class', 'line').attr('d', line);
       }
-      _results.push(svg.selectAll('path').datum(values).attr('d', scope.line));
+      _results.push(svg.select('path').datum(values));
     }
     return _results;
   };
