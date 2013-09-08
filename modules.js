@@ -12,15 +12,15 @@
   };
 
   ModuleDimensions = {
-    width: 200,
-    height: 500
+    width: 100,
+    height: 250
   };
 
   moduleComponents = function(_arg) {
     var clock, component, gate, ground, inverter, moduleName, moduleType, pa;
     moduleType = _arg.type, moduleName = _arg.name;
     component = function(type, componentTerminalNames, componentIndex) {
-      var componentTerminalName, globalTerminalName, terminals;
+      var componentTerminalName, identifier, terminals;
       if (componentIndex == null) {
         componentIndex = '';
       }
@@ -29,10 +29,10 @@
         _results = [];
         for (_i = 0, _len = componentTerminalNames.length; _i < _len; _i++) {
           componentTerminalName = componentTerminalNames[_i];
-          globalTerminalName = [moduleName, componentTerminalName.replace(/(\D+)/, "$1" + componentIndex)].join('_');
+          identifier = [moduleName, componentTerminalName.replace(/(\D+)/, "$1" + componentIndex)].join('_');
           _results.push({
             componentTerminalName: componentTerminalName,
-            globalTerminalName: globalTerminalName
+            identifier: identifier
           });
         }
         return _results;
@@ -78,7 +78,7 @@
       case 'pa':
         return [pa(0), pa(1), inverter(0), inverter(1), ground(2)];
       default:
-        return console.error('unknown module type', moduleType);
+        throw Error("unknown module type " + moduleType);
     }
   };
 
@@ -95,8 +95,8 @@
           for (colIndex = _j = 0, _len1 = moduleRow.length; _j < _len1; colIndex = ++_j) {
             moduleType = moduleRow[colIndex];
             moduleName = [String.fromCharCode(97 + rowIndex), colIndex].join('_');
-            x = colIndex * ModuleDimensions.width / 2;
-            y = rowIndex * ModuleDimensions.height / 2;
+            x = colIndex * ModuleDimensions.width;
+            y = rowIndex * ModuleDimensions.height;
             moduleTerminalNames = TerminalLocations[moduleType];
             terminals = (function() {
               var _k, _len2, _ref, _ref1, _results2;
@@ -105,7 +105,7 @@
               for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
                 _ref1 = _ref[_k], dx = _ref1[0], dy = _ref1[1], moduleTerminalName = _ref1[2];
                 _results2.push({
-                  globalTerminalName: [moduleName, moduleTerminalName].join('_'),
+                  identifier: [moduleName, moduleTerminalName].join('_'),
                   moduleTerminalName: moduleTerminalName,
                   coordinates: [x + dx / 2, y + dy / 2],
                   x: x + dx / 2,
@@ -147,51 +147,55 @@
     return null;
   };
 
-  this.findTerminalByName = function(globalTerminalName) {
-    var terminal, _i, _len, _ref;
-    _ref = MachineHardware.terminals;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      terminal = _ref[_i];
-      if (terminal.globalTerminalName === globalTerminalName) {
-        return terminal;
+  this.getTerminalByIdentifier = function(identifier) {
+    var _ref;
+    return (function() {
+      if ((_ref = MachineHardware.terminals[identifier]) != null) {
+        return _ref;
+      } else {
+        throw Exception("Can't find terminal named " + identifier);
       }
-    }
-    return console.error("Can't find terminal named " + globalTerminalName);
+    })();
   };
 
   this.xyToTerminalName = function(x, y, tolerance) {
-    var globalTerminalName, px, py, _i, _len, _ref, _ref1;
+    var identifier, px, py, _i, _len, _ref, _ref1;
     if (tolerance == null) {
       tolerance = 12;
     }
     _ref = MachineHardware.terminals;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      _ref1 = _ref[_i], px = _ref1.x, py = _ref1.y, globalTerminalName = _ref1.globalTerminalName;
+      _ref1 = _ref[_i], px = _ref1.x, py = _ref1.y, identifier = _ref1.identifier;
       if (lineLength([px, py], [x, y]) < tolerance) {
-        return globalTerminalName;
+        return identifier;
       }
     }
     return null;
   };
 
-  this.getTerminalCoordinates = function(globalTerminalName) {
-    return findTerminalByName(globalTerminalName).coordinates;
+  this.getTerminalCoordinates = function(identifier) {
+    return getTerminalByIdentifier(identifier).coordinates;
   };
 
   this.MachineHardware = (function() {
-    var modules, terminals, _ref;
+    var modules, terminal, terminals, _i, _len, _ref;
     modules = createModules();
+    terminals = (_ref = []).concat.apply(_ref, (function() {
+      var _i, _len, _results;
+      _results = [];
+      for (_i = 0, _len = modules.length; _i < _len; _i++) {
+        terminals = modules[_i].terminals;
+        _results.push(terminals);
+      }
+      return _results;
+    })());
+    for (_i = 0, _len = terminals.length; _i < _len; _i++) {
+      terminal = terminals[_i];
+      terminals[terminal.identifier] = terminal;
+    }
     return {
       modules: modules,
-      terminals: (_ref = []).concat.apply(_ref, (function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = modules.length; _i < _len; _i++) {
-          terminals = modules[_i].terminals;
-          _results.push(terminals);
-        }
-        return _results;
-      })())
+      terminals: terminals
     };
   })();
 

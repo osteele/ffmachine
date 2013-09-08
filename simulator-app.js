@@ -1,5 +1,6 @@
 (function() {
-  var CurrentMachine, CurrentMachineRef, CurrentUser, FirebaseRootRef, MachineChangedHooks, MachineListRef, ReloadAppSeed, SimulatorThread, addCurrentViewer, app, loadMachine, removeCurrentViewer, saveMachine, serializeMachineConfiguration, unserializeConfiguration;
+  var CurrentMachine, CurrentMachineRef, CurrentUser, FirebaseRootRef, MachineChangedHooks, MachineListRef, ReloadAppSeed, SimulatorThread, addCurrentViewer, app, loadMachine, removeCurrentViewer, saveMachine, serializeMachineConfiguration, unserializeConfiguration,
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   FirebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
 
@@ -29,6 +30,7 @@
   app.controller('MachineSimulatorCtrl', function($scope, $location, $window, angularFire, angularFireAuth) {
     var name, simulator;
     $scope.mode = 'edit';
+    $scope.tracedTerminals = [];
     simulator = new SimulatorThread;
     angularFireAuth.initialize(FirebaseRootRef, {
       scope: $scope,
@@ -56,6 +58,21 @@
       $scope.mode = 'simulate';
       return $scope.simulationRunning = simulator.running;
     };
+    $scope.closeTerminalTrace = function(terminal) {
+      var t;
+      return $scope.tracedTerminals = (function() {
+        var _i, _len, _ref, _results;
+        _ref = $scope.tracedTerminals;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          t = _ref[_i];
+          if (t !== terminal) {
+            _results.push(t);
+          }
+        }
+        return _results;
+      })();
+    };
     $scope.$watch('mode', function() {
       if ($scope.mode !== 'simulate') {
         return $scope.stopSimulation();
@@ -80,6 +97,13 @@
         return $scope.machine = machine;
       });
     });
+    window.traceTerminal = function(terminal) {
+      return $scope.$apply(function() {
+        if (__indexOf.call($scope.tracedTerminals, terminal) < 0) {
+          return $scope.tracedTerminals.push(terminal);
+        }
+      });
+    };
     name = $location.search().name;
     if (!name) {
       $window.location.href = '.';
@@ -143,7 +167,7 @@
       var configuration, hook, _i, _len;
       CurrentMachine = snapshot.val();
       if (!CurrentMachine) {
-        console.error("No machine named " + name);
+        throw Error("No machine named " + name);
       }
       configuration = unserializeConfiguration(snapshot.val().wiring);
       for (_i = 0, _len = MachineChangedHooks.length; _i < _len; _i++) {
@@ -192,7 +216,7 @@
     var serializatonWire;
     serializatonWire = function(wire) {
       return wire.terminals.map(function(terminal) {
-        return terminal.globalTerminalName;
+        return terminal.identifier;
       }).join(' ');
     };
     return configuration.wires.map(serializatonWire).join("\n");
@@ -201,7 +225,7 @@
   unserializeConfiguration = function(configurationString) {
     var unserializeWire, wireNames;
     unserializeWire = function(wireString) {
-      return createWire.apply(null, wireString.split(' ').map(findTerminalByName));
+      return createWire.apply(null, wireString.split(' ').map(getTerminalByIdentifier));
     };
     wireNames = configurationString.replace(/\\n/g, "\n").split(/\n/);
     if (wireNames[wireNames.length - 1] === '') {

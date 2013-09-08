@@ -18,11 +18,15 @@
     }
 
     SimulatorClass.prototype.step = function() {
-      var moduleInputs, moduleOutputs, modules, terminals, wires, _ref;
+      var moduleInputs, moduleOutputs, modules, terminal, terminals, wires, _i, _len, _ref;
       _ref = this.configuration, modules = _ref.modules, terminals = _ref.terminals, wires = _ref.wires;
       moduleInputs = computeTerminalValues(terminals, wires);
       moduleOutputs = {};
       runModules(modules, moduleInputs, moduleOutputs);
+      for (_i = 0, _len = terminals.length; _i < _len; _i++) {
+        terminal = terminals[_i];
+        terminal.output = terminal.identifier in moduleOutputs;
+      }
       updateTerminalValues(terminals, moduleOutputs, this.timestamp);
       updateWireValues(wires, moduleOutputs, this.timestamp);
       return this.timestamp += 1;
@@ -66,7 +70,7 @@
         _results = [];
         for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
           terminal = _ref[_j];
-          _results.push(bussesByTerminal[terminal.globalTerminalName]);
+          _results.push(bussesByTerminal[terminal.identifier]);
         }
         return _results;
       })());
@@ -84,7 +88,7 @@
         _ref = w.terminals;
         for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
           terminal = _ref[_k];
-          bussesByTerminal[terminal.globalTerminalName] = bus;
+          bussesByTerminal[terminal.identifier] = bus;
         }
       }
     }
@@ -114,8 +118,8 @@
     _results = [];
     for (_i = 0, _len = terminals.length; _i < _len; _i++) {
       terminal = terminals[_i];
-      if (terminal.globalTerminalName in moduleOutputs) {
-        terminal.value = value = moduleOutputs[terminal.globalTerminalName];
+      if (terminal.identifier in moduleOutputs) {
+        terminal.value = value = moduleOutputs[terminal.identifier];
         trace = terminal.trace || (terminal.trace = []);
         trace.push({
           timestamp: timestamp,
@@ -125,7 +129,7 @@
           trace.splice(0, trace.length - HistoryLength);
         }
         if (Trace.voltageAssignments) {
-          _results.push(console.info("" + terminal.globalTerminalName + " <- " + value));
+          _results.push(console.info("" + terminal.identifier + " <- " + value));
         } else {
           _results.push(void 0);
         }
@@ -144,7 +148,7 @@
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       _ref1 = _ref[_i], wires = _ref1.wires, terminals = _ref1.terminals;
       if (!terminals.some(function(terminal) {
-        return terminal.globalTerminalName in moduleOutputs;
+        return terminal.identifier in moduleOutputs;
       })) {
         continue;
       }
@@ -153,7 +157,7 @@
         _results = [];
         for (_j = 0, _len1 = terminals.length; _j < _len1; _j++) {
           terminal = terminals[_j];
-          _results.push((_ref2 = moduleOutputs[terminal.globalTerminalName]) != null ? _ref2 : weak(terminal.value));
+          _results.push((_ref2 = moduleOutputs[terminal.identifier]) != null ? _ref2 : weak(terminal.value));
         }
         return _results;
       })();
@@ -195,9 +199,9 @@
       }
       for (_k = 0, _len2 = terminals.length; _k < _len2; _k++) {
         terminal = terminals[_k];
-        if (!(terminal.globalTerminalName in moduleOutputs || __indexOf.call(propogatedTerminals, terminal) >= 0)) {
+        if (!(terminal.identifier in moduleOutputs || __indexOf.call(propogatedTerminals, terminal) >= 0)) {
           propogatedTerminals.push(terminal);
-          propogatedOutputs[terminal.globalTerminalName] = value;
+          propogatedOutputs[terminal.identifier] = value;
         }
       }
     }
@@ -246,14 +250,14 @@
         return _results;
       })();
       if (wireValues.length) {
-        values[terminal.globalTerminalName] = wireValues[0];
+        values[terminal.identifier] = wireValues[0];
       }
     }
     return values;
   };
 
   runComponent = function(component, moduleInputs, moduleOutputs) {
-    var circuitType, componentInputs, componentOutputs, componentTerminalName, globalTerminalName, t, targetName, terminals, trace, value, voltage, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+    var circuitType, componentInputs, componentOutputs, componentTerminalName, identifier, t, targetName, terminals, trace, value, voltage, _i, _j, _len, _len1, _ref, _ref1, _ref2;
     trace = Trace.components === 1 || Trace.components === true || (_ref = component.type, __indexOf.call(Trace.components, _ref) >= 0);
     circuitType = component.type, terminals = component.terminals;
     component.state || (component.state = {
@@ -266,9 +270,9 @@
     });
     componentInputs = {};
     for (_i = 0, _len = terminals.length; _i < _len; _i++) {
-      _ref1 = terminals[_i], componentTerminalName = _ref1.componentTerminalName, globalTerminalName = _ref1.globalTerminalName;
+      _ref1 = terminals[_i], componentTerminalName = _ref1.componentTerminalName, identifier = _ref1.identifier;
       targetName = componentTerminalName.replace(/^(\d+)(.+)/, '$2$1');
-      voltage = moduleInputs[globalTerminalName];
+      voltage = moduleInputs[identifier];
       componentInputs[targetName] = voltage;
       componentInputs[targetName + '_v'] = voltToBool(voltage);
     }
@@ -277,7 +281,7 @@
     }
     componentOutputs = ComponentEquations[circuitType].call(component.state, componentInputs);
     for (_j = 0, _len1 = terminals.length; _j < _len1; _j++) {
-      _ref2 = terminals[_j], componentTerminalName = _ref2.componentTerminalName, globalTerminalName = _ref2.globalTerminalName;
+      _ref2 = terminals[_j], componentTerminalName = _ref2.componentTerminalName, identifier = _ref2.identifier;
       if (!(componentTerminalName in componentOutputs)) {
         continue;
       }
@@ -285,7 +289,7 @@
       if (value === true || value === false) {
         value = boolToVolt(value);
       }
-      moduleOutputs[globalTerminalName] = value;
+      moduleOutputs[identifier] = value;
     }
     if (trace) {
       return console.info(component.type, (function() {
@@ -293,7 +297,7 @@
         _results = [];
         for (_k = 0, _len2 = terminals.length; _k < _len2; _k++) {
           t = terminals[_k];
-          _results.push(t.globalTerminalName);
+          _results.push(t.identifier);
         }
         return _results;
       })(), componentInputs, componentOutputs);
