@@ -314,14 +314,14 @@ updateTraces = do ->
     terminal.value = values[(symbols.indexOf(terminalVoltageName(terminal)) + 1) % symbols.length]
     updateTraces()
 
-  updateTerminalTraces = (className, endIndex) ->
+  updateTerminalTraces = ->
     nodes = getLayer('trace-layer').selectAll('.start-trace').data(MachineConfiguration.terminals)
     nodes.exit().remove()
-    enter = nodes.enter().append('g').classed(className, true)
+    enter = nodes.enter().append('g').classed('start-trace', true)
     enter.append('circle')
       .attr('r', 3)
       .on('click', updateTerminalTraceView)
-      .append('title').text((d) -> "Click to trace #{d.globalTerminalName}")
+      .append('title').text((d) -> "Terminal #{d.globalTerminalName}\nClick to trace")
     nodes
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
@@ -329,9 +329,24 @@ updateTraces = do ->
       .attr('transform', (terminal) ->
         pt = terminal.coordinates
         "translate(#{pt[0]}, #{pt[1]})")
+      .select('title').text((d) -> "Terminal #{d.globalTerminalName}\nVoltage #{d.value}\nClick to trace")
+
+  updateWireTraces = ->
+    wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires)
+      .classed('wire', true)
+    wires.enter().append('path').classed('wire', true)
+    wires.exit().remove()
+    wires
+      .attr('d', wirePath)
+      .attr('stroke', wireColor)
+    wires
+      .classed('voltage-negative', isVoltage('negative'))
+      .classed('voltage-ground', isVoltage('ground'))
+      .classed('voltage-float', isVoltage('float'))
 
   return ->
-    updateTerminalTraces 'start-trace', 0
+    updateWireTraces()
+    updateTerminalTraces()
     updateTerminalTraceView()
 
 updateTerminalTraceView = do ->

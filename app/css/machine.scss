@@ -73,6 +73,9 @@ body.simulation-mode .ffmachine {
     stroke-width: 4px;
     stroke-linecap: round;
     filter: url(#drop-shadow);
+    transition: stroke 0.2s;
+    -moz-transition: stroke 0.2s;
+    -webkit-transition: stroke 0.2s;
 
     &:hover {
       // stroke: url(#grad1);
@@ -86,6 +89,10 @@ body.simulation-mode .ffmachine {
     &.hide {
       display: none;
     }
+
+    &.voltage-negative { stroke: black; }
+    &.voltage-ground { stroke: white; }
+    &.voltage-float { stroke: gray; }
   }
 
   .wire-mouse-target {
@@ -116,8 +123,10 @@ body.simulation-mode .ffmachine {
 
       &.voltage-negative circle { fill: black; }
       &.voltage-ground circle { fill: white; }
-      &.voltage-float circle { fill: gray; }
+      // &.voltage-float circle { fill: gray; }
     }
+
+    .wire { stroke-opacity: 0.4; }
   }
 }
 
