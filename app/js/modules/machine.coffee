@@ -25,8 +25,6 @@ knoboffset = null
 
 @initializeMachineView = () ->
   wirebuffer = document.getElementById('wirebuffer')
-  wirebuffer.width = 1800
-  wirebuffer.height = 2000
 
   svgSelection = d3.select(wirebuffer)
   createLayer('wire-layer')

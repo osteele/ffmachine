@@ -3,57 +3,26 @@
 }
 
 #toolbar h1 {
-  font-size: 20pt;
   display: inline-block;
+  font-size: 20pt;
   margin: 0;
+  margin-left: 40px;
   position: relative;
   top: 7px;
-  // margin-top: 15px;
-  margin-left: 40px;
 }
 
-.frame {
-  margin-left: 60px;
-  position: relative;
-  width: 900px;
-  height: 1000px;
-}
+body {
+  .edit-mode-layer, .simulation-mode-layer
+  { display: none; }
 
-.ffmachine {
-  background: lightgray;
-  position: absolute;
-  width: 900px;
-  height: 1000px;
-  overflow: hidden;
-
-  svg, #loading {
-    position: absolute;
-    width: 900px;
-    height: 1000px;
-    top: 0px;
-    left: 0px;
-  }
-
-  #loading {
-    background: rgba(255,255,255,0.25);
-    z-index: 10;
-  }
-}
-
-body .ffmachine {
-  .edit-mode-layer, .simulation-mode-layer { display: none; }
-}
-
-body.edit-mode .ffmachine {
-  .edit-mode-layer { display: block; }
-}
-
-body.simulation-mode .ffmachine {
-  .simulation-mode-layer { display: block; }
+  &.edit-mode .edit-mode-layer,
+  &.simulation-mode .simulation-mode-layer
+  { display: block; }
 }
 
 .ffmachine svg {
   .terminal-position {
+    cursor: pointer;
     fill: white;
     opacity: 0;
     pointer-events: all;
@@ -67,6 +36,7 @@ body.simulation-mode .ffmachine {
     }
 
     &.active {
+      opacity: 1;
       fill: white;
       stroke: white;
       stroke-width: 25px;
