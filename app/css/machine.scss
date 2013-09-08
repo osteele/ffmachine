@@ -53,11 +53,16 @@ body.simulation-mode .ffmachine {
 
 .ffmachine svg {
   .terminal-position {
-    fill: rgba(0,0,0,0);
+    fill: white;
+    opacity: 0;
+    pointer-events: all;
+    stroke-width: 12px;
+    transition: opacity 0.25s;
+    -moz-transition: opacity 0.25s;
+    -webkit-transition: opacity 0.25s;
 
     &:hover {
-      fill: blue;
-      cursor: cell;
+      opacity: 1;
     }
 
     &.active {
@@ -98,14 +103,14 @@ body.simulation-mode .ffmachine {
   .wire-mouse-target {
     cursor: no-drop;
     fill: none;
-    stroke: rgba(0, 255, 0, 0);
+    pointer-events: all;
     stroke-width: 13px;
-    stroke-linecap: round;
   }
 
   .wire-end-target {
     cursor: move;
-    fill: rgba(255, 0, 0, 0);
+    fill: none;
+    pointer-events: all;
   }
 
   .trace-layer {
