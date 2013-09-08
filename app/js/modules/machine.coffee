@@ -88,7 +88,7 @@ deleteWire = (wire) ->
     animationCounter = (animationCounter + 1) % AnimationLength
     # svgSelection.classed("animation-phase-#{i}", animationCounter == i) for i in [0...AnimationLength]
     updateTraces()
-    updateTerminalTraceView()
+    updateTerminalTraceViews()
 
 
 #
@@ -366,25 +366,24 @@ updateTraces = do ->
   return ->
     updateWireTraces()
     updateTerminalTraces()
-    updateTerminalTraceView()
+    updateTerminalTraceViews()
 
 TraceHistoryLength = 200
 
-@updateTerminalTraceView = ->
+@updateTerminalTraceViews = ->
   for element in document.querySelectorAll('.terminal-trace-view')
     scope = angular.element(element).scope()
     terminal = scope.terminal
     values = (terminal.trace or [])
-    svg = scope.svg
-    unless svg
-      svg = scope.svg = d3.select(element).select('svg')
-      x = d3.scale.linear().domain([-TraceHistoryLength, 0]).range([0, 400])
-      y = d3.scale.linear().domain([-3, 0]).range([0, 20])
+    unless scope.path
+      x = d3.scale.linear().domain([-TraceHistoryLength, 0]).range([0, Number(element.width.baseVal.value)])
+      y = d3.scale.linear().domain([-3, 0]).range([0, Number(element.height.baseVal.value)])
       line = scope.line = d3.svg.line()
         .x((d) -> x(d.timestamp - Simulator.timestamp))
         .y((d) -> y(if typeof fromWeak(d.value) == 'number' then fromWeak(d.value) else -3/2))
-      svg.append('path').datum(values).attr('class', 'line').attr('d', line)
-    svg.selectAll('path').datum(values).attr('d', scope.line)
+      svg = d3.select(element)
+      scope.path = svg.append('path')#.attr('d', line)
+    scope.path.datum(values).attr('d', scope.line)
 
 
 #

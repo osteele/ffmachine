@@ -57,13 +57,17 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.mode = 'view' if $scope.mode == 'edit' and not $scope.editable
     $scope.mode = 'edit' if $scope.mode == 'view' and $scope.editable
 
+  $scope.$watch 'tracedTerminals', ->
+    updateTerminalTraceViews()
+
   MachineChangedHooks.push (machine) ->
     $scope.$apply ->
       $scope.machine = machine
 
   window.traceTerminal = (terminal) ->
+    return if terminal in $scope.tracedTerminals
     $scope.$apply ->
-      $scope.tracedTerminals.push terminal if terminal not in $scope.tracedTerminals
+      $scope.tracedTerminals.push terminal
 
   name = $location.search().name
   $window.location.href = '.' unless name
