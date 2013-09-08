@@ -2,7 +2,7 @@
 
   include toolbar
     .search
-      span Search Machines:
+      span Search:
       input(ng-model="searchText", placeholder="machine name")
     a.icon-list(ng-class="{active: layout == 'list'}", ng-click="layout = 'list'")
     a.icon-th(ng-class="{active: layout == 'grid'}", ng-click="layout = 'grid'")
@@ -15,7 +15,7 @@
   table.machines.list(ng-show="layout == 'list'")
     tbody.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
       tr
-        td.name(title="Click to rename")
+        td.name.machine-name(title="Click to rename")
           span(ng-show="!edit_title && !machine_editable(machine)") {{machine.name}}
           span(ng-show="!edit_title && machine_editable(machine)", ng-click="edit_title=true", title="Click to edit") {{machine.name}}
           input(ng-show="edit_title", type="text", ng-model="machine.name", ui-keyup="{enter: 'edit_title=false', 27: 'edit_title=false'}", ui-event="{blur: 'edit_title=false'}")
@@ -41,9 +41,9 @@
   .machines.grid(ng-show="layout == 'grid'")
     .machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
       .titlebar(style="width:100%")
-        span.title(ng-show="!edit_title && !machine_editable(machine)") {{machine.name}}
-        span.title(ng-show="!edit_title && machine_editable(machine)", ng-click="edit_title=true", title="Click to edit") {{machine.name}}
-        input(ng-show="edit_title", type="text", ng-model="machine.name", style="width:100%", ui-keyup="{enter: 'edit_title=false', 27: 'edit_title=false'}", ui-event="{blur: 'edit_title=false'}")
+        span.title.machine-name(ng-show="!edit_title && !machine_editable(machine)") {{machine.name}}
+        span.title.machine-name(ng-show="!edit_title && machine_editable(machine)", ng-click="edit_title=true", title="Click to edit") {{machine.name}}
+        input.machine-name(ng-show="edit_title", type="text", ng-model="machine.name", style="width:100%", ui-keyup="{enter: 'edit_title=false', 27: 'edit_title=false'}", ui-event="{blur: 'edit_title=false'}")
         .buttons(ng-hide="edit_title")
           a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
           a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")

@@ -6,6 +6,7 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
 
     link(href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc2/css/bootstrap.min.css", rel="stylesheet", type="text/css")
     link(href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.1/css/font-awesome.min.css", rel="stylesheet")
+    link(href="http://fonts.googleapis.com/css?family=Abel|Open+Sans|Orbitron:400,600,900", rel="stylesheet")
     link(href="css/app.css", rel="stylesheet")
     link(href="css/machine.css", rel="stylesheet")
 
@@ -36,9 +37,9 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
 
     .content
       .col-md-8
-        h1
+        h1.machine-name
           a(href=".") Flip Flop Machines
-          | &nbsp;» {{machine.name}}
+          | &nbsp;»&nbsp; {{machine.name || 'Loading…'}}
 
         #frame.frame
           .ffmachine
