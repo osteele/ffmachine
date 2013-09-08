@@ -69,7 +69,7 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
             button.close(type="button", ng-click="closeTerminalTrace(terminal)") &times;
             | Trace for {{terminal.identifier}}
           .panel-body
-            svg(width=400, height=200)
+            svg(width=400, height=20)
 
         #connected-users.panel.panel-default(ng-show="machine.connected")
           .panel-heading Current Viewers

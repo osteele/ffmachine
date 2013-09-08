@@ -16,6 +16,7 @@ app = angular.module 'FFMachine', ['firebase']
 
 app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire, angularFireAuth) ->
   $scope.mode = 'edit'
+  $scope.tracedTerminals = []
   simulator = new SimulatorThread
 
   angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
@@ -62,7 +63,7 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
 
   window.traceTerminal = (terminal) ->
     $scope.$apply ->
-      $scope.tracedTerminals = [terminal]
+      $scope.tracedTerminals.push terminal if terminal not in $scope.tracedTerminals
 
   name = $location.search().name
   $window.location.href = '.' unless name

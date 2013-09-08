@@ -379,7 +379,7 @@ TraceHistoryLength = 200
     unless svg
       svg = scope.svg = d3.select(element).select('svg')
       x = d3.scale.linear().domain([-TraceHistoryLength, 0]).range([0, 400])
-      y = d3.scale.linear().domain([-3, 0]).range([0, 200])
+      y = d3.scale.linear().domain([-3, 0]).range([0, 20])
       line = scope.line = d3.svg.line()
         .x((d) -> x(d.timestamp - Simulator.timestamp))
         .y((d) -> y(if typeof fromWeak(d.value) == 'number' then fromWeak(d.value) else -3/2))
