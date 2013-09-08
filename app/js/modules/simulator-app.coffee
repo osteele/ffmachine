@@ -40,6 +40,9 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.mode = 'simulate'
     $scope.simulationRunning = simulator.running
 
+  $scope.closeTerminalTrace = (terminal) ->
+    $scope.tracedTerminals = (t for t in $scope.tracedTerminals when t != terminal)
+
   $scope.$watch 'mode', ->
     $scope.stopSimulation() unless $scope.mode == 'simulate'
 

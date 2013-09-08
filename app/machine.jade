@@ -65,7 +65,9 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
             {{machine.description}}
 
         .terminal-trace-view.panel.panel-default(ng-show="mode == 'simulate'", ng-repeat="terminal in tracedTerminals")
-          .panel-heading Trace for {{terminal.identifier}}
+          .panel-heading
+            button.close(type="button", ng-click="closeTerminalTrace(terminal)") &times;
+            | Trace for {{terminal.identifier}}
           .panel-body
             svg(width=400, height=200)
 
