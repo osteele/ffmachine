@@ -208,7 +208,7 @@ updateCircuitView = ->
     .attr('r', 3)
     .on('mousedown', mouseDownAddWire)
     .append('title')
-      .text((pos) -> "Drag #{pos.name} to another terminal to create a wire.")
+      .text((pos) -> "Drag #{pos.identifier} to another terminal to create a wire.")
 
   wireViews = getLayer('wire-layer').selectAll('.wire').data(MachineConfiguration.wires)
   wireViews.enter().append('path').classed('wire', true)
