@@ -293,7 +293,7 @@
     };
     updateEndPinTargets('wire-start-target-layer', 0);
     updateEndPinTargets('wire-end-target-layer', 1);
-    return updateTraces();
+    return updateTraces(true);
   };
 
   wireEndpoints = function(wire) {
@@ -367,7 +367,7 @@
   };
 
   updateTraces = (function() {
-    var isVoltage, symbols, terminalVoltageName, updateTerminalTraces, updateWireTraces, values, voltageParenthetical;
+    var isVoltage, symbols, terminalVoltageName, updateTerminalTraces, updateWireTraces, values, voltageParenthetical, wireIsReversed;
     symbols = ['negative', 'ground', 'float'];
     values = [-3, 0, void 0];
     terminalVoltageName = function(terminal) {
@@ -398,31 +398,36 @@
       nodes = getLayer('trace-layer').selectAll('.terminal-trace').data(MachineConfiguration.terminals);
       nodes.exit().remove();
       enter = nodes.enter().append('g').classed('terminal-trace', true);
-      enter.append('circle').attr('r', 3).on('click', traceTerminal).append('title').text(function(d) {
-        return "Terminal " + d.identifier + "\nClick to trace";
-      });
-      return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).attr('transform', function(terminal) {
+      enter.append('circle').attr('r', 3).attr('transform', function(terminal) {
         var pt;
         pt = terminal.coordinates;
         return "translate(" + pt[0] + ", " + pt[1] + ")";
-      }).select('title').text(function(t) {
+      }).on('click', traceTerminal).append('title').text(function(d) {
+        return "Terminal " + d.identifier + "\nClick to trace";
+      });
+      return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).select('title').text(function(t) {
         return "Terminal " + t.identifier + " " + (voltageParenthetical(t)) + "\nClick to trace this terminal.";
       });
     };
-    updateWireTraces = function() {
+    updateWireTraces = function(updateWirePositions) {
       var wires;
       wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires).classed('wire', true);
       wires.enter().append('path').classed('wire', true).append('title').text(function(w) {
         return "Wire " + (wireName(w)) + (voltageParenthetical(w));
       });
       wires.exit().remove();
-      wires.attr('d', wirePath).attr('stroke', wireColor);
-      return wires.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).classed('reversed', function(w) {
-        return !w.terminals[0].output;
-      });
+      if (updateWirePositions) {
+        wires.attr('d', wirePath).attr('stroke', wireColor);
+      }
+      return wires.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).classed('reversed', wireIsReversed);
     };
-    return function() {
-      updateWireTraces();
+    wireIsReversed = function(w) {
+      var t1, t2, _ref;
+      _ref = w.terminals, t1 = _ref[0], t2 = _ref[1];
+      return t2.timestamp < t1.timestamp || t2.phase < t1.phase;
+    };
+    return function(updateWirePositions) {
+      updateWireTraces(updateWirePositions);
       updateTerminalTraces();
       return updateTerminalTraceViews();
     };
