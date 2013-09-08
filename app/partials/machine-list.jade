@@ -63,3 +63,5 @@
           | Modified on {{machine.modified_at | date}}
 
         ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': 'One viewer.', 'other': '{} viewers.'}")
+      .description {{machine.description}}
+

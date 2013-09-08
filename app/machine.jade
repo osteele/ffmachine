@@ -60,10 +60,10 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
                   stop(offset="0%", style="stop-color:rgb(255,255,0);stop-opacity:1")
                   stop(offset="100%", style="stop-color:rgb(255,0,0);stop-opacity:1")
 
-      .col-md-4
-        #connected-users
-          h3 Current Viewers
-          ul(ng-repeat="viewer in machine.connected") {{viewer}}
+      #sidebar.col-md-4
+        #description(ng-show="mode != 'simulate' && machine.description")
+          h3 Description
+          {{machine.description}}
 
         #legend(ng-show="mode == 'simulate'")
           h3 Voltage Key
@@ -71,6 +71,10 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
           .pull-right.ground-voltage 0V
           //- .pull-right.float-voltage undefined
 
-        #trace.pull-right(ng-show="mode == 'simulate'")
+        #trace(ng-show="mode == 'simulate'")
           h3 Trace
           svg#wireTrace(width=400, height=200)
+
+        #connected-users(ng-show="machine.connected")
+          h3 Current Viewers
+          ul(ng-repeat="viewer in machine.connected") {{viewer}}
