@@ -439,9 +439,7 @@
       scope = angular.element(element).scope();
       terminal = scope.terminal;
       values = terminal.trace || [];
-      svg = scope.svg;
-      if (!svg) {
-        svg = scope.svg = d3.select(element);
+      if (!scope.path) {
         x = d3.scale.linear().domain([-TraceHistoryLength, 0]).range([0, Number(element.width.baseVal.value)]);
         y = d3.scale.linear().domain([-3, 0]).range([0, Number(element.height.baseVal.value)]);
         line = scope.line = d3.svg.line().x(function(d) {
@@ -449,9 +447,10 @@
         }).y(function(d) {
           return y(typeof fromWeak(d.value) === 'number' ? fromWeak(d.value) : -3 / 2);
         });
-        svg.append('path').datum(values).attr('class', 'line').attr('d', line);
+        svg = d3.select(element);
+        scope.path = svg.append('path');
       }
-      _results.push(svg.select('path').datum(values));
+      _results.push(scope.path.datum(values).attr('d', scope.line));
     }
     return _results;
   };
