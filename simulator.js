@@ -156,6 +156,15 @@
       values = (function() {
         var _j, _len1, _results;
         _results = [];
+        for (_j = 0, _len1 = terminals.length; _j < _len1; _j++) {
+          terminal = terminals[_j];
+          _results.push(moduleOutputs[terminal.globalTerminalName]);
+        }
+        return _results;
+      })();
+      values = (function() {
+        var _j, _len1, _results;
+        _results = [];
         for (_j = 0, _len1 = values.length; _j < _len1; _j++) {
           value = values[_j];
           if (value !== void 0) {
