@@ -37,15 +37,14 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
         button.icon-play.icon-large.btn.btn-default(ng-disabled="simulationRunning", ng-click="runSimulation()", title="Click to start the simulation")
         button.icon-pause.icon-large.btn.btn-default(ng-disabled="!simulationRunning", ng-click="stopSimulation()", title="Click to pause the simulation")
         //- a.icon-pause.btn.btn-default(ng-show="mode == 'simulate'", ng-disabled="!simulaton_running")
+      h1.machine-name {{machine.name || 'Loading…'}}
 
     .content
-      .col-md-8
-        h1.machine-name {{machine.name || 'Loading…'}}
 
+      .col-md-8
         #frame.frame
           .ffmachine
             img(src="img/ffmachine.png", width=900, height=1000)
-            #loading(ng-hide="machine")
             svg#wirebuffer
               defs
                 filter#drop-shadow
@@ -61,20 +60,25 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
                   stop(offset="100%", style="stop-color:rgb(255,0,0);stop-opacity:1")
 
       #sidebar.col-md-4
-        #description(ng-show="mode != 'simulate' && machine.description")
-          h3 Description
-          {{machine.description}}
+        .panel.panel-default(ng-show="mode != 'simulate' && machine.description")
+          .panel-heading {{machine.description}}
+          .panel-body
+            {{machine.description}}
 
-        #legend(ng-show="mode == 'simulate'")
-          h3 Voltage Key
-          .pull-right.negative-voltage -3V
-          .pull-right.ground-voltage 0V
+        #trace.panel.panel-default(ng-show="mode == 'simulate'")
+          .panel-heading Trace
+          .panel-body
+            svg#wireTrace(width=400, height=200)
+
+        #connected-users.panel.panel-default(ng-show="machine.connected")
+          .panel-heading Current Viewers
+          .panel-body
+            ul
+              li(ng-repeat="viewer in machine.connected") {{viewer}}
+
+        #legend.panel.panel-default(ng-show="mode == 'simulate'")
+          .panel-heading Legend
+          .panel-body
+            .negative-voltage -3V
+            .ground-voltage 0V
           //- .pull-right.float-voltage undefined
-
-        #trace(ng-show="mode == 'simulate'")
-          h3 Trace
-          svg#wireTrace(width=400, height=200)
-
-        #connected-users(ng-show="machine.connected")
-          h3 Current Viewers
-          ul(ng-repeat="viewer in machine.connected") {{viewer}}

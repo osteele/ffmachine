@@ -1,3 +1,17 @@
+#toolbar {
+  margin-bottom: 10px;
+}
+
+#toolbar h1 {
+  font-size: 20pt;
+  display: inline-block;
+  margin: 0;
+  position: relative;
+  top: 7px;
+  // margin-top: 15px;
+  margin-left: 40px;
+}
+
 .frame {
   margin-left: 60px;
   position: relative;
@@ -136,7 +150,6 @@ body.simulation-mode .ffmachine {
 
 #connected-users {
   font-size: 16px;
-  text-align: right;
 
   h2 {
     margin: 3px;
@@ -150,9 +163,8 @@ body.simulation-mode .ffmachine {
 }
 
 #legend {
-  text-align: right;
-
   .negative-voltage, .ground-voltage, .float-voltage {
+    display: inline-block;
     padding: 5px 10px;
     margin: 0 0 0 5px;
     border-radius: 10px;
@@ -165,8 +177,6 @@ body.simulation-mode .ffmachine {
 }
 
 #wireTrace {
-  text-align: right;
-
   path {
     stroke: blue;
     fill: none;
