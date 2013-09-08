@@ -2,8 +2,9 @@ HistoryLength = 400  # keep this many historical values
 
 # set these to trace the simulator in the js console
 RestrictModules = 0 # ['b_5']
-Trace = 0
-TraceComponents = 0 # []
+Trace =
+  components: 0 # []
+  voltageAssignments: 0
 
 class @SimulatorClass
   constructor: (@configuration) ->
@@ -29,11 +30,13 @@ collectBusses = (wires) ->
     bus = switch busses.length
       when 0 then [wire]
       else [wire].concat(busses...)
-    bussesByTerminal[terminal.globalTerminalName] = bus for terminal in wire.terminals
+    for w in bus
+      bussesByTerminal[terminal.globalTerminalName] = bus for terminal in w.terminals
 
   wireSets = []
   for __, bus of bussesByTerminal
     wireSets.push bus unless bus in wireSets
+  # console.info _.pluck(bus, 'name').sort().join(', ') for bus in wireSets when bus.length > 1
   return ({wires, terminals: _.chain(wires).pluck('terminals').flatten().uniq().value()} for wires in wireSets)
 
 updateTerminalValues = (terminals, moduleOutputs, timestamp) ->
@@ -43,7 +46,7 @@ updateTerminalValues = (terminals, moduleOutputs, timestamp) ->
       trace = terminal.trace or= []
       trace.push {timestamp, value}
       trace.splice(0, trace.length - HistoryLength) if trace.length > HistoryLength
-      console.info "#{terminal.globalTerminalName} <- #{value}" if Trace
+      console.info "#{terminal.globalTerminalName} <- #{value}" if Trace.voltageAssignments
 
 updateWireValues = (wires, moduleOutputs, timestamp) ->
   propogatedTerminals = []
@@ -51,7 +54,7 @@ updateWireValues = (wires, moduleOutputs, timestamp) ->
   for {wires, terminals} in collectBusses(wires)
     # optimization and debuggability: skip unless something changed
     continue unless terminals.some (terminal) -> terminal.globalTerminalName of moduleOutputs
-    values = (terminal.value for terminal in terminals)
+    values = (moduleOutputs[terminal.globalTerminalName] ? weak(terminal.value) for terminal in terminals)
     # remove floating values
     values = (value for value in values when value != undefined)
     values = [undefined] if values.length == 0
@@ -59,7 +62,7 @@ updateWireValues = (wires, moduleOutputs, timestamp) ->
     strongValues = (value for value in values when not isWeak(value))
     values = strongValues if strongValues.length
     value = fromWeak(values[0])
-    console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if Trace
+    console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if Trace.voltageAssignments
     for wire in wires
       wire.value = value
     for terminal in terminals
@@ -82,7 +85,7 @@ computeTerminalValues = (terminals, wires) ->
   return values
 
 runComponent = (component, moduleInputs, moduleOutputs) ->
-  trace = TraceComponents == 1 or TraceComponents == true or component.type in TraceComponents
+  trace = Trace.components == 1 or Trace.components == true or component.type in Trace.components
   {type: circuitType, terminals} = component
   component.state or= {
     falling: (n) ->
@@ -134,6 +137,7 @@ class Weak
   constructor: (@value) ->
 
 weak = (value) ->
+  return value if value instanceof Weak
   value = boolToVolt(value) if value == true or value == false
   new Weak(value)
 

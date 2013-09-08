@@ -64,7 +64,7 @@ notifyMachineConfigurationSubscribers = ->
   machineConfigurationChanged MachineConfiguration
 
 @createWire = (t1, t2) ->
-  terminals = [t1, t2]
+  terminals = [t1, t2].sort((t1, t2) -> t1.globalTerminalName > t2.globalTerminalName)
   wire = {
     name: terminals.map((t) -> t.globalTerminalName).join(' ')
     terminals
