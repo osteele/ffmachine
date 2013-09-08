@@ -64,9 +64,9 @@ notifyMachineConfigurationSubscribers = ->
   machineConfigurationChanged MachineConfiguration
 
 @createWire = (t1, t2) ->
-  terminals = [t1, t2].sort((t1, t2) -> t1.globalTerminalName > t2.globalTerminalName)
+  terminals = [t1, t2].sort((t1, t2) -> t1.identifier > t2.identifier)
   wire = {
-    name: terminals.map((t) -> t.globalTerminalName).join(' ')
+    name: terminals.map((t) -> t.identifier).join(' ')
     terminals
   }
 
@@ -115,7 +115,7 @@ mouseDownAddWire = ->
     unless endTerminal == newEndTerminal
       endTerminal = newEndTerminal
       svgSelection.select('.active.end').classed('active', false).classed('end', false)
-      d3.select(wirebuffer.getElementById(endTerminal.globalTerminalName))
+      d3.select(wirebuffer.getElementById(endTerminal.identifier))
         .classed('active', true).classed('end', true) if endTerminal
 
   window.onmouseup = (e) ->
@@ -151,7 +151,7 @@ dragWireEnd = (wire) ->
     unless endTerminal == newEndTerminal
       endTerminal = newEndTerminal
       svgSelection.select('.active').classed('active', false)
-      d3.select(wirebuffer.getElementById(endTerminal.globalTerminalName))
+      d3.select(wirebuffer.getElementById(endTerminal.identifier))
         .classed('active', true) if endTerminal
 
   window.onmouseup = (e) ->
@@ -194,7 +194,7 @@ updateCircuitView = ->
   terminalTargets.enter().append('circle').classed('terminal-position', true)
   terminalTargets.exit().remove()
   terminalTargets
-    .attr('id', (pos) -> pos.globalTerminalName)
+    .attr('id', (pos) -> pos.identifier)
     .attr('cx', (pos) -> pos.x)
     .attr('cy', (pos) -> pos.y)
     .attr('r', 3)
@@ -321,7 +321,7 @@ updateTraces = do ->
     enter.append('circle')
       .attr('r', 3)
       .on('click', updateTerminalTraceView)
-      .append('title').text((d) -> "Terminal #{d.globalTerminalName}\nClick to trace")
+      .append('title').text((d) -> "Terminal #{d.identifier}\nClick to trace")
     nodes
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
@@ -329,7 +329,7 @@ updateTraces = do ->
       .attr('transform', (terminal) ->
         pt = terminal.coordinates
         "translate(#{pt[0]}, #{pt[1]})")
-      .select('title').text((d) -> "Terminal #{d.globalTerminalName}\nVoltage #{d.value}\nClick to trace")
+      .select('title').text((d) -> "Terminal #{d.identifier}\nVoltage #{d.value}\nClick to trace")
 
   updateWireTraces = ->
     wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires)

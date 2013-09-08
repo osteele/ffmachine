@@ -95,7 +95,7 @@ loadMachine = (name) ->
   CurrentMachineRef = MachineListRef.child(name)
   CurrentMachineRef.on 'value', (snapshot) ->
     CurrentMachine = snapshot.val()
-    console.error "No machine named #{name}" unless CurrentMachine
+    throw Error("No machine named #{name}") unless CurrentMachine
     configuration = unserializeConfiguration(snapshot.val().wiring)
     setTimeout (-> hook(CurrentMachine)), 10 for hook in MachineChangedHooks
     @updateMachineConfiguration configuration
@@ -122,7 +122,7 @@ saveMachine = (configuration) ->
 
 serializeMachineConfiguration = (configuration) ->
   serializatonWire = (wire) ->
-    return wire.terminals.map((terminal) -> terminal.globalTerminalName).join(' ')
+    return wire.terminals.map((terminal) -> terminal.identifier).join(' ')
   return configuration.wires.map(serializatonWire).join("\n")
 
 unserializeConfiguration = (configurationString) ->

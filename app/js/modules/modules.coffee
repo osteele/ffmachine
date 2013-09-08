@@ -73,8 +73,8 @@ ModuleDimensions =
 moduleComponents = ({type: moduleType, name: moduleName}) ->
   component = (type, componentTerminalNames, componentIndex='') ->
     terminals = for componentTerminalName in componentTerminalNames
-      globalTerminalName = [moduleName, componentTerminalName.replace(/(\D+)/, "$1#{componentIndex}")].join('_')
-      {componentTerminalName, globalTerminalName}
+      identifier = [moduleName, componentTerminalName.replace(/(\D+)/, "$1#{componentIndex}")].join('_')
+      {componentTerminalName, identifier}
     return {type, terminals}
 
   clock = ->
@@ -113,7 +113,7 @@ moduleComponents = ({type: moduleType, name: moduleName}) ->
       inverter(1)
       ground(2)
     ]
-    else console.error 'unknown module type', moduleType
+    else throw Error("unknown module type #{moduleType}")
 
 createModules = ->
   rows = for moduleRow, rowIndex in ModuleLocationMap
@@ -125,7 +125,7 @@ createModules = ->
       terminals =
         for [dx, dy, moduleTerminalName] in TerminalLocations[moduleType]
           {
-            globalTerminalName: [moduleName, moduleTerminalName].join('_')
+            identifier: [moduleName, moduleTerminalName].join('_')
             moduleTerminalName
             coordinates: [x + dx / 2, y + dy / 2]
             x: x + dx / 2
@@ -149,18 +149,18 @@ createModules = ->
     return terminal if lineLength(terminal.coordinates, [x, y]) < tolerance
   return null
 
-@findTerminalByName = (globalTerminalName) ->
+@findTerminalByName = (identifier) ->
   for terminal in MachineHardware.terminals
-    return terminal if terminal.globalTerminalName == globalTerminalName
-  console.error "Can't find terminal named #{globalTerminalName}"
+    return terminal if terminal.identifier == identifier
+  throw Exception("Can't find terminal named #{identifier}")
 
 @xyToTerminalName = (x, y, tolerance=12) ->
-  for {x: px, y: py, globalTerminalName} in MachineHardware.terminals
-    return globalTerminalName if lineLength([px, py], [x, y]) < tolerance
+  for {x: px, y: py, identifier} in MachineHardware.terminals
+    return identifier if lineLength([px, py], [x, y]) < tolerance
   return null
 
-@getTerminalCoordinates = (globalTerminalName) ->
-  findTerminalByName(globalTerminalName).coordinates
+@getTerminalCoordinates = (identifier) ->
+  findTerminalByName(identifier).coordinates
 
 @MachineHardware = do ->
   modules = createModules()
