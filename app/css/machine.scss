@@ -73,9 +73,9 @@ body.simulation-mode .ffmachine {
     stroke-width: 4px;
     stroke-linecap: round;
     filter: url(#drop-shadow);
-    transition: stroke 0.2s;
-    -moz-transition: stroke 0.2s;
-    -webkit-transition: stroke 0.2s;
+    transition: stroke 1s;
+    -moz-transition: stroke 1s;
+    -webkit-transition: stroke 1s;
 
     &:hover {
       // stroke: url(#grad1);
@@ -126,7 +126,13 @@ body.simulation-mode .ffmachine {
       // &.voltage-float circle { fill: gray; }
     }
 
-    .wire { stroke-opacity: 0.4; }
+    .wire {
+      transition: stroke 0.2s;
+      -moz-transition: stroke 0.2s;
+      -webkit-transition: stroke 0.2s;
+      stroke-width: 2px;
+      stroke-dasharray: 2, 4;
+    }
   }
 }
 
