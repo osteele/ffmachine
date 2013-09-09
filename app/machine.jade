@@ -28,7 +28,7 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
   body(ng-class="{'edit-mode': mode == 'edit', 'simulation-mode': mode == 'simulate'}")
     include partials/toolbar
       .btn-group
-        button.icon-book.icon-large.btn.btn-default(href=".") &nbsp;Directory
+        a.icon-book.icon-large.btn.btn-default(href=".") &nbsp;Directory
       .btn-group
         button.icon-eye-open.icon-large.btn.btn-default(ng-hide="editable", ng-disabled="mode == 'view'", ng-click="mode = 'view'") &nbsp;View
         button.icon-wrench.icon-large.btn.btn-default(ng-show="editable", ng-disabled="mode == 'edit'", ng-show="editable", ng-click="mode = 'edit'") &nbsp;Edit

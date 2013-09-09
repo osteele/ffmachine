@@ -37,16 +37,16 @@ h1 {
   position: relative;
   width: 100%;
 
-  a {
-    color: black;
-    border-radius: 2px;
-    margin: 0 5px;
-    padding: 5px;
-    text-decoration: none;
+  // a {
+  //   color: black;
+  //   border-radius: 2px;
+  //   margin: 0 5px;
+  //   padding: 5px;
+  //   text-decoration: none;
 
-    &:hover { background: lightGray; }
-    &.active { background: white; }
-  }
+  //   &:hover { background: lightGray; }
+  //   &.active { background: white; }
+  // }
 
   .search { display: inline-block; margin-right: 60px; }
 }
