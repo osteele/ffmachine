@@ -91,6 +91,7 @@
   };
 
   addWire = function(wire) {
+    console.info('add wire');
     MachineConfiguration.wires.push(wire);
     updateCircuitView();
     return notifyMachineConfigurationSubscribers();
@@ -119,9 +120,13 @@
     AnimationLength = 6;
     animationCounter = 0;
     return function() {
+      var i, _i;
       Simulator || (Simulator = new SimulatorClass(MachineConfiguration));
       Simulator.step();
       animationCounter = (animationCounter + 1) % AnimationLength;
+      for (i = _i = 0; 0 <= AnimationLength ? _i < AnimationLength : _i > AnimationLength; i = 0 <= AnimationLength ? ++_i : --_i) {
+        svgSelection.classed("animation-phase-" + i, animationCounter === i);
+      }
       updateTraces();
       return updateTerminalTraceViews();
     };
@@ -374,7 +379,7 @@
   };
 
   updateTraces = (function() {
-    var isVoltage, symbols, terminalVoltageName, updateTerminalTraces, updateWireTraces, values, voltageParenthetical;
+    var isVoltage, symbols, terminalVoltageName, updateTerminalTraces, updateWireTraces, values, voltageParenthetical, wireIsReversed;
     symbols = ['negative', 'ground', 'float'];
     values = [-3, 0, void 0];
     terminalVoltageName = function(terminal) {
@@ -426,9 +431,12 @@
       if (wiresMaybeMoved) {
         wires.attr('d', wirePath).attr('stroke', wireColor);
       }
-      return wires.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).classed('reversed', function(w) {
-        return !w.terminals[0].output;
-      });
+      return wires.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).classed('reversed', wireIsReversed);
+    };
+    wireIsReversed = function(w) {
+      var t1, t2, _ref;
+      _ref = w.terminals, t1 = _ref[0], t2 = _ref[1];
+      return t2.timestamp < t1.timestamp || t2.phase < t1.phase;
     };
     return function(_arg) {
       var wiresMaybeMoved;
