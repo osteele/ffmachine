@@ -18,7 +18,7 @@
     }
 
     SimulatorClass.prototype.step = function() {
-      var moduleInputs, moduleOutputs, modules, propogatedOutputs, propogatedTerminals, terminal, terminals, wires, _i, _len, _ref, _ref1;
+      var moduleInputs, moduleOutputs, modules, terminal, terminals, wires, _i, _len, _ref;
       _ref = this.configuration, modules = _ref.modules, terminals = _ref.terminals, wires = _ref.wires;
       moduleInputs = computeTerminalValues(terminals, wires);
       moduleOutputs = {};
@@ -27,9 +27,8 @@
         terminal = terminals[_i];
         terminal.output = terminal.identifier in moduleOutputs;
       }
-      updateTerminalValues(terminals, moduleOutputs, this.timestamp, 0);
-      _ref1 = updateWireValues(wires, moduleOutputs, this.timestamp, 1), propogatedTerminals = _ref1[0], propogatedOutputs = _ref1[1];
-      updateTerminalValues(propogatedTerminals, propogatedOutputs, this.timestamp, 2);
+      updateTerminalValues(terminals, moduleOutputs, this.timestamp);
+      updateWireValues(wires, moduleOutputs, this.timestamp);
       return this.timestamp += 1;
     };
 
@@ -114,14 +113,13 @@
     })();
   };
 
-  updateTerminalValues = function(terminals, moduleOutputs, timestamp, simulationPhase) {
+  updateTerminalValues = function(terminals, moduleOutputs, timestamp) {
     var terminal, trace, value, _i, _len, _results;
     _results = [];
     for (_i = 0, _len = terminals.length; _i < _len; _i++) {
       terminal = terminals[_i];
       if (terminal.identifier in moduleOutputs) {
         terminal.value = value = moduleOutputs[terminal.identifier];
-        terminal.simulationPhase = simulationPhase;
         trace = terminal.trace || (terminal.trace = []);
         trace.push({
           timestamp: timestamp,
@@ -142,7 +140,7 @@
     return _results;
   };
 
-  updateWireValues = function(wires, moduleOutputs, timestamp, simulationPhase) {
+  updateWireValues = function(wires, moduleOutputs, timestamp) {
     var propogatedOutputs, propogatedTerminals, strongValues, terminal, terminals, value, values, wire, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
     propogatedTerminals = [];
     propogatedOutputs = {};
@@ -207,7 +205,7 @@
         }
       }
     }
-    return [propogatedTerminals, propogatedOutputs];
+    return updateTerminalValues(propogatedTerminals, propogatedOutputs, timestamp);
   };
 
   updateModuleOutputs = function(module, moduleInputs, moduleOutputs) {

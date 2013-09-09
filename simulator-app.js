@@ -28,7 +28,7 @@
   app = angular.module('FFMachine', ['firebase']);
 
   app.controller('MachineSimulatorCtrl', function($scope, $location, $window, angularFire, angularFireAuth) {
-    var name, simulator;
+    var machineName, simulator;
     $scope.mode = 'edit';
     $scope.tracedTerminals = [];
     simulator = new SimulatorThread;
@@ -108,12 +108,12 @@
         return $scope.tracedTerminals.push(terminal);
       });
     };
-    name = $location.search().name;
-    if (!name) {
+    machineName = $location.search().name;
+    if (!machineName) {
       $window.location.href = '.';
     }
     initializeMachineView();
-    return loadMachine(name);
+    return loadMachine(machineName);
   });
 
   SimulatorThread = (function() {
@@ -165,13 +165,13 @@
     return onlineRef.remove();
   };
 
-  loadMachine = function(name) {
-    CurrentMachineRef = MachineListRef.child(name);
+  loadMachine = function(machineName) {
+    CurrentMachineRef = MachineListRef.child(machineName);
     return CurrentMachineRef.on('value', function(snapshot) {
       var configuration, hook, _i, _len;
       CurrentMachine = snapshot.val();
       if (!CurrentMachine) {
-        throw Error("No machine named " + name);
+        throw Error("No machine named " + machineName);
       }
       configuration = unserializeConfiguration(snapshot.val().wiring);
       for (_i = 0, _len = MachineChangedHooks.length; _i < _len; _i++) {
@@ -217,26 +217,26 @@
   };
 
   serializeMachineConfiguration = function(configuration) {
-    var serializatonWire;
-    serializatonWire = function(wire) {
+    var serializeWire;
+    serializeWire = function(wire) {
       return wire.terminals.map(function(terminal) {
         return terminal.identifier;
       }).join(' ');
     };
-    return configuration.wires.map(serializatonWire).join("\n");
+    return configuration.wires.map(serializeWire).join("\n");
   };
 
   unserializeConfiguration = function(configurationString) {
-    var unserializeWire, wireNames;
+    var unserializeWire, wireStrings;
     unserializeWire = function(wireString) {
       return createWire.apply(null, wireString.split(' ').map(getTerminalByIdentifier));
     };
-    wireNames = configurationString.replace(/\\n/g, "\n").split(/\n/);
-    if (wireNames[wireNames.length - 1] === '') {
-      wireNames.pop();
+    wireStrings = configurationString.replace(/\\n/g, "\n").split(/\n/);
+    if (wireStrings[wireStrings.length - 1] === '') {
+      wireStrings.pop();
     }
     return {
-      wires: wireNames.map(unserializeWire)
+      wires: wireStrings.map(unserializeWire)
     };
   };
 
