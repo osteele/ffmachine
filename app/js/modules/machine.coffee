@@ -65,7 +65,8 @@ notifyMachineConfigurationSubscribers = ->
 @createWire = (t1, t2) ->
   terminals = [t1, t2].sort((t1, t2) -> t1.identifier > t2.identifier)
   wire = {
-    name: terminals.map((t) -> t.identifier).join(' ')
+    name: (t.identifier for t in terminals).join(' ↔ ')
+    identifier: (t.identifier for t in terminals).join('-')
     terminals
   }
 
@@ -193,12 +194,14 @@ releaseKnob = ->
 # Drawing
 #
 
-wireName = (w) ->
-  (t.identifier for t in w.terminals).join(' ↔ ')
+getIdentifier = (d) -> d.identifier
 
 updateCircuitView = ->
+  # getIdentifier = (d) -> d.identifier
+  # getIdentifier = null unless wiringChanged
+
   terminalTargets = getLayer('terminal-target-layer')
-    .selectAll('.terminal-position').data(MachineConfiguration.terminals)
+    .selectAll('.terminal-position').data(MachineConfiguration.terminals, getIdentifier)
   terminalTargets.enter().append('circle').classed('terminal-position', true)
   terminalTargets.exit().remove()
   terminalTargets
@@ -210,7 +213,7 @@ updateCircuitView = ->
     .append('title')
       .text((pos) -> "Drag #{pos.identifier} to another terminal to create a wire.")
 
-  wireViews = getLayer('wire-layer').selectAll('.wire').data(MachineConfiguration.wires)
+  wireViews = getLayer('wire-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
   wireViews.enter().append('path').classed('wire', true)
   wireViews.exit().remove()
   wireViews
@@ -218,9 +221,9 @@ updateCircuitView = ->
     .attr('stroke', wireColor)
 
   wireTitle = (w) ->
-    "Wire #{wireName(w)}\nClick to delete this wire."
+    "Wire #{w.name}\nClick to delete this wire."
   wireTargets = getLayer('deletion-target-layer').selectAll('.wire-mouse-target')
-    .data(MachineConfiguration.wires)
+    .data(MachineConfiguration.wires, getIdentifier)
   wireTargets.enter()
     .append('path')
     .classed('wire-mouse-target', true)
@@ -247,7 +250,7 @@ updateCircuitView = ->
       #   targetView.transition().delay(0).attr('d', endpointsToPath(endpoints...))
       #   )
       # .on('mouseout', (wire) -> getWireView(wire).transition().delay(0).attr('d', wirePath(wire)) )
-      .append('title').text((w) -> "Drag this end of #{wireName(w)} to move it to terminal.")
+      .append('title').text((w) -> "Drag this end of #{w.name} to move it to terminal.")
     startPinTargets.exit().remove()
     startPinTargets
       .attr('cx', (wire) -> wire.terminals[endIndex].coordinates[0])
@@ -256,7 +259,7 @@ updateCircuitView = ->
   updateEndPinTargets 'wire-start-target-layer', 0
   updateEndPinTargets 'wire-end-target-layer', 1
 
-  updateTraces(true)
+  updateTraces wiresMaybeMoved: true
   # drawKnobs()
 
 wireEndpoints = (wire) ->
@@ -331,7 +334,8 @@ updateTraces = do ->
     return "(#{value}V)" unless value == undefined
 
   updateTerminalTraces = ->
-    nodes = getLayer('trace-layer').selectAll('.terminal-trace').data(MachineConfiguration.terminals)
+    nodes = getLayer('trace-layer').selectAll('.terminal-trace')
+      .data(MachineConfiguration.terminals, getIdentifier)
     nodes.exit().remove()
     enter = nodes.enter().append('g').classed('terminal-trace', true)
     enter.append('circle')
@@ -348,13 +352,13 @@ updateTraces = do ->
       .select('title').text((t) ->
         "Terminal #{t.identifier} #{voltageParenthetical(t)}\nClick to trace this terminal.")
 
-  updateWireTraces = (updateWirePositions) ->
-    wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires)
+  updateWireTraces = (wiresMaybeMoved) ->
+    wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
       .classed('wire', true)
     wires.enter().append('path').classed('wire', true)
-      .append('title').text((w) -> "Wire #{wireName(w)}#{voltageParenthetical(w)}")
+      .append('title').text((w) -> "Wire #{w.name}#{voltageParenthetical(w)}")
     wires.exit().remove()
-    if updateWirePositions
+    if wiresMaybeMoved
       wires
         .attr('d', wirePath)
         .attr('stroke', wireColor)
@@ -364,8 +368,8 @@ updateTraces = do ->
       .classed('voltage-float', isVoltage('float'))
       .classed('reversed', (w) -> !w.terminals[0].output)
 
-  return (updateWirePositions) ->
-    updateWireTraces(updateWirePositions)
+  return ({wiresMaybeMoved}={}) ->
+    updateWireTraces(wiresMaybeMoved)
     updateTerminalTraces()
     updateTerminalTraceViews()
 

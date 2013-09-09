@@ -69,10 +69,10 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.$apply ->
       $scope.tracedTerminals.push terminal
 
-  name = $location.search().name
-  $window.location.href = '.' unless name
+  machineName = $location.search().name
+  $window.location.href = '.' unless machineName
   initializeMachineView()
-  loadMachine name
+  loadMachine machineName
 
 class SimulatorThread
   constructor: ->
@@ -103,11 +103,11 @@ removeCurrentViewer = ->
   onlineRef = CurrentMachineRef.child('connected').child(CurrentUser.id)
   onlineRef.remove()
 
-loadMachine = (name) ->
-  CurrentMachineRef = MachineListRef.child(name)
+loadMachine = (machineName) ->
+  CurrentMachineRef = MachineListRef.child(machineName)
   CurrentMachineRef.on 'value', (snapshot) ->
     CurrentMachine = snapshot.val()
-    throw Error("No machine named #{name}") unless CurrentMachine
+    throw Error("No machine named #{machineName}") unless CurrentMachine
     configuration = unserializeConfiguration(snapshot.val().wiring)
     setTimeout (-> hook(CurrentMachine)), 10 for hook in MachineChangedHooks
     @updateMachineConfiguration configuration
@@ -133,13 +133,13 @@ saveMachine = (configuration) ->
   saveMachine configuration
 
 serializeMachineConfiguration = (configuration) ->
-  serializatonWire = (wire) ->
+  serializeWire = (wire) ->
     return wire.terminals.map((terminal) -> terminal.identifier).join(' ')
-  return configuration.wires.map(serializatonWire).join("\n")
+  return configuration.wires.map(serializeWire).join("\n")
 
 unserializeConfiguration = (configurationString) ->
   unserializeWire = (wireString) ->
     return createWire(wireString.split(' ').map(getTerminalByIdentifier)...)
-  wireNames = configurationString.replace(/\\n/g, "\n").split(/\n/)
-  wireNames.pop() if wireNames[wireNames.length - 1] == ''
-  return {wires: wireNames.map(unserializeWire)}
+  wireStrings = configurationString.replace(/\\n/g, "\n").split(/\n/)
+  wireStrings.pop() if wireStrings[wireStrings.length - 1] == ''
+  return {wires: wireStrings.map(unserializeWire)}
