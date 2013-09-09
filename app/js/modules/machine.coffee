@@ -56,11 +56,12 @@ getLayer = (layerName) ->
   MachineConfiguration.wires = configuration.wires
   MachineConfiguration.modules = configuration.modules ? MachineHardware.modules
   MachineConfiguration.terminals = configuration.terminals ? MachineHardware.terminals
-  updateCircuitView()
+  notifyMachineConfigurationSubscribers()
 
 # This calls the storage interface
 notifyMachineConfigurationSubscribers = ->
   machineConfigurationChanged MachineConfiguration
+  updateCircuitView()
 
 @createWire = (t1, t2) ->
   terminals = [t1, t2].sort((t1, t2) -> t1.identifier > t2.identifier)
@@ -72,12 +73,10 @@ notifyMachineConfigurationSubscribers = ->
 
 addWire = (wire) ->
   MachineConfiguration.wires.push wire
-  updateCircuitView()
   notifyMachineConfigurationSubscribers()
 
 deleteWire = (wire) ->
   MachineConfiguration.wires = (w for w in MachineConfiguration.wires when w != wire)
-  updateCircuitView()
   notifyMachineConfigurationSubscribers()
 
 @stepSimulator = do ->
@@ -166,7 +165,6 @@ dragWireEnd = (wire) ->
     svgSelection.select('.active').classed('active', false)
     if endTerminal and wire.terminals[wireTerminalIndex] != endTerminal
       wire.terminals[wireTerminalIndex] = endTerminal
-      updateCircuitView()
       notifyMachineConfigurationSubscribers()
     else
       # restore the wire position and color
@@ -177,7 +175,6 @@ dragKnob = (e) ->
   a = knobAngle(knob, localEvent(e)...)
   knoboffset = mod360(knob[2] - a) unless moved
   knob[2] = mod360(a + knoboffset)
-  updateCircuitView()
   notifyMachineConfigurationSubscribers()
 
 releaseKnob = ->
@@ -186,7 +183,6 @@ releaseKnob = ->
     knob[2] = findNearest(knob[2], [-72, -36, 0, 36, 72])
   if starty == 2
     knob[2] = findNearest(knob[2], [-68, -23, 22, 67])
-  updateCircuitView()
   notifyMachineConfigurationSubscribers()
 
 

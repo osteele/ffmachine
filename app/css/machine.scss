@@ -157,3 +157,20 @@ body {
     fill: none;
   }
 }
+
+#wire-list {
+  font-size: small;
+  .terminal-0, .terminal-1 { font: monospace; width: 20px; }
+  .terminal-0, .voltage { text-align: right; }
+  tr, td {
+    transition: background-color 0.5s;
+    -moz-transition: background-color 0.5s;
+    -webkit-transition: background-color 0.5s;
+
+  }
+  b { font-weight: bold; }
+  del { text-decoration: none; }
+  ins { text-decoration: none; color: blue; }
+}
+
+body.simulation-running .voltage { visibility: hidden; }

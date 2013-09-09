@@ -3,7 +3,7 @@ FirebaseRootRef = new Firebase 'https://ffmachine.firebaseIO.com/'
 CurrentMachine = null
 CurrentMachineRef = null
 CurrentUser = null
-MachineChangedHooks = []
+StoredMachineChangedHooks = []
 MachineListRef = FirebaseRootRef.child 'machines'
 ReloadAppSeed = null
 
@@ -60,19 +60,40 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
   $scope.$watch 'tracedTerminals', ->
     updateTerminalTraceViews()
 
-  MachineChangedHooks.push (machine) ->
+  StoredMachineChangedHooks.push (storedMachine) ->
     $scope.$apply ->
-      $scope.machine = machine
+      $scope.machine = storedMachine
 
   window.traceTerminal = (terminal) ->
     return if terminal in $scope.tracedTerminals
     $scope.$apply ->
       $scope.tracedTerminals.push terminal
 
+  window.machineConfigurationChanged = (configuration) ->
+    saveMachine configuration
+    $scope.$apply ->
+      $scope.wires = configuration.wires
+
   machineName = $location.search().name
   $window.location.href = '.' unless machineName
   initializeMachineView()
   loadMachine machineName
+
+app.filter 'floatValue', ->
+  (value) ->
+    value = fromWeak(value)
+    return unless typeof value == 'number'
+    "#{value}<b>V</b>"
+
+app.filter 'terminalVoltageMiniHistory', ->
+  (terminal) ->
+    value = fromWeak(terminal.value)
+    prev = terminal.trace?[terminal.trace?.length - 2]?.value
+    prev = fromWeak(value) if prev
+    return unless typeof(value) == 'number' or typeof(prev) == 'number'
+    str = "#{value}<b>V</b>"
+    str = "<del>#{prev}<b>V</b></del> &rarr; <ins>#{str}</ins>" if typeof prev == 'number' and prev != value
+    return str
 
 class SimulatorThread
   constructor: ->
@@ -109,7 +130,7 @@ loadMachine = (machineName) ->
     CurrentMachine = snapshot.val()
     throw Error("No machine named #{machineName}") unless CurrentMachine
     configuration = unserializeConfiguration(snapshot.val().wiring)
-    setTimeout (-> hook(CurrentMachine)), 10 for hook in MachineChangedHooks
+    setTimeout (-> hook(CurrentMachine)), 10 for hook in StoredMachineChangedHooks
     @updateMachineConfiguration configuration
     addCurrentViewer()
 
@@ -128,9 +149,6 @@ saveMachine = (configuration) ->
   CurrentMachineRef.child('wiring').set wiring
   CurrentMachineRef.child('modified_at').set modified_at
   CurrentMachineRef.child('history').push {user: user?.email, wiring, previous_wiring, modified_at}
-
-@machineConfigurationChanged = (configuration) ->
-  saveMachine configuration
 
 serializeMachineConfiguration = (configuration) ->
   serializeWire = (wire) ->

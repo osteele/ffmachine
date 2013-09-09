@@ -66,6 +66,7 @@ updateWireValues = (wires, moduleOutputs, timestamp) ->
     value = fromWeak(values[0])
     console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if Trace.voltageAssignments
     for wire in wires
+      wire.changed = wire.value? and wire.value != value
       wire.value = value
     for terminal in terminals
       unless terminal.identifier of moduleOutputs or terminal in propogatedTerminals

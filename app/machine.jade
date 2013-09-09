@@ -1,7 +1,7 @@
 doctype 5
 html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
   head
-    title(ng:bind-template="{{machine.name}}") Flip Flop Machine
+    title(ng:bind-template="Machine: {{machine.name}}") Flip Flop Machine
     meta(charset="utf-8")
 
     link(href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc2/css/bootstrap.min.css", rel="stylesheet", type="text/css")
@@ -25,7 +25,7 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
 
     link(href="img/ffmachine.png", rel="subresource")
 
-  body(ng-class="{'edit-mode': mode == 'edit', 'simulation-mode': mode == 'simulate'}")
+  body(ng-class="{'edit-mode': mode == 'edit', 'simulation-mode': mode == 'simulate', 'simulation-running': simulationRunning}")
     include partials/toolbar
       .btn-group
         a.icon-book.icon-large.btn.btn-default(href=".") &nbsp;Directory
@@ -40,7 +40,6 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
       h1.machine-name(ng-bind="machine.name") Loading…
 
     .content
-
       .col-md-8
         .ffmachine(ng-show="machine")
           svg#machineView
@@ -68,13 +67,22 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
           .panel-heading Terminal Traces
           .panel-body
             p(ng-hide="tracedTerminals.length") Click on a terminal to trace it here.
-            table
+            table.table.table-condensed.table-striped
               tr(ng-repeat="terminal in tracedTerminals")
                 td
                   a.icon-remove(ng-click="closeTerminalTrace(terminal)") &nbsp;
                   small {{terminal.identifier}}
                 td
                   svg.terminal-trace-view(width=300, height=20)
+
+        .panel.panel-default(ng-show="wires.length")
+          .panel-heading Wires
+          .panel-body
+            table.table.table-condensed.table-striped#wire-list
+              tr(ng-repeat="wire in wires | orderBy:'identifier'", ng-class="{success: wire.changed}")
+                td.terminal-0 {{wire.terminals[0].identifier}}
+                td.terminal-1 {{wire.terminals[1].identifier}}
+                td.voltage(ng-bind-html-unsafe="wire.terminals[0] | terminalVoltageMiniHistory")
 
         #connected-users.panel.panel-default(ng-show="machine.connected")
           .panel-heading Current Viewers
@@ -87,4 +95,4 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
           .panel-body
             .negative-voltage -3V
             .ground-voltage 0V
-          //- .pull-right.float-voltage undefined
+            //- .pull-right.float-voltage undefined
