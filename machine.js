@@ -91,7 +91,6 @@
   };
 
   addWire = function(wire) {
-    console.info('add wire');
     MachineConfiguration.wires.push(wire);
     updateCircuitView();
     return notifyMachineConfigurationSubscribers();
@@ -120,13 +119,9 @@
     AnimationLength = 6;
     animationCounter = 0;
     return function() {
-      var i, _i;
       Simulator || (Simulator = new SimulatorClass(MachineConfiguration));
       Simulator.step();
       animationCounter = (animationCounter + 1) % AnimationLength;
-      for (i = _i = 0; 0 <= AnimationLength ? _i < AnimationLength : _i > AnimationLength; i = 0 <= AnimationLength ? ++_i : --_i) {
-        svgSelection.classed("animation-phase-" + i, animationCounter === i);
-      }
       updateTraces();
       return updateTerminalTraceViews();
     };
