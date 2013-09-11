@@ -255,7 +255,7 @@
     }).attr('cy', function(pos) {
       return pos.y;
     }).attr('r', 3).on('mousedown', mouseDownAddWire).append('title').text(function(pos) {
-      return "Drag " + pos.identifier + " to another terminal to create a wire.";
+      return "Drag " + pos.name + " to another terminal to create a wire.";
     });
     wireViews = getLayer('wire-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier);
     wireViews.enter().append('path').classed('wire', true);
@@ -407,10 +407,10 @@
         pt = terminal.coordinates;
         return "translate(" + pt[0] + ", " + pt[1] + ")";
       }).on('click', traceTerminal).append('title').text(function(d) {
-        return "Terminal " + d.identifier + "\nClick to trace";
+        return "Terminal " + d.name + "\nClick to trace";
       });
       return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).select('title').text(function(t) {
-        return "Terminal " + t.identifier + " " + (voltageParenthetical(t)) + "\nClick to trace this terminal.";
+        return "Terminal " + t.name + " " + (voltageParenthetical(t)) + "\nClick to trace this terminal.";
       });
     };
     updateWireTraces = function(wiresMaybeMoved) {

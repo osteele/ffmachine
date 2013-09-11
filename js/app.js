@@ -25,10 +25,10 @@
 
   app.config(function($locationProvider, $routeProvider) {
     return $routeProvider.when('/', {
-      templateUrl: 'partials/machine-list.html',
+      templateUrl: 'templates/machine-list.html',
       controller: 'MachineListCtrl'
     }).when('/machines/:machineId', {
-      templateUrl: 'partials/machine-detail.html',
+      templateUrl: 'templates/machine-detail.html',
       controller: 'MachineDetailCtrl'
     }).otherwise({
       redirectTo: '/'
@@ -86,7 +86,7 @@
       })())[0];
     };
     $scope.duplicate_machine = function(machine) {
-      var k, m, message_prefix, name, name_index, now, user, user_key;
+      var access, copy, k, m, message_prefix, name, name_index, now, user;
       user = $scope.user;
       if (!user) {
         alert("You must sign in before making a machine.");
@@ -117,18 +117,21 @@
         }
         break;
       }
-      user_key = {
-        id: user.id,
-        email: user.email
-      };
       now = Firebase.ServerValue.TIMESTAMP;
-      return machineListRef.push({
+      access = {};
+      access[user.id] = 'write';
+      copy = {
         name: name,
         wiring: machine.wiring,
-        creator: user_key,
-        writers: [user_key],
-        created_at: now
-      });
+        creator: {
+          id: user.id,
+          email: user.email
+        },
+        created_at: now,
+        auth: access,
+        access: access
+      };
+      return machineListRef.push(copy);
     };
     $scope.delete_machine = function(machine) {
       var k, key, m;
