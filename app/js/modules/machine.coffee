@@ -197,8 +197,6 @@ updateCircuitView = ->
   terminalTargets = getLayer('terminal-target-layer')
     .selectAll('.terminal-position').data(MachineConfiguration.terminals, getIdentifier)
   terminalTargets.enter().append('circle').classed('terminal-position', true)
-  terminalTargets.exit().remove()
-  terminalTargets
     .attr('id', (pos) -> pos.identifier)
     .attr('cx', (pos) -> pos.x)
     .attr('cy', (pos) -> pos.y)
@@ -206,6 +204,7 @@ updateCircuitView = ->
     .on('mousedown', mouseDownAddWire)
     .append('title')
       .text((pos) -> "Drag #{pos.name} to another terminal to create a wire.")
+  terminalTargets.exit().remove()
 
   wireViews = getLayer('wire-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
   wireViews.enter().append('path').classed('wire', true)
@@ -214,8 +213,7 @@ updateCircuitView = ->
     .attr('d', wirePath)
     .attr('stroke', wireColor)
 
-  wireTitle = (w) ->
-    "Wire #{w.name}\nClick to delete this wire."
+  wireTitle = (w) -> "Wire #{w.name}\nClick to delete this wire."
   wireTargets = getLayer('deletion-target-layer').selectAll('.wire-mouse-target')
     .data(MachineConfiguration.wires, getIdentifier)
   wireTargets.enter()
@@ -224,18 +222,17 @@ updateCircuitView = ->
     .on('mousedown', deleteWire)
     .append('title').text(wireTitle)
   wireTargets.exit().remove()
-  wireTargets
-    .attr('d', wirePath)
+  wireTargets.attr('d', wirePath)
 
-  updateEndPinTargets = (layerName, endIndex) ->
-    terminalTitleText = (w) ->
+  updateWireEndTargets = (layerName, endIndex) ->
+    wireEndTitleText = (w) ->
       "Terminal #{w.terminals[endIndex].name}. " +
       "Drag this end of the wire to move it to another terminal."
 
-    startPinTargets = getLayer(layerName)
+    wireEndTargets = getLayer(layerName)
       .selectAll('.wire-end-target')
       .data(w for w in MachineConfiguration.wires when wireLength(w) > 45)
-    startPinTargets.enter()
+    wireEndTargets.enter()
       .append('circle')
       .classed('wire-end-target', true)
       .attr('r', 10)
@@ -248,14 +245,14 @@ updateCircuitView = ->
       #   targetView.transition().delay(0).attr('d', endpointsToPath(endpoints...))
       #   )
       # .on('mouseout', (wire) -> getWireView(wire).transition().delay(0).attr('d', wirePath(wire)) )
-      .append('title').text(terminalTitleText)
-    startPinTargets.exit().remove()
-    startPinTargets
+      .append('title').text(wireEndTitleText)
+    wireEndTargets.exit().remove()
+    wireEndTargets
       .attr('cx', (wire) -> wire.terminals[endIndex].coordinates[0])
       .attr('cy', (wire) -> wire.terminals[endIndex].coordinates[1])
 
-  updateEndPinTargets 'wire-start-target-layer', 0
-  updateEndPinTargets 'wire-end-target-layer', 1
+  updateWireEndTargets 'wire-start-target-layer', 0
+  updateWireEndTargets 'wire-end-target-layer', 1
 
   updateTraces wiresMaybeMoved: true
   # drawKnobs()
