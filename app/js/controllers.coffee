@@ -68,7 +68,7 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
     return user and machine.auth?[user.id] == 'write'
 
   $scope.machine_stats = (machine) ->
-    "#{(machine.wiring.split(/\s+/).length - 1) / 2} wires"
+    "#{Math.floor(machine.wiring.split(/\s+/).length / 2)} wires"
 
   $scope.machine_url = (machine) ->
     return "machine.html?name=#{encodeURIComponent($scope.machine_key(machine))}"
