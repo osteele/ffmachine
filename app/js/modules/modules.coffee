@@ -71,12 +71,17 @@ ModuleDimensions =
 # Constructors
 #
 
-moduleComponents = ({type: moduleType, name: moduleName}) ->
-  component = (type, componentTerminalNames, componentIndex='') ->
-    terminals = for componentTerminalName in componentTerminalNames
-      identifier = [moduleName, componentTerminalName.replace(/(\D+)/, "$1#{componentIndex}")].join('_')
-      {componentTerminalName, identifier}
-    return {type, terminals}
+moduleComponents = ({type: moduleType, name: moduleName, identifier: moduleIdentifier}) ->
+  component = (type, componentTerminalIdentifiers, componentIndex='') ->
+    terminalIdentifiers = for componentTerminalIdentifier in componentTerminalIdentifiers
+      identifier = [moduleIdentifier, componentTerminalIdentifier.replace(/(\D+)/, "$1#{componentIndex}")].join('_')
+      {componentTerminalIdentifier, identifier}
+    typeName = type
+    typeName = 'flip-flip' if type == 'ff'
+    typeName = 'pulse-amplifier' if type == 'pa'
+    name = "#{moduleName}:#{typeName}"
+    name += "(#{componentIndex})" if typeof componentIndex == 'number'
+    return {name, type, terminalIdentifiers}
 
   clock = ->
     component('clock', ['-', '+', 'gnd'])
@@ -139,7 +144,7 @@ createModules = ->
         identifier: moduleIdentifier
         type: moduleType
         terminals
-        components: moduleComponents(type: moduleType, name: moduleName)
+        components: moduleComponents(type: moduleType, name: moduleName, identifier: moduleIdentifier)
       }
   [].concat rows...
 

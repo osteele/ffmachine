@@ -1,9 +1,9 @@
 HistoryLength = 400  # keep this many historical values
 
-# set these to trace the simulator in the js console
-RestrictModules = 0 # ['b_5']
+# Set these, to trace the simulator in the js console
 Trace =
-  components: 0 # []
+  modules: 0 #['a9']
+  components: 0
   voltageAssignments: 0
 
 class @SimulatorClass
@@ -22,7 +22,7 @@ class @SimulatorClass
     # console.info getTerminalByIdentifier('a_8_+').output, getTerminalByIdentifier('b_8_b1').output
 
 runModules = (modules, moduleInputs, moduleOutputs) ->
-  modules = (m for m in modules when m.name in RestrictModules) if RestrictModules.length
+  modules = (m for m in modules when m.name in Trace.modules) if Trace.modules.length
   updateModuleOutputs module, moduleInputs, moduleOutputs for module in modules
 
 collectBusses = (wires) ->
@@ -42,15 +42,19 @@ collectBusses = (wires) ->
   return ({wires, terminals: _.chain(wires).pluck('terminals').flatten().uniq().value()} for wires in wireSets)
 
 updateTerminalValues = (terminals, moduleOutputs, timestamp) ->
+  trace = Trace.voltageAssignments
+  console.info "Updating terminal values from", moduleOutputs if trace
   for terminal in terminals
     if terminal.identifier of moduleOutputs
       terminal.value = value = moduleOutputs[terminal.identifier]
       trace = terminal.trace or= []
       trace.push {timestamp, value}
       trace.splice(0, trace.length - HistoryLength) if trace.length > HistoryLength
-      console.info "#{terminal.identifier} <- #{value}" if Trace.voltageAssignments
+      console.info "#{terminal.identifier} <- #{value}" if trace
 
 updateWireValues = (wires, moduleOutputs, timestamp) ->
+  trace = Trace.voltageAssignments
+  console.info "Updating wire values from", moduleOutputs if trace
   propogatedTerminals = []
   propogatedOutputs = {}
   for {wires, terminals} in collectBusses(wires)
@@ -64,7 +68,7 @@ updateWireValues = (wires, moduleOutputs, timestamp) ->
     strongValues = (value for value in values when not isWeak(value))
     values = strongValues if strongValues.length
     value = fromWeak(values[0])
-    console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if Trace.voltageAssignments
+    console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if trace
     for wire in wires
       wire.changed = wire.value? and wire.value != value
       wire.value = value
@@ -88,8 +92,7 @@ computeTerminalValues = (terminals, wires) ->
   return values
 
 runComponent = (component, moduleInputs, moduleOutputs) ->
-  trace = Trace.components == 1 or Trace.components == true or component.type in Trace.components
-  {type: circuitType, terminals} = component
+  {type: componentType, terminalIdentifiers} = component
   component.state or= {
     falling: (n) ->
       s = @prev
@@ -97,22 +100,30 @@ runComponent = (component, moduleInputs, moduleOutputs) ->
       n < s
   }
 
+  trace = Trace.components == 1 or Trace.components == true or component.type in Trace.components
+  # console.info "Computing characteristic equation for", component.name if trace
+
   componentInputs = {}
-  for {componentTerminalName, identifier} in terminals
-    targetName = componentTerminalName.replace(/^(\d+)(.+)/, '$2$1')
+  loggedInputs = {}
+  for {componentTerminalIdentifier, identifier} in terminalIdentifiers
+    targetName = componentTerminalIdentifier.replace(/^(\d+)(.+)/, '$2$1')
     voltage = moduleInputs[identifier]
     componentInputs[targetName] = voltage
     componentInputs[targetName + '_v'] = voltToBool(voltage)
-  console.error "No component step function for #{circuitType}" unless ComponentEquations[circuitType]?
-  componentOutputs = ComponentEquations[circuitType].call(component.state, componentInputs)
+    loggedInputs[targetName] = voltage
+  console.error "No component step function for #{componentType}" unless ComponentEquations[componentType]?
+  componentOutputs = ComponentEquations[componentType].call(component.state, componentInputs)
 
-  for {componentTerminalName, identifier} in terminals
-    continue unless componentTerminalName of componentOutputs
-    value = componentOutputs[componentTerminalName]
+  for {componentTerminalIdentifier, identifier} in terminalIdentifiers
+    continue unless componentTerminalIdentifier of componentOutputs
+    value = componentOutputs[componentTerminalIdentifier]
     value = boolToVolt(value) if value == true or value == false
     moduleOutputs[identifier] = value
 
-  console.info component.type, (t.identifier for t in terminals), componentInputs, componentOutputs if trace
+  if trace
+    console.info component.name,
+      "\n\tTerminals:", (t.identifier for t in terminalIdentifiers).join(', ')
+      "\n\tInputs: ", loggedInputs, "\n\tOutputs:", componentOutputs
 
 
 #
