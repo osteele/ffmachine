@@ -55,11 +55,12 @@
     MachineConfiguration.wires = configuration.wires;
     MachineConfiguration.modules = (_ref = configuration.modules) != null ? _ref : MachineHardware.modules;
     MachineConfiguration.terminals = (_ref1 = configuration.terminals) != null ? _ref1 : MachineHardware.terminals;
-    return updateCircuitView();
+    return notifyMachineConfigurationSubscribers();
   };
 
   notifyMachineConfigurationSubscribers = function() {
-    return machineConfigurationChanged(MachineConfiguration);
+    machineConfigurationChanged(MachineConfiguration);
+    return updateCircuitView();
   };
 
   this.createWire = function(t1, t2) {
@@ -92,7 +93,6 @@
 
   addWire = function(wire) {
     MachineConfiguration.wires.push(wire);
-    updateCircuitView();
     return notifyMachineConfigurationSubscribers();
   };
 
@@ -110,7 +110,6 @@
       }
       return _results;
     })();
-    updateCircuitView();
     return notifyMachineConfigurationSubscribers();
   };
 
@@ -210,7 +209,6 @@
       svgSelection.select('.active').classed('active', false);
       if (endTerminal && wire.terminals[wireTerminalIndex] !== endTerminal) {
         wire.terminals[wireTerminalIndex] = endTerminal;
-        updateCircuitView();
         return notifyMachineConfigurationSubscribers();
       } else {
         return updateCircuitView();
@@ -226,7 +224,6 @@
       knoboffset = mod360(knob[2] - a);
     }
     knob[2] = mod360(a + knoboffset);
-    updateCircuitView();
     return notifyMachineConfigurationSubscribers();
   };
 
@@ -239,7 +236,6 @@
     if (starty === 2) {
       knob[2] = findNearest(knob[2], [-68, -23, 22, 67]);
     }
-    updateCircuitView();
     return notifyMachineConfigurationSubscribers();
   };
 
@@ -374,7 +370,7 @@
   };
 
   updateTraces = (function() {
-    var isVoltage, symbols, terminalVoltageName, updateTerminalTraces, updateWireTraces, values, voltageParenthetical, wireIsReversed;
+    var isVoltage, symbols, terminalVoltageName, updateTerminalTraces, updateWireTraces, values, voltageParenthetical;
     symbols = ['negative', 'ground', 'float'];
     values = [-3, 0, void 0];
     terminalVoltageName = function(terminal) {
@@ -426,12 +422,9 @@
       if (wiresMaybeMoved) {
         wires.attr('d', wirePath).attr('stroke', wireColor);
       }
-      return wires.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).classed('reversed', wireIsReversed);
-    };
-    wireIsReversed = function(w) {
-      var t1, t2, _ref;
-      _ref = w.terminals, t1 = _ref[0], t2 = _ref[1];
-      return t2.timestamp < t1.timestamp || t2.phase < t1.phase;
+      return wires.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).classed('reversed', function(w) {
+        return !w.terminals[0].output;
+      });
     };
     return function(_arg) {
       var wiresMaybeMoved;

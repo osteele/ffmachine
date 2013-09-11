@@ -1,5 +1,5 @@
 (function() {
-  var CurrentMachine, CurrentMachineRef, CurrentUser, FirebaseRootRef, MachineChangedHooks, MachineListRef, ReloadAppSeed, SimulatorThread, addCurrentViewer, app, loadMachine, removeCurrentViewer, saveMachine, serializeMachineConfiguration, unserializeConfiguration,
+  var CurrentMachine, CurrentMachineRef, CurrentUser, FirebaseRootRef, MachineListRef, ReloadAppSeed, SimulatorThread, StoredMachineChangedHooks, addCurrentViewer, app, loadMachine, removeCurrentViewer, saveMachine, serializeMachineConfiguration, unserializeConfiguration,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   FirebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
@@ -10,7 +10,7 @@
 
   CurrentUser = null;
 
-  MachineChangedHooks = [];
+  StoredMachineChangedHooks = [];
 
   MachineListRef = FirebaseRootRef.child('machines');
 
@@ -84,7 +84,8 @@
       return addCurrentViewer();
     });
     $scope.$watch('user + machine', function() {
-      $scope.editable = CurrentMachine && CurrentUser && CurrentMachine.creator.id === CurrentUser.id;
+      var _ref;
+      $scope.editable = CurrentMachine && (CurrentMachine != null ? (_ref = CurrentMachine.auth) != null ? _ref[CurrentUser.id] : void 0 : void 0) === 'write';
       if ($scope.mode === 'edit' && !$scope.editable) {
         $scope.mode = 'view';
       }
@@ -95,9 +96,9 @@
     $scope.$watch('tracedTerminals', function() {
       return updateTerminalTraceViews();
     });
-    MachineChangedHooks.push(function(machine) {
+    StoredMachineChangedHooks.push(function(storedMachine) {
       return $scope.$apply(function() {
-        return $scope.machine = machine;
+        return $scope.machine = storedMachine;
       });
     });
     window.traceTerminal = function(terminal) {
@@ -108,12 +109,47 @@
         return $scope.tracedTerminals.push(terminal);
       });
     };
+    window.machineConfigurationChanged = function(configuration) {
+      saveMachine(configuration);
+      return $scope.$apply(function() {
+        return $scope.wires = configuration.wires;
+      });
+    };
     machineName = $location.search().name;
     if (!machineName) {
       $window.location.href = '.';
     }
     initializeMachineView();
     return loadMachine(machineName);
+  });
+
+  app.filter('floatValue', function() {
+    return function(value) {
+      value = fromWeak(value);
+      if (typeof value !== 'number') {
+        return;
+      }
+      return "" + value + "<b>V</b>";
+    };
+  });
+
+  app.filter('terminalVoltageMiniHistory', function() {
+    return function(terminal) {
+      var prev, str, value, _ref, _ref1, _ref2;
+      value = fromWeak(terminal.value);
+      prev = (_ref = terminal.trace) != null ? (_ref1 = _ref[((_ref2 = terminal.trace) != null ? _ref2.length : void 0) - 2]) != null ? _ref1.value : void 0 : void 0;
+      if (prev) {
+        prev = fromWeak(value);
+      }
+      if (!(typeof value === 'number' || typeof prev === 'number')) {
+        return;
+      }
+      str = "" + value + "<b>V</b>";
+      if (typeof prev === 'number' && prev !== value) {
+        str = "<del>" + prev + "<b>V</b></del> &rarr; <ins>" + str + "</ins>";
+      }
+      return str;
+    };
   });
 
   SimulatorThread = (function() {
@@ -174,8 +210,8 @@
         throw Error("No machine named " + machineName);
       }
       configuration = unserializeConfiguration(snapshot.val().wiring);
-      for (_i = 0, _len = MachineChangedHooks.length; _i < _len; _i++) {
-        hook = MachineChangedHooks[_i];
+      for (_i = 0, _len = StoredMachineChangedHooks.length; _i < _len; _i++) {
+        hook = StoredMachineChangedHooks[_i];
         setTimeout((function() {
           return hook(CurrentMachine);
         }), 10);
@@ -210,10 +246,6 @@
       previous_wiring: previous_wiring,
       modified_at: modified_at
     });
-  };
-
-  this.machineConfigurationChanged = function(configuration) {
-    return saveMachine(configuration);
   };
 
   serializeMachineConfiguration = function(configuration) {

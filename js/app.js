@@ -159,9 +159,7 @@
       if (machine.deleted_at) {
         return false;
       }
-      return user && machine.writers && (_ref = user.id, __indexOf.call(machine.writers.map(function(user) {
-        return user.id;
-      }), _ref) >= 0);
+      return user && ((_ref = machine.auth) != null ? _ref[user.id] : void 0) === 'write';
     };
     $scope.machine_stats = function(machine) {
       return "" + ((machine.wiring.split(/\s+/).length - 1) / 2) + " wires";
