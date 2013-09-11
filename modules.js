@@ -17,29 +17,41 @@
   };
 
   moduleComponents = function(_arg) {
-    var clock, component, gate, ground, inverter, moduleName, moduleType, pa;
-    moduleType = _arg.type, moduleName = _arg.name;
-    component = function(type, componentTerminalNames, componentIndex) {
-      var componentTerminalName, identifier, terminals;
+    var clock, component, gate, ground, inverter, moduleIdentifier, moduleName, moduleType, pa;
+    moduleType = _arg.type, moduleName = _arg.name, moduleIdentifier = _arg.identifier;
+    component = function(type, componentTerminalIdentifiers, componentIndex) {
+      var componentTerminalIdentifier, identifier, name, terminalIdentifiers, typeName;
       if (componentIndex == null) {
         componentIndex = '';
       }
-      terminals = (function() {
+      terminalIdentifiers = (function() {
         var _i, _len, _results;
         _results = [];
-        for (_i = 0, _len = componentTerminalNames.length; _i < _len; _i++) {
-          componentTerminalName = componentTerminalNames[_i];
-          identifier = [moduleName, componentTerminalName.replace(/(\D+)/, "$1" + componentIndex)].join('_');
+        for (_i = 0, _len = componentTerminalIdentifiers.length; _i < _len; _i++) {
+          componentTerminalIdentifier = componentTerminalIdentifiers[_i];
+          identifier = [moduleIdentifier, componentTerminalIdentifier.replace(/(\D+)/, "$1" + componentIndex)].join('_');
           _results.push({
-            componentTerminalName: componentTerminalName,
+            componentTerminalIdentifier: componentTerminalIdentifier,
             identifier: identifier
           });
         }
         return _results;
       })();
+      typeName = type;
+      if (type === 'ff') {
+        typeName = 'flip-flip';
+      }
+      if (type === 'pa') {
+        typeName = 'pulse-amplifier';
+      }
+      name = "" + moduleName + ":" + typeName;
+      if (typeof componentIndex === 'number') {
+        name += "(" + componentIndex + ")";
+      }
       return {
+        name: name,
         type: type,
-        terminals: terminals
+        terminalIdentifiers: terminalIdentifiers
       };
     };
     clock = function() {
@@ -83,7 +95,7 @@
   };
 
   createModules = function() {
-    var colIndex, dx, dy, moduleName, moduleRow, moduleTerminalName, moduleTerminalNames, moduleType, rowIndex, rows, terminals, x, y, _ref;
+    var colIndex, dx, dy, moduleIdentifier, moduleName, moduleRow, moduleTerminalName, moduleTerminalNames, moduleType, rowIndex, rows, terminals, x, y, _ref;
     rows = (function() {
       var _i, _len, _results;
       _results = [];
@@ -94,7 +106,8 @@
           _results1 = [];
           for (colIndex = _j = 0, _len1 = moduleRow.length; _j < _len1; colIndex = ++_j) {
             moduleType = moduleRow[colIndex];
-            moduleName = [String.fromCharCode(97 + rowIndex), colIndex].join('_');
+            moduleName = [String.fromCharCode(97 + rowIndex), colIndex + 1].join('');
+            moduleIdentifier = [String.fromCharCode(97 + rowIndex), colIndex].join('_');
             x = colIndex * ModuleDimensions.width;
             y = rowIndex * ModuleDimensions.height;
             moduleTerminalNames = TerminalLocations[moduleType];
@@ -105,7 +118,8 @@
               for (_k = 0, _len2 = _ref.length; _k < _len2; _k++) {
                 _ref1 = _ref[_k], dx = _ref1[0], dy = _ref1[1], moduleTerminalName = _ref1[2];
                 _results2.push({
-                  identifier: [moduleName, moduleTerminalName].join('_'),
+                  name: [moduleName, moduleTerminalName].join(':'),
+                  identifier: [moduleIdentifier, moduleTerminalName].join('_'),
                   moduleTerminalName: moduleTerminalName,
                   coordinates: [x + dx / 2, y + dy / 2],
                   x: x + dx / 2,
@@ -116,11 +130,13 @@
             })();
             _results1.push({
               name: moduleName,
+              identifier: moduleIdentifier,
               type: moduleType,
               terminals: terminals,
               components: moduleComponents({
                 type: moduleType,
-                name: moduleName
+                name: moduleName,
+                identifier: moduleIdentifier
               })
             });
           }

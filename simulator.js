@@ -1,12 +1,11 @@
 (function() {
-  var ComponentEquations, HistoryLength, RestrictModules, Trace, Weak, boolToVolt, collectBusses, computeTerminalValues, getConnectedWires, isWeak, runComponent, runModules, updateModuleOutputs, updateTerminalValues, updateWireValues, voltToBool, weak,
+  var ComponentEquations, HistoryLength, Trace, Weak, boolToVolt, collectBusses, computeTerminalValues, getConnectedWires, isWeak, runComponent, runModules, updateModuleOutputs, updateTerminalValues, updateWireValues, voltToBool, weak,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   HistoryLength = 400;
 
-  RestrictModules = 0;
-
   Trace = {
+    modules: 0,
     components: 0,
     voltageAssignments: 0
   };
@@ -19,6 +18,9 @@
 
     SimulatorClass.prototype.step = function() {
       var moduleInputs, moduleOutputs, modules, terminal, terminals, wires, _i, _len, _ref;
+      if (Trace.modules || Trace.components || Trace.voltageAssignments) {
+        console.info('Simulation frame', this.timestamp);
+      }
       _ref = this.configuration, modules = _ref.modules, terminals = _ref.terminals, wires = _ref.wires;
       moduleInputs = computeTerminalValues(terminals, wires);
       moduleOutputs = {};
@@ -38,13 +40,13 @@
 
   runModules = function(modules, moduleInputs, moduleOutputs) {
     var m, module, _i, _len, _results;
-    if (RestrictModules.length) {
+    if (Trace.modules.length) {
       modules = (function() {
         var _i, _len, _ref, _results;
         _results = [];
         for (_i = 0, _len = modules.length; _i < _len; _i++) {
           m = modules[_i];
-          if (_ref = m.name, __indexOf.call(RestrictModules, _ref) >= 0) {
+          if (_ref = m.name, __indexOf.call(Trace.modules, _ref) >= 0) {
             _results.push(m);
           }
         }
@@ -114,22 +116,26 @@
   };
 
   updateTerminalValues = function(terminals, moduleOutputs, timestamp) {
-    var terminal, trace, value, _i, _len, _results;
+    var history, terminal, trace, value, _i, _len, _results;
+    trace = Trace.voltageAssignments;
+    if (trace) {
+      console.info("Updating terminal values from", moduleOutputs);
+    }
     _results = [];
     for (_i = 0, _len = terminals.length; _i < _len; _i++) {
       terminal = terminals[_i];
       if (terminal.identifier in moduleOutputs) {
         terminal.value = value = moduleOutputs[terminal.identifier];
-        trace = terminal.trace || (terminal.trace = []);
-        trace.push({
+        history = terminal.trace || (terminal.trace = []);
+        history.push({
           timestamp: timestamp,
           value: value
         });
-        if (trace.length > HistoryLength) {
-          trace.splice(0, trace.length - HistoryLength);
+        if (history.length > HistoryLength) {
+          history.splice(0, history.length - HistoryLength);
         }
-        if (Trace.voltageAssignments) {
-          _results.push(console.info("" + terminal.identifier + " <- " + value));
+        if (trace) {
+          _results.push(console.info("\t" + terminal.identifier + " <- " + value, history));
         } else {
           _results.push(void 0);
         }
@@ -141,7 +147,11 @@
   };
 
   updateWireValues = function(wires, moduleOutputs, timestamp) {
-    var propogatedOutputs, propogatedTerminals, strongValues, terminal, terminals, value, values, wire, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
+    var propogatedOutputs, propogatedTerminals, strongValues, terminal, terminals, trace, value, values, wire, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
+    trace = Trace.voltageAssignments;
+    if (trace) {
+      console.info("Updating wire values from", moduleOutputs);
+    }
     propogatedTerminals = [];
     propogatedOutputs = {};
     _ref = collectBusses(wires);
@@ -190,8 +200,8 @@
         values = strongValues;
       }
       value = fromWeak(values[0]);
-      if (Trace.voltageAssignments) {
-        console.info("" + (_.pluck(wires, 'name').join(',')) + " <- " + value);
+      if (trace) {
+        console.info("\t" + (_.pluck(wires, 'name').join(',')) + " <- " + value);
       }
       for (_j = 0, _len1 = wires.length; _j < _len1; _j++) {
         wire = wires[_j];
@@ -258,9 +268,8 @@
   };
 
   runComponent = function(component, moduleInputs, moduleOutputs) {
-    var circuitType, componentInputs, componentOutputs, componentTerminalName, identifier, t, targetName, terminals, trace, value, voltage, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-    trace = Trace.components === 1 || Trace.components === true || (_ref = component.type, __indexOf.call(Trace.components, _ref) >= 0);
-    circuitType = component.type, terminals = component.terminals;
+    var componentInputs, componentOutputs, componentTerminalIdentifier, componentType, identifier, loggedInputs, t, targetName, terminalIdentifiers, trace, value, voltage, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+    componentType = component.type, terminalIdentifiers = component.terminalIdentifiers;
     component.state || (component.state = {
       falling: function(n) {
         var s;
@@ -269,39 +278,42 @@
         return n < s;
       }
     });
+    trace = (_ref = component.type, __indexOf.call(Trace.components, _ref) >= 0) || (Trace.components && !Trace.components.length);
     componentInputs = {};
-    for (_i = 0, _len = terminals.length; _i < _len; _i++) {
-      _ref1 = terminals[_i], componentTerminalName = _ref1.componentTerminalName, identifier = _ref1.identifier;
-      targetName = componentTerminalName.replace(/^(\d+)(.+)/, '$2$1');
+    loggedInputs = {};
+    for (_i = 0, _len = terminalIdentifiers.length; _i < _len; _i++) {
+      _ref1 = terminalIdentifiers[_i], componentTerminalIdentifier = _ref1.componentTerminalIdentifier, identifier = _ref1.identifier;
+      targetName = componentTerminalIdentifier.replace(/^(\d+)(.+)/, '$2$1');
       voltage = moduleInputs[identifier];
       componentInputs[targetName] = voltage;
       componentInputs[targetName + '_v'] = voltToBool(voltage);
+      loggedInputs[targetName] = voltage;
     }
-    if (ComponentEquations[circuitType] == null) {
-      console.error("No component step function for " + circuitType);
+    if (ComponentEquations[componentType] == null) {
+      console.error("No component step function for " + componentType);
     }
-    componentOutputs = ComponentEquations[circuitType].call(component.state, componentInputs);
-    for (_j = 0, _len1 = terminals.length; _j < _len1; _j++) {
-      _ref2 = terminals[_j], componentTerminalName = _ref2.componentTerminalName, identifier = _ref2.identifier;
-      if (!(componentTerminalName in componentOutputs)) {
+    componentOutputs = ComponentEquations[componentType].call(component.state, componentInputs);
+    for (_j = 0, _len1 = terminalIdentifiers.length; _j < _len1; _j++) {
+      _ref2 = terminalIdentifiers[_j], componentTerminalIdentifier = _ref2.componentTerminalIdentifier, identifier = _ref2.identifier;
+      if (!(componentTerminalIdentifier in componentOutputs)) {
         continue;
       }
-      value = componentOutputs[componentTerminalName];
+      value = componentOutputs[componentTerminalIdentifier];
       if (value === true || value === false) {
         value = boolToVolt(value);
       }
       moduleOutputs[identifier] = value;
     }
     if (trace) {
-      return console.info(component.type, (function() {
+      return console.info("Running component", component.name, "\n\tTerminals:", ((function() {
         var _k, _len2, _results;
         _results = [];
-        for (_k = 0, _len2 = terminals.length; _k < _len2; _k++) {
-          t = terminals[_k];
+        for (_k = 0, _len2 = terminalIdentifiers.length; _k < _len2; _k++) {
+          t = terminalIdentifiers[_k];
           _results.push(t.identifier);
         }
         return _results;
-      })(), componentInputs, componentOutputs);
+      })()).join(', '), "\n\tInputs: ", loggedInputs, "\n\tOutputs:", componentOutputs);
     }
   };
 

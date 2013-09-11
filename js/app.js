@@ -40,7 +40,6 @@
   controllers.controller('MachineListCtrl', function($scope, $location, angularFire, angularFireAuth) {
     $scope.layout = 'grid';
     $scope.machines = [];
-    $scope.message = "Loading...";
     angularFireAuth.initialize(firebaseRootRef, {
       scope: $scope,
       name: 'user'

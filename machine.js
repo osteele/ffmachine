@@ -74,7 +74,7 @@
         _results = [];
         for (_i = 0, _len = terminals.length; _i < _len; _i++) {
           t = terminals[_i];
-          _results.push(t.identifier);
+          _results.push(t.name);
         }
         return _results;
       })()).join(' ↔ '),
@@ -269,7 +269,10 @@
     wireTargets.exit().remove();
     wireTargets.attr('d', wirePath);
     updateEndPinTargets = function(layerName, endIndex) {
-      var startPinTargets, w;
+      var startPinTargets, terminalTitleText, w;
+      terminalTitleText = function(w) {
+        return ("Terminal " + w.terminals[endIndex].name + ". ") + "Drag this end of the wire to move it to another terminal.";
+      };
       startPinTargets = getLayer(layerName).selectAll('.wire-end-target').data((function() {
         var _i, _len, _ref, _results;
         _ref = MachineConfiguration.wires;
@@ -282,9 +285,7 @@
         }
         return _results;
       })());
-      startPinTargets.enter().append('circle').classed('wire-end-target', true).attr('r', 10).on('mousedown', dragWireEnd).append('title').text(function(w) {
-        return "Drag this end of " + w.name + " to move it to terminal.";
-      });
+      startPinTargets.enter().append('circle').classed('wire-end-target', true).attr('r', 10).on('mousedown', dragWireEnd).append('title').text(terminalTitleText);
       startPinTargets.exit().remove();
       return startPinTargets.attr('cx', function(wire) {
         return wire.terminals[endIndex].coordinates[0];

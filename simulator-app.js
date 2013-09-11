@@ -139,7 +139,7 @@
       value = fromWeak(terminal.value);
       prev = (_ref = terminal.trace) != null ? (_ref1 = _ref[((_ref2 = terminal.trace) != null ? _ref2.length : void 0) - 2]) != null ? _ref1.value : void 0 : void 0;
       if (prev) {
-        prev = fromWeak(value);
+        prev = fromWeak(prev);
       }
       if (!(typeof value === 'number' || typeof prev === 'number')) {
         return;
