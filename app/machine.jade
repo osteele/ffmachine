@@ -37,7 +37,13 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
         button.icon-step-forward.icon-large.btn.btn-default(ng-disabled="simulatonRunning", ng-click="stepSimulation()", title="Click to step the simulation")
         button.icon-play.icon-large.btn.btn-default(ng-disabled="simulationRunning", ng-click="runSimulation()", title="Click to start the simulation")
         button.icon-pause.icon-large.btn.btn-default(ng-disabled="!simulationRunning", ng-click="stopSimulation()", title="Click to pause the simulation")
-      h1.machine-name(ng-bind="machine.name") Loading…
+      h1.machine-name(ng-bind="machine.name")
+
+    .container(ng-hide="machine")
+      .jumbotron
+        h1
+          i.icon-spinner.icon-spin.icon-large
+          | &nbsp;Loading…
 
     .content
       .col-md-8
