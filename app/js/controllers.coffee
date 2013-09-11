@@ -78,6 +78,11 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
     return [] unless machine.connected
     return (k for k of machine.connected)
 
+  $scope.saveMachineName = (machine, event) ->
+    name = angular.element(event.target).val()
+    machineListRef.child($scope.machine_key(machine)).child('name').set name
+    $scope.editMachineNameMode = false
+
   # FIXME gets 'digest already in progress'
   $scope.view_details = (machine) ->
     $location.path '/machines/' + encodeURIComponent($scope.machine_key(machine))

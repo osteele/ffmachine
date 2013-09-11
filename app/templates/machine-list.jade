@@ -1,7 +1,8 @@
 mixin editable-name
-  span.title.machine-name(ng-show="!edit_title && !machine_editable(machine)") {{machine.name}}
-  span.title.machine-name(ng-show="!edit_title && machine_editable(machine)", ng-click="edit_title=true", title="Click to edit") {{machine.name}}
-  input.machine-name(ng-show="edit_title", type="text", ng-model="machine.name", ui-keyup="{enter: 'edit_title=false', 27: 'edit_title=false'}", ui-event="{blur: 'edit_title=false'}")
+  span.title.machine-name(ng-show="!editMachineNameMode && !machine_editable(machine)") {{machine.name}}
+  span.title.machine-name(ng-show="!editMachineNameMode && machine_editable(machine)", ng-click="editMachineNameMode=true", title="Click to edit") {{machine.name}}
+  //- input.machine-name(ng-show="editMachineNameMode", type="text", ng-model="machine.name", ui-keyup="{enter: 'editMachineNameMode=false', 27: 'editMachineNameMode=false'}", ui-event="{blur: 'editMachineNameMode=false'}")
+  input.machine-name(ng-show="editMachineNameMode", type="text", value="{{machine.name}}", ui-keyup="{enter: 'saveMachineName(machine, $event)', 27: 'editMachineNameMode=false'}", ui-event="{blur: 'editMachineNameMode=false'}")
 
 .machine-list
   include partials/toolbar
@@ -49,7 +50,7 @@ mixin editable-name
     .machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | orderBy:'isTemplate' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
       .titlebar(style="width:100%")
         mixin editable-name
-        .buttons(ng-hide="edit_title")
+        .buttons(ng-hide="editMachineNameMode")
           a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
           a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
           a.icon-eye-open(ng-href="{{machine_url(machine)}}", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
