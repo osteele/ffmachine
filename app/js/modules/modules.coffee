@@ -118,14 +118,16 @@ moduleComponents = ({type: moduleType, name: moduleName}) ->
 createModules = ->
   rows = for moduleRow, rowIndex in ModuleLocationMap
     for moduleType, colIndex in moduleRow
-      moduleName = [String.fromCharCode(97 + rowIndex), colIndex].join('_')
+      moduleName = [String.fromCharCode(97 + rowIndex), colIndex + 1].join('')
+      moduleIdentifier = [String.fromCharCode(97 + rowIndex), colIndex].join('_')
       x = colIndex * ModuleDimensions.width
       y = rowIndex * ModuleDimensions.height
       moduleTerminalNames = TerminalLocations[moduleType]
       terminals =
         for [dx, dy, moduleTerminalName] in TerminalLocations[moduleType]
           {
-            identifier: [moduleName, moduleTerminalName].join('_')
+            name: [moduleName, moduleTerminalName].join(':')
+            identifier: [moduleIdentifier, moduleTerminalName].join('_')
             moduleTerminalName
             coordinates: [x + dx / 2, y + dy / 2]
             x: x + dx / 2
@@ -133,6 +135,7 @@ createModules = ->
           }
       {
         name: moduleName
+        identifier: moduleIdentifier
         type: moduleType
         terminals
         components: moduleComponents(type: moduleType, name: moduleName)

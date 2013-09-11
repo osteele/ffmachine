@@ -66,7 +66,7 @@ notifyMachineConfigurationSubscribers = ->
 @createWire = (t1, t2) ->
   terminals = [t1, t2].sort((t1, t2) -> t1.identifier > t2.identifier)
   wire = {
-    name: (t.identifier for t in terminals).join(' ↔ ')
+    name: (t.name for t in terminals).join(' ↔ ')
     identifier: (t.identifier for t in terminals).join('-')
     terminals
   }
@@ -230,6 +230,10 @@ updateCircuitView = ->
     .attr('d', wirePath)
 
   updateEndPinTargets = (layerName, endIndex) ->
+    terminalTitleText = (w) ->
+      "Terminal #{w.terminals[endIndex].name}. " +
+      "Drag this end of the wire to move it to another terminal."
+
     startPinTargets = getLayer(layerName)
       .selectAll('.wire-end-target')
       .data(w for w in MachineConfiguration.wires when wireLength(w) > 45)
@@ -246,7 +250,7 @@ updateCircuitView = ->
       #   targetView.transition().delay(0).attr('d', endpointsToPath(endpoints...))
       #   )
       # .on('mouseout', (wire) -> getWireView(wire).transition().delay(0).attr('d', wirePath(wire)) )
-      .append('title').text((w) -> "Drag this end of #{w.name} to move it to terminal.")
+      .append('title').text(terminalTitleText)
     startPinTargets.exit().remove()
     startPinTargets
       .attr('cx', (wire) -> wire.terminals[endIndex].coordinates[0])
