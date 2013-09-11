@@ -190,12 +190,10 @@ releaseKnob = ->
 # Drawing
 #
 
-getIdentifier = (d) -> d.identifier
+getIdentifier = (d) ->
+  d.identifier
 
 updateCircuitView = ->
-  # getIdentifier = (d) -> d.identifier
-  # getIdentifier = null unless wiringChanged
-
   terminalTargets = getLayer('terminal-target-layer')
     .selectAll('.terminal-position').data(MachineConfiguration.terminals, getIdentifier)
   terminalTargets.enter().append('circle').classed('terminal-position', true)
@@ -207,7 +205,7 @@ updateCircuitView = ->
     .attr('r', 3)
     .on('mousedown', mouseDownAddWire)
     .append('title')
-      .text((pos) -> "Drag #{pos.identifier} to another terminal to create a wire.")
+      .text((pos) -> "Drag #{pos.name} to another terminal to create a wire.")
 
   wireViews = getLayer('wire-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
   wireViews.enter().append('path').classed('wire', true)
@@ -344,13 +342,13 @@ updateTraces = do ->
         pt = terminal.coordinates
         "translate(#{pt[0]}, #{pt[1]})")
       .on('click', traceTerminal)
-      .append('title').text((d) -> "Terminal #{d.identifier}\nClick to trace")
+      .append('title').text((d) -> "Terminal #{d.name}\nClick to trace")
     nodes
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
       .classed('voltage-float', isVoltage('float'))
       .select('title').text((t) ->
-        "Terminal #{t.identifier} #{voltageParenthetical(t)}\nClick to trace this terminal.")
+        "Terminal #{t.name} #{voltageParenthetical(t)}\nClick to trace this terminal.")
 
   updateWireTraces = (wiresMaybeMoved) ->
     wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
