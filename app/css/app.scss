@@ -18,11 +18,10 @@ h1 {
 }
 
 #account {
-  // position: absolute; top: 90px; right: 10px;
+  margin-left: 25px;
   font-size: medium;
   font-family: "Open Sans", serif;
   text-align: right;
-  // button { float: right; }
 }
 
 #toolbar {
@@ -36,17 +35,6 @@ h1 {
   padding: 10px;
   position: relative;
   width: 100%;
-
-  // a {
-  //   color: black;
-  //   border-radius: 2px;
-  //   margin: 0 5px;
-  //   padding: 5px;
-  //   text-decoration: none;
-
-  //   &:hover { background: lightGray; }
-  //   &.active { background: white; }
-  // }
 
   .search { display: inline-block; margin-right: 60px; }
 }

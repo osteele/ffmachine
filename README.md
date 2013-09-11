@@ -64,13 +64,14 @@ This project uses the following tools and libraries:
 - [D3](http://d3js.org/) for binding to the graphics and wiring interaction
 - [Font Awesome](http://fortawesome.github.io/Font-Awesome/) icons
 - [Firebase](https://www.firebase.com/) for data storage and synchronization, and for Persona intergration
+- [Github Buttons](https://github.com/mdo/github-buttons)
 - [Github Pages](http://pages.github.com/) for hosting
 - [Google Fonts](http://www.google.com/fonts) for web fonts
 - [Grunt](http://gruntjs.com/) build system
 - [Jade](http://jade-lang.com/) compiles to HTML
 - [Mozilla Persona](https://www.mozilla.org/en-US/persona/) for login and authentication
 - [Sass](http://sass-lang.com/) compiles to CSS
-- Additional Grunt components listed in the [package.js](./package.js) file.
+- Additional Grunt components listed in the [package.json](./package.json) file.
 
 [npm]: https://npmjs.org/
 [npm download]: http://nodejs.org/download/
