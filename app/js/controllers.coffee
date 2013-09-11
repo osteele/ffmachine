@@ -42,9 +42,18 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
       break
       # break unless (m for k, m of $scope.machines when m.name.toLowerCase() == name.toLowerCase()).length
       # message_prefix = "A machine named '#{name}' already exists. Please choose another name.\n\n"
-    user_key = {id: user.id, email: user.email}
     now = Firebase.ServerValue.TIMESTAMP
-    machineListRef.push {name, wiring: machine.wiring, creator: user_key, writers: [user_key], created_at: now}
+    access = {}
+    access[user.id] = 'write'
+    copy = {
+      name
+      wiring: machine.wiring
+      creator: {id: user.id, email: user.email}
+      created_at: now
+      auth: access
+      access: access
+    }
+    machineListRef.push copy
 
   $scope.delete_machine = (machine) ->
     return unless confirm "Are you sure you want to delete the machine named '#{machine.name}'?"
