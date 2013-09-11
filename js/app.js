@@ -128,7 +128,6 @@
           email: user.email
         },
         created_at: now,
-        auth: access,
         access: access
       };
       return machineListRef.push(copy);

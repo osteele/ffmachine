@@ -85,7 +85,7 @@
     });
     $scope.$watch('user + machine', function() {
       var _ref;
-      $scope.editable = CurrentMachine && (CurrentMachine != null ? (_ref = CurrentMachine.auth) != null ? _ref[CurrentUser.id] : void 0 : void 0) === 'write';
+      $scope.editable = CurrentMachine && (CurrentMachine != null ? (_ref = CurrentMachine.access) != null ? _ref[CurrentUser.id] : void 0 : void 0) === 'write';
       if ($scope.mode === 'edit' && !$scope.editable) {
         $scope.mode = 'view';
       }
