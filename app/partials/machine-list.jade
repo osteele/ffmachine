@@ -7,7 +7,7 @@
     a.icon-list(ng-class="{active: layout == 'list'}", ng-click="layout = 'list'")
     a.icon-th-large(ng-class="{active: layout == 'grid'}", ng-click="layout = 'grid'")
     //- a.icon-th(ng-class="{active: layout == 'grid'}", ng-click="layout = 'grid'")
-    h1 Machine Directory
+    h1 Machines
 
   #message(ng-show="message")
     p(ng-bind-html-unsafe=" message")
@@ -16,7 +16,7 @@
     .jumbotron
       h1
         i.icon-spinner.icon-spin.icon-large
-        | &nbsp;Loading…
+        | &nbsp;Loading machine list…
 
   table.machines.list(ng-show="layout == 'list'")
     tbody.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
