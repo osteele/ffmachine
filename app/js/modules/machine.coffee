@@ -206,7 +206,8 @@ updateCircuitView = ->
       .text((pos) -> "Drag #{pos.name} to another terminal to create a wire.")
   terminalTargets.exit().remove()
 
-  wireViews = getLayer('wire-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
+  wireViews = getLayer('wire-layer')
+    .selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
   wireViews.enter().append('path').classed('wire', true)
   wireViews.exit().remove()
   wireViews
@@ -219,6 +220,8 @@ updateCircuitView = ->
   wireTargets.enter()
     .append('path')
     .classed('wire-mouse-target', true)
+    .on('mouseover', (wire) -> getWireView(wire).classed('hilight', true))
+    .on('mouseout', (wire) -> getWireView(wire).classed('hilight', false))
     .on('mousedown', deleteWire)
     .append('title').text(wireTitle)
   wireTargets.exit().remove()

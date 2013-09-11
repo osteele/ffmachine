@@ -1,12 +1,14 @@
 filter#drop-shadow
   feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="2")
   feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
-  feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
+  feBlend(in="SourceGraphic", in2="offsetBlur", mode="normal")
 
-filter#drop-shadow-2
+filter#wire-hilight
+  feGaussianBlur(in="SourceGraphic", result="sourceBlur", stdDeviation="3")
   feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="1")
   feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
-  feBlend(in2="offsetBlur", in="SourceGraphic", mode="normal")
+  feBlend(in="sourceBlur", in2="offsetBlur", result="sourceAndShadow", mode="normal")
+  feBlend(in="SourceGraphic", in2="sourceAndShadow", mode="normal")
 
 linearGradient#grad1(x1="0%", y1="0%", x2="100%", y2="0%")
   stop(offset="0%", style="stop-color:rgb(255,255,0);stop-opacity:1")

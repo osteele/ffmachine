@@ -49,9 +49,8 @@ body {
     -moz-transition: stroke 1s;
     -webkit-transition: stroke 1s;
 
-    &:hover {
-      // stroke: url(#grad1);
-      // filter: url(#drop-shadow-2);
+    &:hover, &.hilight {
+      filter: url(#wire-hilight);
     }
 
     &.dragging {
