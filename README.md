@@ -37,7 +37,7 @@ References:
 1. Run `grunt` on the command line. This starts a server at localhost:8000.
 2. Visit http://localhost:8000/ to see a list of documents.
 
-## Development
+## Development Tasks
 
 `grunt` with no arguments copies / transcodes sources into the `build` directory, runs a server at port `8000`,
 watches files, and copies / transcodes them again if they change.
@@ -46,7 +46,7 @@ watches files, and copies / transcodes them again if they change.
 
 `grunt server` runs a [LiveReload server][LiveReload]. Install and activate the [LiveReload extension (Safari, Chrome, or Firefox)][LiveReload extensions] to reload the web page when the sources are changed.
 
-## Deployment
+## Deploying to Github Pages
 
 1. Create and configure the `release` directory: `git clone -b gh-pages git@github.com:osteele/ffmachine.git release`.
 You only need to do this once.
@@ -54,6 +54,11 @@ You only need to do this once.
 3. Visit http://osteele.github.io/ffmachine/.
 
 ## Credits
+
+Contributors:
+
+- Brian Silverman wrote the initial display and editor
+- Oliver Steele ported this to Angular, SVG, and D3, and added the simulator, storage, and sync.
 
 This project uses the following tools and libraries:
 
