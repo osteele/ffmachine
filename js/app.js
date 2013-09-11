@@ -183,6 +183,12 @@
         return _results;
       })();
     };
+    $scope.saveMachineName = function(machine, event) {
+      var name;
+      name = angular.element(event.target).val();
+      machineListRef.child($scope.machine_key(machine)).child('name').set(name);
+      return $scope.editMachineNameMode = false;
+    };
     $scope.view_details = function(machine) {
       return $location.path('/machines/' + encodeURIComponent($scope.machine_key(machine)));
     };
