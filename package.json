@@ -1,13 +1,13 @@
 {
   "name": "ffmachine",
-  "version": "0.0.0",
-  "description": "Recreation of software machine",
+  "version": "0.1.0",
+  "description": "DEC Laboratory Digital Modules simulator",
   "repository": {
     "type": "git",
     "url": "git@github.com:osteele/ffmachine.git"
   },
   "keywords": [
-    "music"
+    "dec", "electronics", "simulator"
   ],
   "devDependencies": {
     "grunt": "~0.4.1",
@@ -16,9 +16,9 @@
     "grunt-contrib-connect": "~0.3.0",
     "grunt-contrib-copy": "~0.4.1",
     "grunt-contrib-jade": "~0.8.0",
+    "grunt-contrib-sass": "~0.5.0",
     "grunt-contrib-watch": "~0.4.4",
     "grunt-github-pages": "0.0.3",
-    "grunt-notify": "~0.2.7",
-    "grunt-contrib-sass": "~0.5.0"
+    "grunt-notify": "~0.2.7"
   }
 }
