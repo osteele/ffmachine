@@ -7,11 +7,11 @@ You can build and simulate your own machine configuration there and see machines
 
 This simulator simulates the following modules:
 
-- Type 110 Diode Gate, containing two diode gates and two clamp loads
-- Type 201 Flip-Flop, containing one flip-flop and two inverters
-- Type 401 Clock
-- Type 402 Clock
-- Type 602 Pulse Amplifier
+- Type 110 Diode Gate module, consisting of two diode gates and two clamped load terminals
+- Type 201 Flip-Flop module, consisting of one flip-flop, two inverters, and three ground terminals
+- Type 401 Clock module
+- Type 5402 Clock module
+- Type 602 Pulse Amplifier module, consisting of two pulse amplifiers, two inverters, and three grounds
 
 References:
 

@@ -6,7 +6,7 @@ ModuleLocationMap = [
 ]
 
 TerminalLocations = {
-  # 201 flip-flop
+  # Type 201 Flip-Flop
   ff: [
     [100.5, 166, 'p'],
 
@@ -23,11 +23,11 @@ TerminalLocations = {
     [66.5, 372.5, 'gnd1'], [100.5, 372.5, 'gnd2'], [134.5, 372.5, 'gnd3']
   ]
 
-  # 5401, 402 clocks
+  # Type 401, 402 clocks
   clk1: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
   clk2: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
 
-  # 602 pulse amplifier
+  # Type 602 Pulse Amplifier
   pa: [
     [160, 90, '-0'], [160, 136, '+0'], [66, 113, 'in0'], [160, 167, 'gnd0'],
     [160, 240, '-1'], [160, 286, '+1'], [66, 263, 'in1'], [160, 317, 'gnd1'],
@@ -36,13 +36,13 @@ TerminalLocations = {
     [40, 360, 'gnd2']
   ]
 
-  # 110 diode
+  # Type 110 Diode Gate
   dg: [
-    # clamp load
+    # clamped load
     [61, 126, 'cl0'],
     [141, 126, 'cl1'],
 
-    # gates
+    # diode gate #1
     [61, 158, 'c0'], [61, 204, 'e0'],
     [60, 275, 'b00'],
     [49, 300, 'b01'],
@@ -51,6 +51,7 @@ TerminalLocations = {
     [60, 375, 'b04'],
     [49, 400, 'b05'],
 
+    # diode gate #2
     [141, 158, 'c1'], [141, 204, 'e1'],
     [141, 275, 'b10']
     [152, 300, 'b11']

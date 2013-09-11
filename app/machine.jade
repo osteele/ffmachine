@@ -69,7 +69,8 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
         .panel.panel-default(ng-show="mode == 'simulate'")
           .panel-heading Terminal Traces
           .panel-body
-            p(ng-hide="tracedTerminals.length") Click on a terminal to trace it here.
+            p(ng-hide="tracedTerminals.length").
+             Click on a terminal in the wiring diagram to trace it here.
             table.table.table-condensed.table-striped
               tr(ng-repeat="terminal in tracedTerminals")
                 td
