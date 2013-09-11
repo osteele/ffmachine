@@ -15,6 +15,6 @@ app = angular.module 'FFMachine', modules.concat(dependencies)
 app.config ($locationProvider, $routeProvider) ->
   # $locationProvider.html5Mode true
   $routeProvider
-    .when('/', templateUrl: 'partials/machine-list.html', controller: 'MachineListCtrl')
-    .when('/machines/:machineId', templateUrl: 'partials/machine-detail.html', controller: 'MachineDetailCtrl')
+    .when('/', templateUrl: 'templates/machine-list.html', controller: 'MachineListCtrl')
+    .when('/machines/:machineId', templateUrl: 'templates/machine-detail.html', controller: 'MachineDetailCtrl')
     .otherwise(redirectTo: '/')
