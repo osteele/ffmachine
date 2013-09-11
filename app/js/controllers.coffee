@@ -58,7 +58,7 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
   $scope.machine_editable = (machine) ->
     user = $scope.user
     return false if machine.deleted_at
-    return user and machine.writers and user.id in machine.writers.map (user) -> user.id
+    return user and machine.auth?[user.id] == 'write'
 
   $scope.machine_stats = (machine) ->
     "#{(machine.wiring.split(/\s+/).length - 1) / 2} wires"
