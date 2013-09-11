@@ -50,7 +50,6 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
       wiring: machine.wiring
       creator: {id: user.id, email: user.email}
       created_at: now
-      auth: access
       access: access
     }
     machineListRef.push copy

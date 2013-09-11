@@ -53,7 +53,7 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     addCurrentViewer()
 
   $scope.$watch 'user + machine', ->
-    $scope.editable = CurrentMachine and CurrentMachine?.auth?[CurrentUser.id] == 'write'
+    $scope.editable = CurrentMachine and CurrentMachine?.access?[CurrentUser.id] == 'write'
     $scope.mode = 'view' if $scope.mode == 'edit' and not $scope.editable
     $scope.mode = 'edit' if $scope.mode == 'view' and $scope.editable
 
