@@ -12,6 +12,12 @@
   #message(ng-show="message")
     p(ng-bind-html-unsafe=" message")
 
+  .container(ng-hide="machines")
+    .jumbotron
+      h1
+        i.icon-spinner.icon-spin.icon-large
+        | &nbsp;Loading…
+
   table.machines.list(ng-show="layout == 'list'")
     tbody.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
       tr

@@ -3,7 +3,6 @@ controllers = angular.module 'FFMachine.controllers', []
 controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angularFireAuth) ->
   $scope.layout = 'grid'
   $scope.machines = []
-  $scope.message = "Loading..."
 
   angularFireAuth.initialize firebaseRootRef, scope: $scope, name: 'user'
 
