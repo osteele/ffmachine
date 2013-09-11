@@ -11,6 +11,7 @@ class @SimulatorClass
     @timestamp = 0
 
   step: ->
+    console.info 'Simulation frame', @timestamp if Trace.modules or Trace.components or Trace.voltageAssignments
     {modules, terminals, wires} = @configuration
     moduleInputs = computeTerminalValues(terminals, wires)
     moduleOutputs = {}
@@ -47,10 +48,10 @@ updateTerminalValues = (terminals, moduleOutputs, timestamp) ->
   for terminal in terminals
     if terminal.identifier of moduleOutputs
       terminal.value = value = moduleOutputs[terminal.identifier]
-      trace = terminal.trace or= []
-      trace.push {timestamp, value}
-      trace.splice(0, trace.length - HistoryLength) if trace.length > HistoryLength
-      console.info "#{terminal.identifier} <- #{value}" if trace
+      history = terminal.trace or= []
+      history.push {timestamp, value}
+      history.splice(0, history.length - HistoryLength) if history.length > HistoryLength
+      console.info "\t#{terminal.identifier} <- #{value}", history if trace
 
 updateWireValues = (wires, moduleOutputs, timestamp) ->
   trace = Trace.voltageAssignments
@@ -68,7 +69,7 @@ updateWireValues = (wires, moduleOutputs, timestamp) ->
     strongValues = (value for value in values when not isWeak(value))
     values = strongValues if strongValues.length
     value = fromWeak(values[0])
-    console.info "#{_.pluck(wires, 'name').join(',')} <- #{value}" if trace
+    console.info "\t#{_.pluck(wires, 'name').join(',')} <- #{value}" if trace
     for wire in wires
       wire.changed = wire.value? and wire.value != value
       wire.value = value
@@ -100,7 +101,7 @@ runComponent = (component, moduleInputs, moduleOutputs) ->
       n < s
   }
 
-  trace = Trace.components == 1 or Trace.components == true or component.type in Trace.components
+  trace = component.type in Trace.components or (Trace.components and not Trace.components.length)
   # console.info "Computing characteristic equation for", component.name if trace
 
   componentInputs = {}
@@ -121,7 +122,7 @@ runComponent = (component, moduleInputs, moduleOutputs) ->
     moduleOutputs[identifier] = value
 
   if trace
-    console.info component.name,
+    console.info "Running component", component.name,
       "\n\tTerminals:", (t.identifier for t in terminalIdentifiers).join(', ')
       "\n\tInputs: ", loggedInputs, "\n\tOutputs:", componentOutputs
 

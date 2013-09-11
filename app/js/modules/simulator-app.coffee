@@ -89,7 +89,7 @@ app.filter 'terminalVoltageMiniHistory', ->
   (terminal) ->
     value = fromWeak(terminal.value)
     prev = terminal.trace?[terminal.trace?.length - 2]?.value
-    prev = fromWeak(value) if prev
+    prev = fromWeak(prev) if prev
     return unless typeof(value) == 'number' or typeof(prev) == 'number'
     str = "#{value}<b>V</b>"
     str = "<del>#{prev}<b>V</b></del> &rarr; <ins>#{str}</ins>" if typeof prev == 'number' and prev != value
