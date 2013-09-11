@@ -244,11 +244,9 @@
   };
 
   updateCircuitView = function() {
-    var terminalTargets, updateEndPinTargets, wireTargets, wireTitle, wireViews;
+    var terminalTargets, updateWireEndTargets, wireTargets, wireTitle, wireViews;
     terminalTargets = getLayer('terminal-target-layer').selectAll('.terminal-position').data(MachineConfiguration.terminals, getIdentifier);
-    terminalTargets.enter().append('circle').classed('terminal-position', true);
-    terminalTargets.exit().remove();
-    terminalTargets.attr('id', function(pos) {
+    terminalTargets.enter().append('circle').classed('terminal-position', true).attr('id', function(pos) {
       return pos.identifier;
     }).attr('cx', function(pos) {
       return pos.x;
@@ -257,6 +255,7 @@
     }).attr('r', 3).on('mousedown', mouseDownAddWire).append('title').text(function(pos) {
       return "Drag " + pos.name + " to another terminal to create a wire.";
     });
+    terminalTargets.exit().remove();
     wireViews = getLayer('wire-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier);
     wireViews.enter().append('path').classed('wire', true);
     wireViews.exit().remove();
@@ -268,12 +267,12 @@
     wireTargets.enter().append('path').classed('wire-mouse-target', true).on('mousedown', deleteWire).append('title').text(wireTitle);
     wireTargets.exit().remove();
     wireTargets.attr('d', wirePath);
-    updateEndPinTargets = function(layerName, endIndex) {
-      var startPinTargets, terminalTitleText, w;
-      terminalTitleText = function(w) {
+    updateWireEndTargets = function(layerName, endIndex) {
+      var w, wireEndTargets, wireEndTitleText;
+      wireEndTitleText = function(w) {
         return ("Terminal " + w.terminals[endIndex].name + ". ") + "Drag this end of the wire to move it to another terminal.";
       };
-      startPinTargets = getLayer(layerName).selectAll('.wire-end-target').data((function() {
+      wireEndTargets = getLayer(layerName).selectAll('.wire-end-target').data((function() {
         var _i, _len, _ref, _results;
         _ref = MachineConfiguration.wires;
         _results = [];
@@ -285,16 +284,16 @@
         }
         return _results;
       })());
-      startPinTargets.enter().append('circle').classed('wire-end-target', true).attr('r', 10).on('mousedown', dragWireEnd).append('title').text(terminalTitleText);
-      startPinTargets.exit().remove();
-      return startPinTargets.attr('cx', function(wire) {
+      wireEndTargets.enter().append('circle').classed('wire-end-target', true).attr('r', 10).on('mousedown', dragWireEnd).append('title').text(wireEndTitleText);
+      wireEndTargets.exit().remove();
+      return wireEndTargets.attr('cx', function(wire) {
         return wire.terminals[endIndex].coordinates[0];
       }).attr('cy', function(wire) {
         return wire.terminals[endIndex].coordinates[1];
       });
     };
-    updateEndPinTargets('wire-start-target-layer', 0);
-    updateEndPinTargets('wire-end-target-layer', 1);
+    updateWireEndTargets('wire-start-target-layer', 0);
+    updateWireEndTargets('wire-end-target-layer', 1);
     return updateTraces({
       wiresMaybeMoved: true
     });
