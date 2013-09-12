@@ -5,21 +5,18 @@ CurrentMachineRef = null
 CurrentUser = null
 StoredMachineChangedHooks = []
 MachineListRef = FirebaseRootRef.child 'machines'
-ReloadAppSeed = null
 
-FirebaseRootRef.child('version').on 'value', (snapshot) ->
-  key = snapshot.val()
-  location.reload() if ReloadAppSeed and key and ReloadAppSeed != key
-  ReloadAppSeed = key
+do ->
+  reloadAppSeed = null
+  FirebaseRootRef.child('version').on 'value', (snapshot) ->
+    key = snapshot.val()
+    location.reload() if reloadAppSeed and key and reloadAppSeed != key
+    reloadAppSeed = key
 
 app = angular.module 'FFMachine', ['firebase']
 
 app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire, angularFireAuth) ->
   $scope.mode = 'edit'
-  $scope.graphedTerminals = []
-  simulator = new SimulatorThread
-
-  angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
 
   $scope.$safeApply or= (fn) ->
     phase = @$root.$$phase
@@ -28,11 +25,29 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     else
       @$apply fn
 
+  #
+  # Login
+  #
+
+  angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
+
   $scope.login = (provider) ->
     angularFireAuth.login provider, rememberMe: true
 
   $scope.logout = ->
     angularFireAuth.logout()
+
+  $scope.$watch 'user', ->
+    removeCurrentViewer()
+    CurrentUser = $scope.user
+    addCurrentViewer()
+
+
+  #
+  # Simulation
+  #
+
+  simulator = new SimulatorThread
 
   $scope.runSimulation = ->
     simulator.start()
@@ -48,24 +63,13 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.mode = 'simulate'
     $scope.simulationRunning = simulator.running
 
-  $scope.closeHistoryGraph = (terminal) ->
-    $scope.graphedTerminals = (t for t in $scope.graphedTerminals when t != terminal)
-
   $scope.$watch 'mode', ->
     $scope.stopSimulation() unless $scope.mode == 'simulate'
 
-  $scope.$watch 'user', ->
-    removeCurrentViewer()
-    CurrentUser = $scope.user
-    addCurrentViewer()
 
-  $scope.$watch 'user + machine', ->
-    $scope.editable = CurrentMachine and CurrentMachine?.access?[CurrentUser.id] == 'write'
-    $scope.mode = 'view' if $scope.mode == 'edit' and not $scope.editable
-    $scope.mode = 'edit' if $scope.mode == 'view' and $scope.editable
-
-  $scope.$watch 'graphedTerminals', ->
-    updateHistoryGraphs()
+  #
+  # Wire List
+  #
 
   $scope.setHighlightWire = (wire) ->
     Dispatcher.highlightWire wire
@@ -81,14 +85,36 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.$safeApply ->
       $scope.highlightWire = null
 
-  StoredMachineChangedHooks.push (storedMachine) ->
-    $scope.$apply ->
-      $scope.machine = storedMachine
+
+  #
+  # Graphs
+  #
+
+  $scope.graphedTerminals = []
+
+  $scope.closeHistoryGraph = (terminal) ->
+    $scope.graphedTerminals = (t for t in $scope.graphedTerminals when t != terminal)
+
+  $scope.$watch 'graphedTerminals', ->
+    updateHistoryGraphs()
 
   window.graphTerminal = (terminal) ->
     return if terminal in $scope.graphedTerminals
     $scope.$apply ->
       $scope.graphedTerminals.push terminal
+
+  #
+  # Machine Storage
+  #
+
+  $scope.$watch 'user + machine', ->
+    $scope.editable = CurrentMachine and CurrentMachine?.access?[CurrentUser.id] == 'write'
+    $scope.mode = 'view' if $scope.mode == 'edit' and not $scope.editable
+    $scope.mode = 'edit' if $scope.mode == 'view' and $scope.editable
+
+  StoredMachineChangedHooks.push (storedMachine) ->
+    $scope.$apply ->
+      $scope.machine = storedMachine
 
   window.machineConfigurationChanged = (configuration) ->
     saveMachine configuration
@@ -99,6 +125,7 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
   $window.location.href = '.' unless machineName
   initializeMachineView()
   loadMachine machineName
+
 
 app.filter 'floatValue', ->
   (value) ->
@@ -133,6 +160,11 @@ class SimulatorThread
     @stop()
     stepSimulator()
 
+
+#
+# Tracking Active Viewers
+#
+
 addCurrentViewer = ->
   user = CurrentUser
   return unless CurrentMachineRef and CurrentUser
@@ -144,6 +176,11 @@ removeCurrentViewer = ->
   return unless CurrentMachineRef and CurrentUser
   onlineRef = CurrentMachineRef.child('connected').child(CurrentUser.id)
   onlineRef.remove()
+
+
+#
+# Storage and Serialization
+#
 
 loadMachine = (machineName) ->
   CurrentMachineRef = MachineListRef.child(machineName)
