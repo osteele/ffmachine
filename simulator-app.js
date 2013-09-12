@@ -36,6 +36,15 @@
       scope: $scope,
       name: 'user'
     });
+    $scope.$safeApply || ($scope.$safeApply = function(fn) {
+      var phase;
+      phase = this.$root.$$phase;
+      if (phase === '$apply' || phase === '$digest') {
+        return this.$eval(fn);
+      } else {
+        return this.$apply(fn);
+      }
+    });
     $scope.login = function(provider) {
       return angularFireAuth.login(provider, {
         rememberMe: true
@@ -95,6 +104,22 @@
     });
     $scope.$watch('tracedTerminals', function() {
       return updateTerminalTraceViews();
+    });
+    $scope.setHighlightWire = function(wire) {
+      return Dispatcher.highlightWire(wire);
+    };
+    $scope.unsetHighlightWire = function(wire) {
+      return Dispatcher.unhighlightWire(wire);
+    };
+    Dispatcher.on('highlightWire.controller', function(wire) {
+      return $scope.$safeApply(function() {
+        return $scope.highlightWire = wire;
+      });
+    });
+    Dispatcher.on('unhighlightWire.controller', function(wire) {
+      return $scope.$safeApply(function() {
+        return $scope.highlightWire = null;
+      });
     });
     StoredMachineChangedHooks.push(function(storedMachine) {
       return $scope.$apply(function() {

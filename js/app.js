@@ -163,7 +163,7 @@
       return user && ((_ref = machine.auth) != null ? _ref[user.id] : void 0) === 'write';
     };
     $scope.machine_stats = function(machine) {
-      return "" + ((machine.wiring.split(/\s+/).length - 1) / 2) + " wires";
+      return "" + (Math.floor(machine.wiring.split(/\s+/).length / 2)) + " wires";
     };
     $scope.machine_url = function(machine) {
       return "machine.html?name=" + (encodeURIComponent($scope.machine_key(machine)));

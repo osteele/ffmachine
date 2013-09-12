@@ -1,8 +1,10 @@
 (function() {
-  var Knobs, MachineConfiguration, Simulator, TraceHistoryLength, addWire, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getIdentifier, getLayer, getWireView, hexd, knobAngle, knoboffset, localEvent, localx, localy, machineViewElement, mod360, mouseDownAddWire, notifyMachineConfigurationSubscribers, pickColor, releaseKnob, sin, svgSelection, updateCircuitView, updateTraces, wireColor, wireEndpoints, wireLength, wirePath,
+  var Knobs, MachineConfiguration, Simulator, TraceHistoryLength, addWire, animateWires, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getIdentifier, getLayer, getWireView, hexd, knobAngle, knoboffset, localEvent, localx, localy, machineViewElement, mod360, mouseDownAddWire, notifyMachineConfigurationSubscribers, pickColor, releaseKnob, sin, svgSelection, updateCircuitView, updateTraces, wireColor, wireEndpoints, wireIsReversed, wireLength, wirePath,
     __slice = [].slice;
 
   Knobs = [[100, 252, 288, '#f0f0f0'], [100, 382, 0, '#f0f0f0'], [1700, 252, 292, '#202020'], [1700, 382, 0, '#202020']];
+
+  this.Dispatcher = d3.dispatch('highlightWire', 'unhighlightWire');
 
   MachineConfiguration = {
     modules: [],
@@ -17,6 +19,8 @@
   svgSelection = null;
 
   knoboffset = null;
+
+  animateWires = true;
 
   this.initializeMachineView = function() {
     machineViewElement = document.getElementById('machineView');
@@ -118,9 +122,15 @@
     AnimationLength = 6;
     animationCounter = 0;
     return function() {
+      var i, _i;
       Simulator || (Simulator = new SimulatorClass(MachineConfiguration));
       Simulator.step();
-      animationCounter = (animationCounter + 1) % AnimationLength;
+      if (animateWires) {
+        animationCounter = (animationCounter + 1) % AnimationLength;
+        for (i = _i = 0; 0 <= AnimationLength ? _i < AnimationLength : _i > AnimationLength; i = 0 <= AnimationLength ? ++_i : --_i) {
+          svgSelection.classed("animation-phase-" + i, animationCounter === i);
+        }
+      }
       updateTraces();
       return updateTerminalTraceViews();
     };
@@ -243,6 +253,14 @@
     return d.identifier;
   };
 
+  Dispatcher.on('highlightWire.svg', function(wire) {
+    return getWireView(wire).classed('highlight', true);
+  });
+
+  Dispatcher.on('unhighlightWire.svg', function(wire) {
+    return getWireView(wire).classed('highlight', false);
+  });
+
   updateCircuitView = function() {
     var terminalTargets, updateWireEndTargets, wireTargets, wireTitle, wireViews;
     terminalTargets = getLayer('terminal-target-layer').selectAll('.terminal-position').data(MachineConfiguration.terminals, getIdentifier);
@@ -264,7 +282,7 @@
       return "Wire " + w.name + "\nClick to delete this wire.";
     };
     wireTargets = getLayer('deletion-target-layer').selectAll('.wire-mouse-target').data(MachineConfiguration.wires, getIdentifier);
-    wireTargets.enter().append('path').classed('wire-mouse-target', true).on('mousedown', deleteWire).append('title').text(wireTitle);
+    wireTargets.enter().append('path').classed('wire-mouse-target', true).on('mouseover', Dispatcher.highlightWire).on('mouseout', Dispatcher.unhighlightWire).on('mousedown', deleteWire).append('title').text(wireTitle);
     wireTargets.exit().remove();
     wireTargets.attr('d', wirePath);
     updateWireEndTargets = function(layerName, endIndex) {
@@ -284,7 +302,7 @@
         }
         return _results;
       })());
-      wireEndTargets.enter().append('circle').classed('wire-end-target', true).attr('r', 10).on('mousedown', dragWireEnd).append('title').text(wireEndTitleText);
+      wireEndTargets.enter().append('circle').classed('wire-end-target', true).attr('r', 10).on('mouseover', Dispatcher.highlightWire).on('mouseout', Dispatcher.unhighlightWire).on('mousedown', dragWireEnd).append('title').text(wireEndTitleText);
       wireEndTargets.exit().remove();
       return wireEndTargets.attr('cx', function(wire) {
         return wire.terminals[endIndex].coordinates[0];
@@ -369,6 +387,12 @@
     return arctan2(x - knob[0], knob[1] - y);
   };
 
+  wireIsReversed = function(w) {
+    var t1, t2, _ref;
+    _ref = w.terminals, t1 = _ref[0], t2 = _ref[1];
+    return t1.output && !t2.output;
+  };
+
   updateTraces = (function() {
     var isVoltage, symbols, terminalVoltageName, updateTerminalTraces, updateWireTraces, values, voltageParenthetical;
     symbols = ['negative', 'ground', 'float'];
@@ -422,9 +446,7 @@
       if (wiresMaybeMoved) {
         wires.attr('d', wirePath).attr('stroke', wireColor);
       }
-      return wires.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).classed('reversed', function(w) {
-        return !w.terminals[0].output;
-      });
+      return wires.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).classed('reversed', wireIsReversed);
     };
     return function(_arg) {
       var wiresMaybeMoved;
