@@ -1,5 +1,5 @@
 (function() {
-  var Knobs, MachineConfiguration, Simulator, TraceHistoryLength, addWire, animateWires, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getIdentifier, getLayer, getWireView, hexd, knobAngle, knoboffset, localEvent, localx, localy, machineViewElement, mod360, mouseDownAddWire, notifyMachineConfigurationSubscribers, pickColor, releaseKnob, sin, svgSelection, updateCircuitView, updateTraces, wireColor, wireEndpoints, wireIsReversed, wireLength, wirePath,
+  var Knobs, MachineConfiguration, Simulator, VoltageHistoryLength, addWire, animateWires, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getIdentifier, getLayer, getWireView, hexd, knobAngle, knoboffset, localEvent, localx, localy, machineViewElement, mod360, mouseDownAddWire, notifyMachineConfigurationSubscribers, pickColor, releaseKnob, sin, svgSelection, updateCircuitView, updateVoltageStates, wireColor, wireEndpoints, wireIsReversed, wireLength, wirePath,
     __slice = [].slice;
 
   Knobs = [[100, 252, 288, '#f0f0f0'], [100, 382, 0, '#f0f0f0'], [1700, 252, 292, '#202020'], [1700, 382, 0, '#202020']];
@@ -26,7 +26,7 @@
     machineViewElement = document.getElementById('machineView');
     svgSelection = d3.select(machineViewElement);
     createLayer('wire-layer');
-    createLayer('trace-layer', {
+    createLayer('probe-layer', {
       simulationMode: true
     });
     createLayer('deletion-target-layer', {
@@ -131,8 +131,8 @@
           svgSelection.classed("animation-phase-" + i, animationCounter === i);
         }
       }
-      updateTraces();
-      return updateTerminalTraceViews();
+      updateVoltageStates();
+      return updateHistoryGraphs();
     };
   })();
 
@@ -312,7 +312,7 @@
     };
     updateWireEndTargets('wire-start-target-layer', 0);
     updateWireEndTargets('wire-end-target-layer', 1);
-    return updateTraces({
+    return updateVoltageStates({
       wiresMaybeMoved: true
     });
   };
@@ -393,8 +393,8 @@
     return t1.output && !t2.output;
   };
 
-  updateTraces = (function() {
-    var isVoltage, symbols, terminalVoltageName, updateTerminalTraces, updateWireTraces, values, voltageParenthetical;
+  updateVoltageStates = (function() {
+    var isVoltage, symbols, terminalVoltageName, updateTerminalVoltages, updateWireVoltages, values, voltageParenthetical;
     symbols = ['negative', 'ground', 'float'];
     values = [-3, 0, void 0];
     terminalVoltageName = function(terminal) {
@@ -420,25 +420,25 @@
         return "(" + value + "V)";
       }
     };
-    updateTerminalTraces = function() {
+    updateTerminalVoltages = function() {
       var enter, nodes;
-      nodes = getLayer('trace-layer').selectAll('.terminal-trace').data(MachineConfiguration.terminals, getIdentifier);
+      nodes = getLayer('probe-layer').selectAll('.terminal-probe').data(MachineConfiguration.terminals, getIdentifier);
       nodes.exit().remove();
-      enter = nodes.enter().append('g').classed('terminal-trace', true);
+      enter = nodes.enter().append('g').classed('terminal-probe', true);
       enter.append('circle').attr('r', 3).attr('transform', function(terminal) {
         var pt;
         pt = terminal.coordinates;
         return "translate(" + pt[0] + ", " + pt[1] + ")";
-      }).on('click', traceTerminal).append('title').text(function(d) {
+      }).on('click', graphTerminal).append('title').text(function(d) {
         return "Terminal " + d.name + "\nClick to trace";
       });
       return nodes.classed('voltage-negative', isVoltage('negative')).classed('voltage-ground', isVoltage('ground')).classed('voltage-float', isVoltage('float')).select('title').text(function(t) {
         return "Terminal " + t.name + " " + (voltageParenthetical(t)) + "\nClick to trace this terminal.";
       });
     };
-    updateWireTraces = function(wiresMaybeMoved) {
+    updateWireVoltages = function(wiresMaybeMoved) {
       var wires;
-      wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier).classed('wire', true);
+      wires = getLayer('probe-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier).classed('wire', true);
       wires.enter().append('path').classed('wire', true).append('title').text(function(w) {
         return "Wire " + w.name + (voltageParenthetical(w));
       });
@@ -451,35 +451,34 @@
     return function(_arg) {
       var wiresMaybeMoved;
       wiresMaybeMoved = (_arg != null ? _arg : {}).wiresMaybeMoved;
-      updateWireTraces(wiresMaybeMoved);
-      updateTerminalTraces();
-      return updateTerminalTraceViews();
+      updateWireVoltages(wiresMaybeMoved);
+      updateTerminalVoltages();
+      return updateHistoryGraphs();
     };
   })();
 
-  TraceHistoryLength = 200;
+  VoltageHistoryLength = 200;
 
-  this.updateTerminalTraceViews = function() {
-    var element, line, scope, svg, terminal, values, x, y, _i, _len, _ref, _results;
-    _ref = document.querySelectorAll('.terminal-trace-view');
+  this.updateHistoryGraphs = function() {
+    var element, scope, terminal, _i, _len, _ref, _results;
+    _ref = document.querySelectorAll('.terminal-history-graph');
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       element = _ref[_i];
       scope = angular.element(element).scope();
       terminal = scope.terminal;
-      values = terminal.trace || [];
-      if (!scope.path) {
-        x = d3.scale.linear().domain([-TraceHistoryLength, 0]).range([0, Number(element.width.baseVal.value)]);
+      scope.path || (scope.path = d3.select(element).append('path'));
+      scope.line || (scope.line = (function() {
+        var x, y;
+        x = d3.scale.linear().domain([-VoltageHistoryLength, 0]).range([0, Number(element.width.baseVal.value)]);
         y = d3.scale.linear().domain([-3, 0]).range([0, Number(element.height.baseVal.value)]);
-        line = scope.line = d3.svg.line().x(function(d) {
+        return d3.svg.line().x(function(d) {
           return x(d.timestamp - Simulator.timestamp);
         }).y(function(d) {
           return y(typeof fromWeak(d.value) === 'number' ? fromWeak(d.value) : -3 / 2);
         });
-        svg = d3.select(element);
-        scope.path = svg.append('path');
-      }
-      _results.push(scope.path.datum(values).attr('d', scope.line));
+      })());
+      _results.push(scope.path.datum(terminal.history || []).attr('d', scope.line));
     }
     return _results;
   };

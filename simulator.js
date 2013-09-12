@@ -126,7 +126,7 @@
       terminal = terminals[_i];
       if (terminal.identifier in moduleOutputs) {
         terminal.value = value = moduleOutputs[terminal.identifier];
-        history = terminal.trace || (terminal.trace = []);
+        history = terminal.history || (terminal.history = []);
         history.push({
           timestamp: timestamp,
           value: value

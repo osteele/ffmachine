@@ -38,6 +38,7 @@
   controllers = angular.module('FFMachine.controllers', []);
 
   controllers.controller('MachineListCtrl', function($scope, $location, angularFire, angularFireAuth) {
+    var getMachineKey;
     $scope.layout = 'grid';
     $scope.machines = [];
     angularFireAuth.initialize(firebaseRootRef, {
@@ -45,7 +46,7 @@
       name: 'user'
     });
     angularFire(machineListRef, $scope, 'machines', {});
-    $scope.$watch(function() {
+    $scope.$watch('user + machines', function() {
       var m, machines, _;
       machines = (function() {
         var _ref, _results;
@@ -62,7 +63,7 @@
       }
       $scope.message = null;
       if (!machines.some(function(m) {
-        return $scope.machine_editable(m);
+        return $scope.machineIsEditable(m);
       })) {
         $scope.message = "Congratulation! You are signed in. " + "You can view other people's machines but not save changes. " + "Copy a machine to make your own machine that you can edit.";
       }
@@ -70,7 +71,7 @@
         return $scope.message = "You can view machines but not save changes. " + "Sign In to make your own machines. " + "The <em>Sign In</em> button will lead you through the steps to create an account.";
       }
     });
-    $scope.machine_key = function(machine) {
+    getMachineKey = function(machine) {
       var k, m;
       return ((function() {
         var _ref, _results;
@@ -85,7 +86,8 @@
         return _results;
       })())[0];
     };
-    $scope.duplicate_machine = function(machine) {
+    $scope.machine_key = getMachineKey;
+    $scope.duplicateMachine = function(machine) {
       var access, copy, k, m, message_prefix, name, name_index, now, user;
       user = $scope.user;
       if (!user) {
@@ -132,7 +134,7 @@
       };
       return machineListRef.push(copy);
     };
-    $scope.delete_machine = function(machine) {
+    $scope.deleteMachine = function(machine) {
       var k, key, m;
       if (!confirm("Are you sure you want to delete the machine named '" + machine.name + "'?")) {
         return;
@@ -151,24 +153,21 @@
       })())[0];
       return machineListRef.child(key).child('deleted_at').set(Firebase.ServerValue.TIMESTAMP);
     };
-    $scope.rename_machine = function(machine) {
-      return machine.name = machine.name.replace(/^\s+/, '').replace(/\s+$/, '');
-    };
-    $scope.machine_editable = function(machine) {
+    $scope.machineIsEditable = function(machine) {
       var user, _ref;
       user = $scope.user;
       if (machine.deleted_at) {
         return false;
       }
-      return user && ((_ref = machine.auth) != null ? _ref[user.id] : void 0) === 'write';
+      return user && ((_ref = machine.access) != null ? _ref[user.id] : void 0) === 'write';
     };
-    $scope.machine_stats = function(machine) {
+    $scope.machineStats = function(machine) {
       return "" + (Math.floor(machine.wiring.split(/\s+/).length / 2)) + " wires";
     };
-    $scope.machine_url = function(machine) {
+    $scope.machineUrl = function(machine) {
       return "machine.html?name=" + (encodeURIComponent($scope.machine_key(machine)));
     };
-    $scope.machine_viewers = function(machine) {
+    $scope.machineViewers = function(machine) {
       var k;
       if (!machine.connected) {
         return [];
@@ -188,7 +187,7 @@
       machineListRef.child($scope.machine_key(machine)).child('name').set(name);
       return $scope.editMachineNameMode = false;
     };
-    $scope.view_details = function(machine) {
+    $scope.viewDetails = function(machine) {
       return $location.path('/machines/' + encodeURIComponent($scope.machine_key(machine)));
     };
     $scope.login = function(provider) {
