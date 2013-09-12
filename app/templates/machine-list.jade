@@ -1,6 +1,6 @@
 mixin editable-name
-  span.title.machine-name(ng-show="!editMachineNameMode && !machine_editable(machine)") {{machine.name}}
-  span.title.machine-name(ng-show="!editMachineNameMode && machine_editable(machine)", ng-click="editMachineNameMode=true", title="Click to edit") {{machine.name}}
+  span.title.machine-name(ng-show="!editMachineNameMode && !machineIsEditable(machine)") {{machine.name}}
+  span.title.machine-name(ng-show="!editMachineNameMode && machineIsEditable(machine)", ng-click="editMachineNameMode=true", title="Click to edit") {{machine.name}}
   //- input.machine-name(ng-show="editMachineNameMode", type="text", ng-model="machine.name", ui-keyup="{enter: 'editMachineNameMode=false', 27: 'editMachineNameMode=false'}", ui-event="{blur: 'editMachineNameMode=false'}")
   input.machine-name(ng-show="editMachineNameMode", type="text", value="{{machine.name}}", ui-keyup="{enter: 'saveMachineName(machine, $event)', 27: 'editMachineNameMode=false'}", ui-event="{blur: 'editMachineNameMode=false'}")
 
@@ -24,38 +24,38 @@ mixin editable-name
         | &nbsp;Loading machine list…
 
   table.machines.list(ng-show="layout == 'list'")
-    tbody.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText | orderBy:'isTemplate'", ng-class="{protected: !machine_editable(machine)}")
+    tbody.machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | filter:searchText | orderBy:'isTemplate'", ng-class="{protected: !machineIsEditable(machine)}")
       tr
         td.name.machine-name(title="Click to rename")
           mixin editable-name
 
         td.icons
-          a.icon-eye-open(ng-href="{{machine_url(machine)}}", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
-          a.icon-edit.protect(ng-href="{{machine_url(machine)}}", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
+          a.icon-eye-open(ng-href="{{machineUrl(machine)}}", ng-hide="machineIsEditable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
+          a.icon-edit.protect(ng-href="{{machineUrl(machine)}}", ng-show="machineIsEditable(machine)", title="Edit '{{machine.name}}'")
           //- a.icon-info-sign(ng-click="show_details = !show_details")
-          a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
-          .icon-trash.protect(ng-hide="machine_editable(machine)")
-          a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
+          a.icon-copy(ng-click="duplicateMachine(machine)", title="Make a copy of '{{machine.name}}'")
+          .icon-trash.protect(ng-hide="machineIsEditable(machine)")
+          a.icon-trash.protect(ng-click="deleteMachine(machine)", ng-show="machineIsEditable(machine)", title="Delete '{{machine.name}}'")
 
         td
-          | ({{machine_stats(machine)}})
+          | ({{machineStats(machine)}})
 
         td(ng-show="machine.creator")
           | Created by {{machine.creator.email}}
 
         td
-          ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': '1 viewer.', 'other': '{} viewers.'}")
+          ng-pluralize(count="machineViewers(machine).length", when="{'0': '', 'one': '1 viewer.', 'other': '{} viewers.'}")
 
   .machines.grid(ng-show="layout == 'grid'")
-    .machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | orderBy:'isTemplate' | filter:searchText", ng-class="{protected: !machine_editable(machine)}")
+    .machine(ng-repeat="machine in machines | objectToList | propertyNot:'deleted_at' | orderBy:'isTemplate' | filter:searchText", ng-class="{protected: !machineIsEditable(machine)}")
       .titlebar(style="width:100%")
         mixin editable-name
         .buttons(ng-hide="editMachineNameMode")
-          a.icon-trash.protect(ng-click="delete_machine(machine)", ng-show="machine_editable(machine)", title="Delete '{{machine.name}}'")
-          a.icon-copy(ng-click="duplicate_machine(machine)", title="Make a copy of '{{machine.name}}'")
-          a.icon-eye-open(ng-href="{{machine_url(machine)}}", ng-hide="machine_editable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
-          a.icon-edit.protect(ng-href="{{machine_url(machine)}}", ng-show="machine_editable(machine)", title="Edit '{{machine.name}}'")
-      a(ng-href="{{machine_url(machine)}}")
+          a.icon-trash.protect(ng-click="deleteMachine(machine)", ng-show="machineIsEditable(machine)", title="Delete '{{machine.name}}'")
+          a.icon-copy(ng-click="duplicateMachine(machine)", title="Make a copy of '{{machine.name}}'")
+          a.icon-eye-open(ng-href="{{machineUrl(machine)}}", ng-hide="machineIsEditable(machine)", title="View '{{machine.name}}' (changes won't be saved)")
+          a.icon-edit.protect(ng-href="{{machineUrl(machine)}}", ng-show="machineIsEditable(machine)", title="Edit '{{machine.name}}'")
+      a(ng-href="{{machineUrl(machine)}}")
         wiring-diagram(wires="{{machine.wiring}}", width="270", height="300")
       .description {{machine.description}}
       .caption
@@ -68,4 +68,4 @@ mixin editable-name
         div(ng-show="machine.modified_at")
           | Modified on {{machine.modified_at | date}}
 
-        ng-pluralize(count="machine_viewers(machine).length", when="{'0': '', 'one': 'One viewer.', 'other': '{} viewers.'}")
+        ng-pluralize(count="machineViewers(machine).length", when="{'0': '', 'one': 'One viewer.', 'other': '{} viewers.'}")

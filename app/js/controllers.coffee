@@ -9,11 +9,11 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
   # TODO is there a way to make this a list type?
   angularFire machineListRef, $scope, 'machines', {}
 
-  $scope.$watch ->
+  $scope.$watch 'user + machines', ->
     machines = (m for _, m of $scope.machines)
     return unless machines.length
     $scope.message = null
-    unless machines.some((m) -> $scope.machine_editable(m))
+    unless machines.some((m) -> $scope.machineIsEditable(m))
       $scope.message = "Congratulation! You are signed in. " +
         "You can view other people's machines but not save changes. " +
         "Copy a machine to make your own machine that you can edit."
@@ -22,10 +22,12 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
         "Sign In to make your own machines. " +
         "The <em>Sign In</em> button will lead you through the steps to create an account."
 
-  $scope.machine_key = (machine) ->
+  getMachineKey = (machine) ->
     (k for k, m of $scope.machines when m == machine)[0]
 
-  $scope.duplicate_machine = (machine) ->
+  $scope.machine_key = getMachineKey
+
+  $scope.duplicateMachine = (machine) ->
     user = $scope.user
     unless user
       alert "You must sign in before making a machine."
@@ -54,26 +56,23 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
     }
     machineListRef.push copy
 
-  $scope.delete_machine = (machine) ->
+  $scope.deleteMachine = (machine) ->
     return unless confirm "Are you sure you want to delete the machine named '#{machine.name}'?"
     key = (k for k, m of $scope.machines when m == machine)[0]
     machineListRef.child(key).child('deleted_at').set Firebase.ServerValue.TIMESTAMP
 
-  $scope.rename_machine = (machine) ->
-    machine.name = machine.name.replace(/^\s+/, '').replace(/\s+$/, '')
-
-  $scope.machine_editable = (machine) ->
+  $scope.machineIsEditable = (machine) ->
     user = $scope.user
     return false if machine.deleted_at
-    return user and machine.auth?[user.id] == 'write'
+    return user and machine.access?[user.id] == 'write'
 
-  $scope.machine_stats = (machine) ->
+  $scope.machineStats = (machine) ->
     "#{Math.floor(machine.wiring.split(/\s+/).length / 2)} wires"
 
-  $scope.machine_url = (machine) ->
+  $scope.machineUrl = (machine) ->
     return "machine.html?name=#{encodeURIComponent($scope.machine_key(machine))}"
 
-  $scope.machine_viewers = (machine) ->
+  $scope.machineViewers = (machine) ->
     return [] unless machine.connected
     return (k for k of machine.connected)
 
@@ -83,7 +82,7 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
     $scope.editMachineNameMode = false
 
   # FIXME gets 'digest already in progress'
-  $scope.view_details = (machine) ->
+  $scope.viewDetails = (machine) ->
     $location.path '/machines/' + encodeURIComponent($scope.machine_key(machine))
 
   $scope.login = (provider) ->
