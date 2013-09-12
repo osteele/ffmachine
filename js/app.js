@@ -1,21 +1,23 @@
 (function() {
-  var app, controllers, dependencies, directives, draw_wiring_thumbnail, filters, firebaseRootRef, machineListRef, modules, reload_key,
+  var app, controllers, dependencies, directives, draw_wiring_thumbnail, filters, firebaseRootRef, machineListRef, modules,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   firebaseRootRef = new Firebase('https://ffmachine.firebaseIO.com/');
 
   machineListRef = firebaseRootRef.child('machines');
 
-  reload_key = null;
-
-  firebaseRootRef.child('version').on('value', function(snapshot) {
-    var key;
-    key = snapshot.val();
-    if (reload_key && key && reload_key !== key) {
-      location.reload();
-    }
-    return reload_key = key;
-  });
+  (function() {
+    var reloadAppSeed;
+    reloadAppSeed = null;
+    return firebaseRootRef.child('version').on('value', function(snapshot) {
+      var key;
+      key = snapshot.val();
+      if (reloadAppSeed && key && reloadAppSeed !== key) {
+        location.reload();
+      }
+      return reloadAppSeed = key;
+    });
+  })();
 
   dependencies = ['firebase', 'ui'];
 
@@ -25,11 +27,11 @@
 
   app.config(function($locationProvider, $routeProvider) {
     return $routeProvider.when('/', {
-      templateUrl: 'templates/machine-list.html',
-      controller: 'MachineListCtrl'
+      controller: 'MachineListCtrl',
+      templateUrl: 'templates/machine-list.html'
     }).when('/machines/:machineId', {
-      templateUrl: 'templates/machine-detail.html',
-      controller: 'MachineDetailCtrl'
+      controller: 'MachineDetailCtrl',
+      templateUrl: 'templates/machine-detail.html'
     }).otherwise({
       redirectTo: '/'
     });
@@ -186,9 +188,6 @@
       name = angular.element(event.target).val();
       machineListRef.child($scope.machine_key(machine)).child('name').set(name);
       return $scope.editMachineNameMode = false;
-    };
-    $scope.viewDetails = function(machine) {
-      return $location.path('/machines/' + encodeURIComponent($scope.machine_key(machine)));
     };
     $scope.login = function(provider) {
       return angularFireAuth.login(provider, {

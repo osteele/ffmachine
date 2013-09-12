@@ -142,7 +142,7 @@
     });
     StoredMachineChangedHooks.push(function(storedMachine) {
       return $scope.$apply(function() {
-        return $scope.machine = storedMachine;
+        return $scope.$parent.machine = storedMachine;
       });
     });
     window.machineConfigurationChanged = function(configuration) {
