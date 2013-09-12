@@ -87,7 +87,7 @@ td { vertical-align: top; }
   }
 
   .machines.grid {
-    .machine { float: left; margin: 10px; width: 270px; }
+    .machine { display: inline-block; margin: 20px; width: 270px; min-height: 100%; vertical-align: top; }
     .titlebar { position: relative; padding: 1px; width: 270px; }
     .titlebar .title { display: block; width: 183px; overflow: hidden; text-overflow: ellipsis; white-space:nowrap; }
     .buttons { position: absolute; bottom: 0; right: 0; }
