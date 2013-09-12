@@ -5,10 +5,6 @@
 .edit-mode-layer, .simulation-mode-layer { display: none; }
 .edit-mode .edit-mode-layer, .simulation-mode .simulation-mode-layer { display: block; }
 
-tr.hover, tr.hover td {
-  background: lightBlue !important;
-}
-
 .ffmachine {
   width: 900px;
   height: 1000px;
@@ -112,12 +108,6 @@ tr.hover, tr.hover td {
 }
 
 #connected-users {
-  // font-size: 16px;
-
-  // h2 {
-  //   margin: 3px;
-  // }
-
   ul {
    margin: 0;
    padding: 0;
@@ -150,12 +140,19 @@ tr.hover, tr.hover td {
   font-size: small;
   .terminal-0, .terminal-1 { font: monospace; width: 20px; }
   .terminal-0, .voltage { text-align: right; }
+
   tr, td {
     transition: background-color 0.5s;
     -moz-transition: background-color 0.5s;
     -webkit-transition: background-color 0.5s;
 
   }
+
+  .hover {
+    text-shadow: #0090ff 0px 0px 2px;
+    cursor: pointer;
+  }
+
   b { font-weight: bold; }
   del { text-decoration: none; }
   ins { text-decoration: none; color: blue; }
