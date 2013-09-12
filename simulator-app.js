@@ -29,9 +29,17 @@
 
   app = angular.module('FFMachine', ['firebase']);
 
-  app.controller('MachineSimulatorCtrl', function($scope, $location, $window, angularFire, angularFireAuth) {
-    var machineName, simulator;
-    $scope.mode = 'edit';
+  app.config(function($routeProvider) {
+    return $routeProvider.when('/machine/:machineId', {
+      controller: 'MachineSimulatorCtrl',
+      templateUrl: 'templates/machine.html'
+    }).otherwise({
+      redirectTo: '/machine/-J2QBaPHg1RtfPIbp32O'
+    });
+  });
+
+  app.controller('MachineSimulatorCtrl', function($scope, $location, $window, $routeParams, angularFire, angularFireAuth) {
+    var machineId, simulator;
     $scope.$safeApply || ($scope.$safeApply = function(fn) {
       var phase;
       phase = this.$root.$$phase;
@@ -41,6 +49,7 @@
         return this.$apply(fn);
       }
     });
+    $scope.mode = 'edit';
     angularFireAuth.initialize(FirebaseRootRef, {
       scope: $scope,
       name: 'user'
@@ -142,12 +151,12 @@
         return $scope.wires = configuration.wires;
       });
     };
-    machineName = $location.search().name;
-    if (!machineName) {
+    machineId = $routeParams.machineId;
+    if (!machineId) {
       $window.location.href = '.';
     }
     initializeMachineView();
-    return loadMachine(machineName);
+    return loadMachine(machineId);
   });
 
   app.filter('floatValue', function() {

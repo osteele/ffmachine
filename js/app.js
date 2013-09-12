@@ -165,7 +165,7 @@
       return "" + (Math.floor(machine.wiring.split(/\s+/).length / 2)) + " wires";
     };
     $scope.machineUrl = function(machine) {
-      return "machine.html?name=" + (encodeURIComponent($scope.machine_key(machine)));
+      return "machine.html?/machine/" + (encodeURIComponent($scope.machine_key(machine)));
     };
     $scope.machineViewers = function(machine) {
       var k;
