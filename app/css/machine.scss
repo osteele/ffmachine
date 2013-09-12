@@ -112,8 +112,8 @@ tr.hover, tr.hover td {
   }
 
   @for $i from 0 through 5 {
-    &.animation-phase-#{$i} .trace-layer .wire { stroke-dashoffset: $i; }
-    &.animation-phase-#{$i} .trace-layer .wire.reversed { stroke-dashoffset: 5 - $i; }
+    &.animation-phase-#{$i} .trace-layer .wire { stroke-dashoffset: $i; stroke: black; }
+    &.animation-phase-#{$i} .trace-layer .wire.reversed { stroke-dashoffset: 5 - $i; stroke: black; }
   }
 }
 

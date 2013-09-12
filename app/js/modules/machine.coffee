@@ -25,6 +25,7 @@ Simulator = null
 machineViewElement = null
 svgSelection = null
 knoboffset = null
+animateWires = true
 
 @initializeMachineView = () ->
   machineViewElement = document.getElementById('machineView')
@@ -87,8 +88,9 @@ deleteWire = (wire) ->
   return ->
     Simulator or= new SimulatorClass(MachineConfiguration)
     Simulator.step()
-    animationCounter = (animationCounter + 1) % AnimationLength
-    # svgSelection.classed("animation-phase-#{i}", animationCounter == i) for i in [0...AnimationLength]
+    if animateWires
+      animationCounter = (animationCounter + 1) % AnimationLength
+      svgSelection.classed("animation-phase-#{i}", animationCounter == i) for i in [0...AnimationLength]
     updateTraces()
     updateTerminalTraceViews()
 
@@ -319,6 +321,10 @@ knobAngle = (knob, x, y) ->
 # Traces
 #
 
+wireIsReversed = (w) ->
+  [t1, t2] = w.terminals
+  t1.output and not t2.output
+
 updateTraces = do ->
   symbols = ['negative', 'ground', 'float']
   values = [-3, 0, undefined]
@@ -331,10 +337,6 @@ updateTraces = do ->
   isVoltage = (symbolicValue) ->
     (terminal) ->
       terminalVoltageName(terminal) == symbolicValue
-
-  # cyclePinValue = (terminal) ->
-  #   terminal.value = values[(symbols.indexOf(terminalVoltageName(terminal)) + 1) % symbols.length]
-  #   updateTraces()
 
   voltageParenthetical = (wireOrTerminal) ->
     value = fromWeak(wireOrTerminal.value)
@@ -374,7 +376,7 @@ updateTraces = do ->
       .classed('voltage-negative', isVoltage('negative'))
       .classed('voltage-ground', isVoltage('ground'))
       .classed('voltage-float', isVoltage('float'))
-      .classed('reversed', (w) -> !w.terminals[0].output)
+      .classed('reversed', wireIsReversed)
 
   return ({wiresMaybeMoved}={}) ->
     updateWireTraces(wiresMaybeMoved)
