@@ -70,17 +70,17 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
                 td.voltage(ng-bind-html-unsafe="wire.terminals[0] | terminalVoltageMiniHistory")
 
         .panel.panel-default(ng-show="mode == 'simulate'")
-          .panel-heading Terminal Traces
+          .panel-heading Oscilloscopes
           .panel-body
-            p(ng-hide="tracedTerminals.length").
-             Click on a terminal in the wiring diagram to trace it here.
+            p(ng-hide="graphedTerminals.length").
+              Click on a terminal in the wiring diagram to trace it here.
             table.table.table-condensed.table-striped
-              tr(ng-repeat="terminal in tracedTerminals")
+              tr(ng-repeat="terminal in graphedTerminals")
                 td
-                  a.icon-remove(ng-click="closeTerminalTrace(terminal)") &nbsp;
+                  a.icon-remove(ng-click="closeTerminalGraph(terminal)") &nbsp;
                   small {{terminal.name}}
                 td
-                  svg.terminal-trace-view(width=300, height=20)
+                  svg.terminal-history-graph(width=300, height=20)
 
         #connected-users.panel.panel-default(ng-show="machine.connected")
           .panel-heading Current Viewers

@@ -32,7 +32,7 @@ animateWires = true
 
   svgSelection = d3.select(machineViewElement)
   createLayer('wire-layer')
-  createLayer('trace-layer', simulationMode: true)
+  createLayer('probe-layer', simulationMode: true)
   createLayer('deletion-target-layer', editMode: true)
   createLayer('terminal-target-layer', editMode: true)
   createLayer('wire-start-target-layer', editMode: true)
@@ -91,8 +91,8 @@ deleteWire = (wire) ->
     if animateWires
       animationCounter = (animationCounter + 1) % AnimationLength
       svgSelection.classed("animation-phase-#{i}", animationCounter == i) for i in [0...AnimationLength]
-    updateTraces()
-    updateTerminalTraceViews()
+    updateVoltageStates()
+    updateHistoryGraphs()
 
 
 #
@@ -269,7 +269,7 @@ updateCircuitView = ->
   updateWireEndTargets 'wire-start-target-layer', 0
   updateWireEndTargets 'wire-end-target-layer', 1
 
-  updateTraces wiresMaybeMoved: true
+  updateVoltageStates wiresMaybeMoved: true
   # drawKnobs()
 
 wireEndpoints = (wire) ->
@@ -318,14 +318,14 @@ knobAngle = (knob, x, y) ->
 
 
 #
-# Traces
+# Probes
 #
 
 wireIsReversed = (w) ->
   [t1, t2] = w.terminals
   t1.output and not t2.output
 
-updateTraces = do ->
+updateVoltageStates = do ->
   symbols = ['negative', 'ground', 'float']
   values = [-3, 0, undefined]
 
@@ -343,17 +343,17 @@ updateTraces = do ->
     return '' if value == undefined
     return "(#{value}V)" unless value == undefined
 
-  updateTerminalTraces = ->
-    nodes = getLayer('trace-layer').selectAll('.terminal-trace')
+  updateTerminalVoltages = ->
+    nodes = getLayer('probe-layer').selectAll('.terminal-probe')
       .data(MachineConfiguration.terminals, getIdentifier)
     nodes.exit().remove()
-    enter = nodes.enter().append('g').classed('terminal-trace', true)
+    enter = nodes.enter().append('g').classed('terminal-probe', true)
     enter.append('circle')
       .attr('r', 3)
       .attr('transform', (terminal) ->
         pt = terminal.coordinates
         "translate(#{pt[0]}, #{pt[1]})")
-      .on('click', traceTerminal)
+      .on('click', graphTerminal)
       .append('title').text((d) -> "Terminal #{d.name}\nClick to trace")
     nodes
       .classed('voltage-negative', isVoltage('negative'))
@@ -362,8 +362,8 @@ updateTraces = do ->
       .select('title').text((t) ->
         "Terminal #{t.name} #{voltageParenthetical(t)}\nClick to trace this terminal.")
 
-  updateWireTraces = (wiresMaybeMoved) ->
-    wires = getLayer('trace-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
+  updateWireVoltages = (wiresMaybeMoved) ->
+    wires = getLayer('probe-layer').selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
       .classed('wire', true)
     wires.enter().append('path').classed('wire', true)
       .append('title').text((w) -> "Wire #{w.name}#{voltageParenthetical(w)}")
@@ -379,26 +379,24 @@ updateTraces = do ->
       .classed('reversed', wireIsReversed)
 
   return ({wiresMaybeMoved}={}) ->
-    updateWireTraces(wiresMaybeMoved)
-    updateTerminalTraces()
-    updateTerminalTraceViews()
+    updateWireVoltages(wiresMaybeMoved)
+    updateTerminalVoltages()
+    updateHistoryGraphs()
 
-TraceHistoryLength = 200
+VoltageHistoryLength = 200
 
-@updateTerminalTraceViews = ->
-  for element in document.querySelectorAll('.terminal-trace-view')
+@updateHistoryGraphs = ->
+  for element in document.querySelectorAll('.terminal-history-graph')
     scope = angular.element(element).scope()
     terminal = scope.terminal
-    values = (terminal.trace or [])
-    unless scope.path
-      x = d3.scale.linear().domain([-TraceHistoryLength, 0]).range([0, Number(element.width.baseVal.value)])
+    scope.path or= d3.select(element).append('path')
+    scope.line or= do ->
+      x = d3.scale.linear().domain([-VoltageHistoryLength, 0]).range([0, Number(element.width.baseVal.value)])
       y = d3.scale.linear().domain([-3, 0]).range([0, Number(element.height.baseVal.value)])
-      line = scope.line = d3.svg.line()
+      d3.svg.line()
         .x((d) -> x(d.timestamp - Simulator.timestamp))
         .y((d) -> y(if typeof fromWeak(d.value) == 'number' then fromWeak(d.value) else -3/2))
-      svg = d3.select(element)
-      scope.path = svg.append('path')#.attr('d', line)
-    scope.path.datum(values).attr('d', scope.line)
+    scope.path.datum(terminal.history or []).attr('d', scope.line)
 
 
 #

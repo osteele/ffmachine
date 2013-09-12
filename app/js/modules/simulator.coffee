@@ -48,7 +48,7 @@ updateTerminalValues = (terminals, moduleOutputs, timestamp) ->
   for terminal in terminals
     if terminal.identifier of moduleOutputs
       terminal.value = value = moduleOutputs[terminal.identifier]
-      history = terminal.trace or= []
+      history = terminal.history or= []
       history.push {timestamp, value}
       history.splice(0, history.length - HistoryLength) if history.length > HistoryLength
       console.info "\t#{terminal.identifier} <- #{value}", history if trace

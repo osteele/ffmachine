@@ -16,7 +16,7 @@ app = angular.module 'FFMachine', ['firebase']
 
 app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire, angularFireAuth) ->
   $scope.mode = 'edit'
-  $scope.tracedTerminals = []
+  $scope.graphedTerminals = []
   simulator = new SimulatorThread
 
   angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
@@ -48,8 +48,8 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.mode = 'simulate'
     $scope.simulationRunning = simulator.running
 
-  $scope.closeTerminalTrace = (terminal) ->
-    $scope.tracedTerminals = (t for t in $scope.tracedTerminals when t != terminal)
+  $scope.closeHistoryGraph = (terminal) ->
+    $scope.graphedTerminals = (t for t in $scope.graphedTerminals when t != terminal)
 
   $scope.$watch 'mode', ->
     $scope.stopSimulation() unless $scope.mode == 'simulate'
@@ -64,8 +64,8 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.mode = 'view' if $scope.mode == 'edit' and not $scope.editable
     $scope.mode = 'edit' if $scope.mode == 'view' and $scope.editable
 
-  $scope.$watch 'tracedTerminals', ->
-    updateTerminalTraceViews()
+  $scope.$watch 'graphedTerminals', ->
+    updateHistoryGraphs()
 
   $scope.setHighlightWire = (wire) ->
     Dispatcher.highlightWire wire
@@ -85,10 +85,10 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
     $scope.$apply ->
       $scope.machine = storedMachine
 
-  window.traceTerminal = (terminal) ->
-    return if terminal in $scope.tracedTerminals
+  window.graphTerminal = (terminal) ->
+    return if terminal in $scope.graphedTerminals
     $scope.$apply ->
-      $scope.tracedTerminals.push terminal
+      $scope.graphedTerminals.push terminal
 
   window.machineConfigurationChanged = (configuration) ->
     saveMachine configuration
@@ -109,7 +109,7 @@ app.filter 'floatValue', ->
 app.filter 'terminalVoltageMiniHistory', ->
   (terminal) ->
     value = fromWeak(terminal.value)
-    prev = terminal.trace?[terminal.trace?.length - 2]?.value
+    prev = terminal.history?[terminal.history?.length - 2]?.value
     prev = fromWeak(prev) if prev
     return unless typeof(value) == 'number' or typeof(prev) == 'number'
     str = "#{value}<b>V</b>"

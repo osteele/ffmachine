@@ -83,8 +83,8 @@ tr.hover, tr.hover td {
     pointer-events: all;
   }
 
-  .trace-layer {
-    .terminal-trace {
+  .probe-layer {
+    .terminal-probe {
       circle {
         cursor: help;
         transition: fill 0.1s;
@@ -112,8 +112,8 @@ tr.hover, tr.hover td {
   }
 
   @for $i from 0 through 5 {
-    &.animation-phase-#{$i} .trace-layer .wire { stroke-dashoffset: $i; stroke: black; }
-    &.animation-phase-#{$i} .trace-layer .wire.reversed { stroke-dashoffset: 5 - $i; stroke: black; }
+    &.animation-phase-#{$i} .probe-layer .wire { stroke-dashoffset: $i; stroke: black; }
+    &.animation-phase-#{$i} .probe-layer .wire.reversed { stroke-dashoffset: 5 - $i; stroke: black; }
   }
 }
 
@@ -145,7 +145,7 @@ tr.hover, tr.hover td {
   .float-voltage { background: gray; }
 }
 
-.terminal-trace-view {
+.terminal-history-graph {
   path {
     stroke: blue;
     fill: none;
