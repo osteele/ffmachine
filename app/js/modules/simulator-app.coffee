@@ -60,6 +60,14 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
   $scope.$watch 'tracedTerminals', ->
     updateTerminalTraceViews()
 
+  Dispatcher.on 'highlightWire.controller', (wire) ->
+    $scope.$apply ->
+      $scope.highlightWire = wire
+
+  Dispatcher.on 'unhighlightWire.controller', (wire) ->
+    $scope.$apply ->
+      $scope.highlightWire = null
+
   StoredMachineChangedHooks.push (storedMachine) ->
     $scope.$apply ->
       $scope.machine = storedMachine

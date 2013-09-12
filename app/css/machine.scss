@@ -11,6 +11,10 @@ body {
   { display: block; }
 }
 
+tr.hover, tr.hover td {
+  background: lightBlue !important;
+}
+
 .ffmachine {
   width: 900px;
   height: 1000px;
@@ -50,7 +54,7 @@ body {
     -webkit-transition: stroke 1s;
 
     &.highlight {
-      filter: url(#wire-hilight);
+      filter: url(#wire-highlight);
     }
 
     &.dragging {

@@ -3,7 +3,7 @@ filter#drop-shadow
   feOffset(in="blur", dx=4, dy=4, result="offsetBlur")
   feBlend(in="SourceGraphic", in2="offsetBlur", mode="normal")
 
-filter#wire-hilight
+filter#wire-highlight
   feGaussianBlur(in="SourceGraphic", result="sourceBlur", stdDeviation="3")
   feGaussianBlur(in="SourceAlpha", result="blur", stdDeviation="1")
   feOffset(in="blur", dx=4, dy=4, result="offsetBlur")

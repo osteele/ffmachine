@@ -61,7 +61,7 @@ html(lang="en", ng-app="FFMachine", ng-controller="MachineSimulatorCtrl")
           .panel-heading Wires
           .panel-body
             table.table.table-condensed.table-striped#wire-list
-              tr(ng-repeat="wire in wires | orderBy:'identifier'", ng-class="{success: wire.changed}")
+              tr(ng-repeat="wire in wires | orderBy:'identifier'", ng-class="{hover: wire == highlightWire, success: wire.changed}")
                 td.terminal-0 {{wire.terminals[0].name}}
                 td.terminal-1 {{wire.terminals[1].name}}
                 td.voltage(ng-bind-html-unsafe="wire.terminals[0] | terminalVoltageMiniHistory")
