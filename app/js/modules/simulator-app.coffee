@@ -21,6 +21,13 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
 
   angularFireAuth.initialize FirebaseRootRef, scope: $scope, name: 'user'
 
+  $scope.$safeApply or= (fn) ->
+    phase = @$root.$$phase
+    if phase == '$apply' or phase == '$digest'
+      @$eval fn
+    else
+      @$apply fn
+
   $scope.login = (provider) ->
     angularFireAuth.login provider, rememberMe: true
 
@@ -60,12 +67,18 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
   $scope.$watch 'tracedTerminals', ->
     updateTerminalTraceViews()
 
+  $scope.setHighlightWire = (wire) ->
+    Dispatcher.highlightWire wire
+
+  $scope.unsetHighlightWire = (wire) ->
+    Dispatcher.unhighlightWire wire
+
   Dispatcher.on 'highlightWire.controller', (wire) ->
-    $scope.$apply ->
+    $scope.$safeApply ->
       $scope.highlightWire = wire
 
   Dispatcher.on 'unhighlightWire.controller', (wire) ->
-    $scope.$apply ->
+    $scope.$safeApply ->
       $scope.highlightWire = null
 
   StoredMachineChangedHooks.push (storedMachine) ->
