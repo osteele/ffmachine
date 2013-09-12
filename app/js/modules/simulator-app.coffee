@@ -121,6 +121,7 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, $routeParams
 
   StoredMachineChangedHooks.push (storedMachine) ->
     $scope.$apply ->
+      # Use the parent so it is accessable from the title element
       $scope.$parent.machine = storedMachine
 
   window.machineConfigurationChanged = (configuration) ->

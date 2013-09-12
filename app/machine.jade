@@ -1,7 +1,7 @@
 doctype 5
 html(lang="en", ng-app="FFMachine")
   head
-    title(ng:bind-template="Machine: {{machine.name}}") Flip Flop Machine
+    title(ng:bind-template="Machine: {{machine.name || 'Loading…'}}")
     meta(charset="utf-8")
 
     link(href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.0.0-rc2/css/bootstrap.min.css", rel="stylesheet", type="text/css")

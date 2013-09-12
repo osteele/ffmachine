@@ -78,12 +78,10 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
 
   $scope.saveMachineName = (machine, event) ->
     name = angular.element(event.target).val()
+    # Setting `machine.name = name` results in 'FIREBASE WARNING: set at /machines failed: permission_denied'
+    # machine.name = name
     machineListRef.child($scope.machine_key(machine)).child('name').set name
     $scope.editMachineNameMode = false
-
-  # FIXME gets 'digest already in progress'
-  $scope.viewDetails = (machine) ->
-    $location.path '/machines/' + encodeURIComponent($scope.machine_key(machine))
 
   $scope.login = (provider) ->
     angularFireAuth.login provider, rememberMe: true
