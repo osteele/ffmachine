@@ -49,7 +49,7 @@ body {
     -moz-transition: stroke 1s;
     -webkit-transition: stroke 1s;
 
-    &:hover, &.hilight {
+    &.highlight {
       filter: url(#wire-hilight);
     }
 

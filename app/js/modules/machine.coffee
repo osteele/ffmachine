@@ -13,6 +13,8 @@ Knobs = [
 # Globals
 #
 
+@Dispatcher = d3.dispatch 'highlightWire', 'unhighlightWire'
+
 MachineConfiguration =
   modules: []
   terminals: []
@@ -193,6 +195,12 @@ releaseKnob = ->
 getIdentifier = (d) ->
   d.identifier
 
+Dispatcher.on 'highlightWire.svg', (wire) ->
+  getWireView(wire).classed('highlight', true)
+
+Dispatcher.on 'unhighlightWire.svg', (wire) ->
+  getWireView(wire).classed('highlight', false)
+
 updateCircuitView = ->
   terminalTargets = getLayer('terminal-target-layer')
     .selectAll('.terminal-position').data(MachineConfiguration.terminals, getIdentifier)
@@ -220,8 +228,8 @@ updateCircuitView = ->
   wireTargets.enter()
     .append('path')
     .classed('wire-mouse-target', true)
-    .on('mouseover', (wire) -> getWireView(wire).classed('hilight', true))
-    .on('mouseout', (wire) -> getWireView(wire).classed('hilight', false))
+    .on('mouseover', Dispatcher.highlightWire)
+    .on('mouseout', Dispatcher.unhighlightWire)
     .on('mousedown', deleteWire)
     .append('title').text(wireTitle)
   wireTargets.exit().remove()
@@ -239,6 +247,8 @@ updateCircuitView = ->
       .append('circle')
       .classed('wire-end-target', true)
       .attr('r', 10)
+      .on('mouseover', Dispatcher.highlightWire)
+      .on('mouseout', Dispatcher.unhighlightWire)
       .on('mousedown', dragWireEnd)
       # Uncomment below for cheesy hover animation of wire end
       # .on('mouseover', (wire) ->
