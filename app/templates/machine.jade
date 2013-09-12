@@ -1,0 +1,69 @@
+#content(ng-class="{'edit-mode': mode == 'edit', 'simulation-mode': mode == 'simulate', 'simulation-running': simulationRunning}")
+  include partials/toolbar
+    .btn-group
+      a.icon-book.icon-large.btn.btn-default(href=".") &nbsp;Directory
+    .btn-group
+      button.icon-eye-open.icon-large.btn.btn-default(ng-hide="editable", ng-disabled="mode == 'view'", ng-click="mode = 'view'") &nbsp;View
+      button.icon-wrench.icon-large.btn.btn-default(ng-show="editable", ng-disabled="mode == 'edit'", ng-show="editable", ng-click="mode = 'edit'") &nbsp;Edit
+      button.icon-bolt.icon-large.btn.btn-default(ng-disabled="mode == 'simulate'", ng-click="mode = 'simulate'") &nbsp;Simulate
+    .btn-group
+      button.icon-step-forward.icon-large.btn.btn-default(ng-disabled="simulatonRunning", ng-click="stepSimulation()", title="Click to step the simulation")
+      button.icon-play.icon-large.btn.btn-default(ng-hide="simulationRunning", ng-click="runSimulation()", title="Click to start the simulation")
+      button.icon-pause.icon-large.btn.btn-default(ng-show="simulationRunning", ng-click="stopSimulation()", title="Click to pause the simulation")
+    h1.machine-name(ng-bind="machine.name")
+
+  .container(ng-hide="machine")
+    .jumbotron
+      h1
+        i.icon-spinner.icon-spin.icon-large
+        | &nbsp;Loading machine…
+
+  .content
+    .col-md-8
+      .ffmachine(ng-show="machine")
+        svg#machineView
+          defs: include partials/svg-effects
+          image(xlink:href="img/ffmachine.png", width="100%", height="100%")
+
+    #sidebar.col-md-4.ng-cloak
+      .panel.panel-default(ng-show="mode != 'simulate' && machine.description")
+        .panel-heading {{machine.name}}
+        .panel-body {{machine.description}}
+
+      .panel.panel-default(ng-show="wires.length")
+        .panel-heading Wires
+        .panel-body
+          table.table.table-condensed.table-striped#wire-list
+            tr(ng-repeat="wire in wires | orderBy:'identifier'",
+                ng-class="{hover: wire == highlightWire, success: wire.changed}",
+                ng-mouseover="setHighlightWire(wire)",
+                ng-mouseout="unsetHighlightWire(wire)")
+              td.terminal-0 {{wire.terminals[0].name}}
+              td.terminal-1 {{wire.terminals[1].name}}
+              td.voltage(ng-bind-html-unsafe="wire.terminals[0] | terminalVoltageMiniHistory")
+
+      .panel.panel-default(ng-show="mode == 'simulate'")
+        .panel-heading Oscilloscopes
+        .panel-body
+          p(ng-hide="graphedTerminals.length").
+            Click on a terminal in the wiring diagram to trace it here.
+          table.table.table-condensed.table-striped
+            tr(ng-repeat="terminal in graphedTerminals")
+              td
+                a.icon-remove(ng-click="closeTerminalGraph(terminal)") &nbsp;
+                small {{terminal.name}}
+              td
+                svg.terminal-history-graph(width=300, height=20)
+
+      #connected-users.panel.panel-default(ng-show="machine.connected")
+        .panel-heading Current Viewers
+        .panel-body
+          ul
+            li(ng-repeat="viewer in machine.connected") {{viewer}}
+
+      #legend.panel.panel-default(ng-show="mode == 'simulate'")
+        .panel-heading Legend
+        .panel-body
+          .negative-voltage -3V
+          .ground-voltage 0V
+          //- .pull-right.float-voltage undefined

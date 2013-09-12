@@ -2,14 +2,8 @@
   margin-bottom: 10px;
 }
 
-body {
-  .edit-mode-layer, .simulation-mode-layer
-  { display: none; }
-
-  &.edit-mode .edit-mode-layer,
-  &.simulation-mode .simulation-mode-layer
-  { display: block; }
-}
+.edit-mode-layer, .simulation-mode-layer { display: none; }
+.edit-mode .edit-mode-layer, .simulation-mode .simulation-mode-layer { display: block; }
 
 tr.hover, tr.hover td {
   background: lightBlue !important;
@@ -167,4 +161,4 @@ tr.hover, tr.hover td {
   ins { text-decoration: none; color: blue; }
 }
 
-body.simulation-running .voltage { visibility: hidden; }
+#content.simulation-running .voltage { visibility: hidden; }

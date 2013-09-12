@@ -70,7 +70,7 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
     "#{Math.floor(machine.wiring.split(/\s+/).length / 2)} wires"
 
   $scope.machineUrl = (machine) ->
-    return "machine.html?name=#{encodeURIComponent($scope.machine_key(machine))}"
+    return "machine.html#/machine/#{encodeURIComponent($scope.machine_key(machine))}"
 
   $scope.machineViewers = (machine) ->
     return [] unless machine.connected

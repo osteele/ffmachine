@@ -15,15 +15,22 @@ do ->
 
 app = angular.module 'FFMachine', ['firebase']
 
-app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire, angularFireAuth) ->
-  $scope.mode = 'edit'
+app.config ($routeProvider) ->
+  $routeProvider
+    .when('/machine/:machineId',
+      controller: 'MachineSimulatorCtrl',
+      templateUrl: 'templates/machine.html')
+    .otherwise(redirectTo: '/machine/-J2QBaPHg1RtfPIbp32O')
 
+app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, $routeParams, angularFire, angularFireAuth) ->
   $scope.$safeApply or= (fn) ->
     phase = @$root.$$phase
     if phase == '$apply' or phase == '$digest'
       @$eval fn
     else
       @$apply fn
+
+  $scope.mode = 'edit'
 
   #
   # Login
@@ -114,17 +121,17 @@ app.controller 'MachineSimulatorCtrl', ($scope, $location, $window, angularFire,
 
   StoredMachineChangedHooks.push (storedMachine) ->
     $scope.$apply ->
-      $scope.machine = storedMachine
+      $scope.$parent.machine = storedMachine
 
   window.machineConfigurationChanged = (configuration) ->
     saveMachine configuration
     $scope.$apply ->
       $scope.wires = configuration.wires
 
-  machineName = $location.search().name
-  $window.location.href = '.' unless machineName
+  machineId = $routeParams.machineId
+  $window.location.href = '.' unless machineId
   initializeMachineView()
-  loadMachine machineName
+  loadMachine machineId
 
 
 app.filter 'floatValue', ->
