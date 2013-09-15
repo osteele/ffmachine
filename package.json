@@ -23,6 +23,7 @@
     "grunt-contrib-watch": "~0.4.x",
     "grunt-github-pages": "0.0.x",
     "grunt-notify": "~0.2.x",
-    "load-grunt-tasks": "~0.1.x"
+    "load-grunt-tasks": "~0.1.x",
+    "grunt-contrib-imagemin": "~0.3.0"
   }
 }

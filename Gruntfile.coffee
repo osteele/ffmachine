@@ -61,8 +61,15 @@ module.exports = (grunt) ->
         expand: true
         cwd: 'app'
         dest: 'build'
-        src: ['**/*', '!**/*.coffee', '!**/*.jade', '!**/*.scss']
+        src: ['**/*', '!**/*.{coffee,jade,png,scss}']
         filter: 'isFile'
+
+    imagemin:
+      app:
+        expand: true
+        cwd: 'app'
+        src: '**/*.{png,jpg,gif}'
+        dest: '<%= options.build_directory %>'
 
     jade:
       app:
@@ -89,13 +96,13 @@ module.exports = (grunt) ->
       options:
         livereload: true
       copy:
-        files: ['app/**/*.css', 'app/**/*.html', 'app/**/*.js', 'app/**/*.png']
+        files: ['app/**/*', '!app/**/*.{coffee,jade,png,scss}']
         tasks: ['copy']
       gruntfile:
         files: 'Gruntfile.coffee'
         tasks: ['coffeelint:gruntfile']
       jade:
-        files: ['app/*.jade', 'app/**/*.jade']
+        files: ['app/**/*.jade']
         tasks: ['jade']
       sass:
         files: ['app/**/*.scss']
@@ -116,7 +123,7 @@ module.exports = (grunt) ->
     copyContext grunt.config.get(['context', context])
     return
 
-  grunt.registerTask 'build', ['clean:context', 'coffee', 'copy', 'jade', 'sass']
+  grunt.registerTask 'build', ['clean:context', 'coffee', 'copy', 'jade', 'sass', 'imagemin']
   grunt.registerTask 'build:release', ['context:release', 'coffeelint', 'build']
   grunt.registerTask 'deploy', ['build:release', 'githubPages:target']
   grunt.registerTask 'default', ['build', 'connect', 'watch']
