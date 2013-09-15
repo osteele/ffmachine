@@ -7,12 +7,15 @@
     "url": "git@github.com:osteele/ffmachine.git"
   },
   "keywords": [
-    "dec", "electronics", "simulator"
+    "dec",
+    "electronics",
+    "simulator"
   ],
   "devDependencies": {
     "grunt": "~0.4.x",
     "grunt-coffeelint": "0.0.x",
     "grunt-contrib-coffee": "~0.7.x",
+    "grunt-contrib-clean": "~0.5.x",
     "grunt-contrib-connect": "~0.3.x",
     "grunt-contrib-copy": "~0.4.x",
     "grunt-contrib-jade": "~0.8.x",

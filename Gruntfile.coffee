@@ -1,123 +1,122 @@
 module.exports = (grunt) ->
   grunt.initConfig
-    pkg: grunt.file.readJSON 'package.json'
+
     options:
       build_directory: 'build'
+      release_directory: 'release'
+
+    context:
+      release:
+        options:
+          build_directory: '<%= options.release_directory %>'
+        coffee:
+          options:
+            sourceMap: false
+        jade:
+          options:
+            pretty: false
+        sass:
+          options:
+            sourcemap: false
+            style: 'compressed'
+
     coffee:
-      debug_bundle:
+      app:
         files:
           '<%= options.build_directory %>/js/app.js': ['app/js/**/*.coffee', '!app/js/modules/*.coffee']
         options:
           join: true
-          sourceMap: true
-      release_bundle:
-        files:
-          'release/js/app.js': ['app/js/**/*.coffee', '!app/js/modules/*.coffee']
-        options:
-          join: true
-      debug_modules:
+      modules:
         expand: true
         cwd: 'app/js/modules'
         src: '**/*.coffee'
         dest: '<%= options.build_directory %>'
         ext: '.js'
-        options:
-          sourceMap: true
-      release_modules:
-        expand: true
-        cwd: 'app/js/modules'
-        src: '**/*.coffee'
-        dest: 'release'
-        ext: '.js'
+      options:
+        sourceMap: true
+
     coffeelint:
       app: ['app/**/*.coffee', '!Gruntfile.coffee']
       gruntfile: 'Gruntfile.coffee'
       options:
         max_line_length:
           value: 120
+
     connect:
       server:
         options:
           base: '<%= options.build_directory %>'
+
     githubPages:
       target:
-        src: 'release'
+        src: '<%= options.release_directory %>'
+
+    clean:
+      debug: '<%= options.build_directory %>'
+      context: 'build'
+      release: '<%= options.release_directory %>/*'
+
     copy:
-      debug:
+      app:
         expand: true
         cwd: 'app'
-        dest: '<%= options.build_directory %>'
-        src: ['**', '!**/*.coffee', '!**/*.jade', '!**/*.scss']
+        dest: 'build'
+        src: ['**/*', '!**/*.coffee', '!**/*.jade', '!**/*.scss']
         filter: 'isFile'
-      release:
-        expand: true
-        cwd: 'app'
-        dest: 'release'
-        src: ['**', '!**/*.coffee', '!**/*.jade', '!**/*.scss']
-        filter: 'isFile'
+
     jade:
-      debug:
+      app:
         expand: true
         cwd: 'app'
         src: '**/*.jade'
         dest: '<%= options.build_directory %>'
         ext: '.html'
-        options:
-          pretty: true
-      release:
-        expand: true
-        cwd: 'app'
-        src: '**/*.jade'
-        dest: 'release'
-        ext: '.html'
+      options:
+        pretty: true
+
     sass:
-      debug:
+      app:
         expand: true
         cwd: 'app'
         dest: '<%= options.build_directory %>'
         src: ['css/**.scss']
         ext: '.css'
         filter: 'isFile'
-        options:
-          sourcemap: true
-      release:
-        expand: true
-        cwd: 'app'
-        dest: 'release'
-        src: ['css/**.scss']
-        ext: '.css'
-        filter: 'isFile'
-        options:
-          style: 'compressed'
+      options:
+        sourcemap: true
+
     watch:
       options:
         livereload: true
-      # coffeelint:
-      #   files: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
-      #   tasks: ['coffeelint:app']
-      #   options:
-      #     livereload: false
       copy:
         files: ['app/**/*.css', 'app/**/*.html', 'app/**/*.js', 'app/**/*.png']
-        tasks: ['copy:debug']
+        tasks: ['copy']
       gruntfile:
         files: 'Gruntfile.coffee'
         tasks: ['coffeelint:gruntfile']
       jade:
         files: ['app/*.jade', 'app/**/*.jade']
-        tasks: ['jade:debug']
+        tasks: ['jade']
       sass:
         files: ['app/**/*.scss']
-        tasks: ['sass:debug']
+        tasks: ['sass']
       scripts:
         files: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
-        tasks: ['coffee:debug']
+        tasks: ['coffee']
 
   require('load-grunt-tasks')(grunt)
 
-  grunt.registerTask 'coffee:debug', ['coffee:debug_modules', 'coffee:debug_bundle']
-  grunt.registerTask 'coffee:release', ['coffee:release_modules', 'coffee:release_bundle']
-  grunt.registerTask 'build', ['coffee:debug', 'copy:debug', 'jade:debug', 'sass:debug']
-  grunt.registerTask 'build:release', ['coffeelint', 'coffee:release', 'copy:release', 'jade:release', 'sass:release']
+  grunt.registerTask 'context', (context) ->
+    copyContext = (obj, prefix='') ->
+      for k, v of obj
+        if typeof v == 'object'
+          copyContext v, prefix + k + '.'
+        else
+          grunt.config.set(prefix + k, v)
+    copyContext grunt.config.get(['context', context])
+    return
+
+  grunt.registerTask 'build', ['clean:context', 'coffee', 'copy', 'jade', 'sass']
+  grunt.registerTask 'build:release', ['context:release', 'coffeelint', 'build']
   grunt.registerTask 'deploy', ['build:release', 'githubPages:target']
   grunt.registerTask 'default', ['build', 'connect', 'watch']
