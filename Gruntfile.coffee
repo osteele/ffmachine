@@ -1,10 +1,12 @@
 module.exports = (grunt) ->
   grunt.initConfig
     pkg: grunt.file.readJSON 'package.json'
+    options:
+      build_directory: 'build'
     coffee:
       debug_bundle:
         files:
-          'build/js/app.js': ['app/js/**/*.coffee', '!app/js/modules/*.coffee']
+          '<%= options.build_directory %>/js/app.js': ['app/js/**/*.coffee', '!app/js/modules/*.coffee']
         options:
           join: true
           sourceMap: true
@@ -17,7 +19,7 @@ module.exports = (grunt) ->
         expand: true
         cwd: 'app/js/modules'
         src: '**/*.coffee'
-        dest: 'build'
+        dest: '<%= options.build_directory %>'
         ext: '.js'
         options:
           sourceMap: true
@@ -36,7 +38,7 @@ module.exports = (grunt) ->
     connect:
       server:
         options:
-          base: 'build'
+          base: '<%= options.build_directory %>'
     githubPages:
       target:
         src: 'release'
@@ -44,7 +46,7 @@ module.exports = (grunt) ->
       debug:
         expand: true
         cwd: 'app'
-        dest: 'build'
+        dest: '<%= options.build_directory %>'
         src: ['**', '!**/*.coffee', '!**/*.jade', '!**/*.scss']
         filter: 'isFile'
       release:
@@ -58,7 +60,7 @@ module.exports = (grunt) ->
         expand: true
         cwd: 'app'
         src: '**/*.jade'
-        dest: 'build'
+        dest: '<%= options.build_directory %>'
         ext: '.html'
         options:
           pretty: true
@@ -72,7 +74,7 @@ module.exports = (grunt) ->
       debug:
         expand: true
         cwd: 'app'
-        dest: 'build'
+        dest: '<%= options.build_directory %>'
         src: ['css/**.scss']
         ext: '.css'
         filter: 'isFile'
@@ -111,15 +113,7 @@ module.exports = (grunt) ->
         files: ['**/*.coffee', '!**/node_modules/**', '!Gruntfile.coffee']
         tasks: ['coffee:debug']
 
-  grunt.loadNpmTasks 'grunt-coffeelint'
-  grunt.loadNpmTasks 'grunt-contrib-coffee'
-  grunt.loadNpmTasks 'grunt-contrib-connect'
-  grunt.loadNpmTasks 'grunt-contrib-copy'
-  grunt.loadNpmTasks 'grunt-contrib-jade'
-  grunt.loadNpmTasks 'grunt-contrib-sass'
-  grunt.loadNpmTasks 'grunt-contrib-watch'
-  grunt.loadNpmTasks 'grunt-github-pages'
-  grunt.loadNpmTasks 'grunt-notify'
+  require('load-grunt-tasks')(grunt)
 
   grunt.registerTask 'coffee:debug', ['coffee:debug_modules', 'coffee:debug_bundle']
   grunt.registerTask 'coffee:release', ['coffee:release_modules', 'coffee:release_bundle']
