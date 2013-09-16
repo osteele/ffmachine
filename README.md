@@ -53,14 +53,12 @@ You only need to do this once.
 2. Run `grunt deploy`.
 3. Visit http://osteele.github.io/ffmachine/.
 
-## Credits
+## Contributors
 
-Contributors:
+- Brian Silverman
+- Oliver Steele
 
-- Brian Silverman wrote the initial display and editor
-- Oliver Steele ported this to Angular, SVG, and D3, and added the simulator, storage, and sync.
-
-This project uses the following tools and libraries:
+## Colophon
 
 - [AngularJS](http://angularjs.org/) application framework and data binding
 - [Bootstrap](http://getbootstrap.com/) for HTML components and CSS default styles
