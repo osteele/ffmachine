@@ -11,6 +11,13 @@
 }
 
 .ffmachine svg {
+  .module-background {
+    rect {
+      fill: #FFF0F0;
+      stroke: black;
+    }
+  }
+
   .terminal-position {
     cursor: pointer;
     fill: white;

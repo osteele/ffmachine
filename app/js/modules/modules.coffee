@@ -5,6 +5,14 @@ ModuleLocationMap = [
   ['ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff']
 ]
 
+ModuleTypeNumbers = {
+  dg: 110
+  ff: 201
+  clk1: 5401
+  clk2: 402
+  pa: 602
+}
+
 TerminalLocations = {
   # Type 201 Flip-Flop
   ff: [
@@ -23,7 +31,7 @@ TerminalLocations = {
     [66.5, 372.5, 'gnd1'], [100.5, 372.5, 'gnd2'], [134.5, 372.5, 'gnd3']
   ]
 
-  # Type 401, 402 clocks
+  # Type 5401, 402 clocks
   clk1: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
   clk2: [[160, 98, '-'], [160, 144, '+'], [160, 190, 'gnd']],
 
@@ -142,9 +150,12 @@ createModules = ->
       {
         name: moduleName
         identifier: moduleIdentifier
+        typeNumber: ModuleTypeNumbers[moduleType]
         type: moduleType
         terminals
         components: moduleComponents(type: moduleType, name: moduleName, identifier: moduleIdentifier)
+        coordinates: {x, y}
+        dimensions: ModuleDimensions
       }
   [].concat rows...
 

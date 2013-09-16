@@ -31,6 +31,7 @@ animateWires = true
   machineViewElement = document.getElementById('machineView')
 
   svgSelection = d3.select(machineViewElement)
+  createLayer('module-background-layer')
   createLayer('wire-layer')
   createLayer('probe-layer', simulationMode: true)
   createLayer('deletion-target-layer', editMode: true)
@@ -60,6 +61,27 @@ getLayer = (layerName) ->
   MachineConfiguration.modules = configuration.modules ? MachineHardware.modules
   MachineConfiguration.terminals = configuration.terminals ? MachineHardware.terminals
   notifyMachineConfigurationSubscribers()
+
+  imageMargin = 10
+  modules = getLayer('module-background-layer').selectAll('.module-background')
+    .data(MachineConfiguration.modules, getIdentifier)
+  modules.exit().remove()
+  moduleGroups = modules.enter()
+    .append('g')
+    .classed('module-background', true)
+    .attr('transform', (m) ->
+      {x, y} = m.coordinates
+      "translate(#{x}, #{y})")
+  moduleGroups.append('rect')
+    .attr('width', (m) -> m.dimensions.width)
+    .attr('height', (m) -> m.dimensions.height)
+  moduleGroups
+    .append('image')
+    .attr('xlink:href', (m) -> "img/modules/#{m.typeNumber}.png")
+    .attr('width', (m) -> m.dimensions.width - 2 * imageMargin)
+    .attr('height', (m) -> m.dimensions.height - 2 * imageMargin)
+    .attr('transform', "translate(#{imageMargin}, #{imageMargin})")
+
 
 # This calls the storage interface
 notifyMachineConfigurationSubscribers = ->
@@ -205,7 +227,8 @@ Dispatcher.on 'unhighlightWire.svg', (wire) ->
 
 updateCircuitView = ->
   terminalTargets = getLayer('terminal-target-layer')
-    .selectAll('.terminal-position').data(MachineConfiguration.terminals, getIdentifier)
+    .selectAll('.terminal-position')
+    .data(MachineConfiguration.terminals, getIdentifier)
   terminalTargets.enter().append('circle').classed('terminal-position', true)
     .attr('id', (pos) -> pos.identifier)
     .attr('cx', (pos) -> pos.x)
@@ -217,7 +240,8 @@ updateCircuitView = ->
   terminalTargets.exit().remove()
 
   wireViews = getLayer('wire-layer')
-    .selectAll('.wire').data(MachineConfiguration.wires, getIdentifier)
+    .selectAll('.wire')
+    .data(MachineConfiguration.wires, getIdentifier)
   wireViews.enter().append('path').classed('wire', true)
   wireViews.exit().remove()
   wireViews
