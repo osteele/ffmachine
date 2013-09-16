@@ -1,7 +1,15 @@
 (function() {
-  var ModuleDimensions, ModuleLocationMap, TerminalLocations, createModules, moduleComponents;
+  var ModuleDimensions, ModuleLocationMap, ModuleTypeNumbers, TerminalLocations, createModules, moduleComponents;
 
   ModuleLocationMap = [['clk1', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'clk2'], ['ff', 'ff', 'ff', 'ff', 'ff', 'dg', 'ff', 'ff', 'ff'], ['ff', 'ff', 'ff', 'ff', 'ff', 'pa', 'ff', 'ff', 'ff'], ['ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff', 'ff']];
+
+  ModuleTypeNumbers = {
+    dg: 110,
+    ff: 201,
+    clk1: 5401,
+    clk2: 402,
+    pa: 602
+  };
 
   TerminalLocations = {
     ff: [[100.5, 166, 'p'], [66.5, 190.5, '0'], [134.5, 190.5, '1'], [66, 252, '0in'], [134, 252, '1in'], [100, 266, 'comp'], [66, 290, 'c0'], [66, 336, 'e0'], [40, 314, 'b0'], [134, 290, 'c1'], [134, 336, 'e1'], [160, 314, 'b1'], [66.5, 372.5, 'gnd1'], [100.5, 372.5, 'gnd2'], [134.5, 372.5, 'gnd3']],
@@ -131,13 +139,19 @@
             _results1.push({
               name: moduleName,
               identifier: moduleIdentifier,
+              typeNumber: ModuleTypeNumbers[moduleType],
               type: moduleType,
               terminals: terminals,
               components: moduleComponents({
                 type: moduleType,
                 name: moduleName,
                 identifier: moduleIdentifier
-              })
+              }),
+              coordinates: {
+                x: x,
+                y: y
+              },
+              dimensions: ModuleDimensions
             });
           }
           return _results1;

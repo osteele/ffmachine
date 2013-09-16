@@ -25,6 +25,7 @@
   this.initializeMachineView = function() {
     machineViewElement = document.getElementById('machineView');
     svgSelection = d3.select(machineViewElement);
+    createLayer('module-background-layer');
     createLayer('wire-layer');
     createLayer('probe-layer', {
       simulationMode: true
@@ -55,11 +56,49 @@
   };
 
   this.updateMachineConfiguration = function(configuration) {
-    var _ref, _ref1;
+    var imageMargin, moduleGroups, modules, terminal, terminals, wire, wires, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
     MachineConfiguration.wires = configuration.wires;
     MachineConfiguration.modules = (_ref = configuration.modules) != null ? _ref : MachineHardware.modules;
     MachineConfiguration.terminals = (_ref1 = configuration.terminals) != null ? _ref1 : MachineHardware.terminals;
-    return notifyMachineConfigurationSubscribers();
+    wires = MachineConfiguration.wires, modules = MachineConfiguration.modules, terminals = MachineConfiguration.terminals;
+    for (_i = 0, _len = terminals.length; _i < _len; _i++) {
+      terminal = terminals[_i];
+      terminal.wires = [];
+    }
+    for (_j = 0, _len1 = wires.length; _j < _len1; _j++) {
+      wire = wires[_j];
+      _ref2 = wire.terminals;
+      for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+        terminal = _ref2[_k];
+        terminal.wires.push(wire);
+      }
+    }
+    notifyMachineConfigurationSubscribers();
+    imageMargin = 10;
+    modules = getLayer('module-background-layer').selectAll('.module-background').data(modules, getIdentifier);
+    modules.exit().remove();
+    moduleGroups = modules.enter().append('g').classed('module-background', true).attr('transform', function(m) {
+      var x, y, _ref3;
+      _ref3 = m.coordinates, x = _ref3.x, y = _ref3.y;
+      return "translate(" + x + ", " + y + ")";
+    });
+    moduleGroups.append('rect').attr('width', function(m) {
+      return m.dimensions.width;
+    }).attr('height', function(m) {
+      return m.dimensions.height;
+    });
+    moduleGroups.append('image').attr('xlink:href', function(m) {
+      return "img/modules/" + m.typeNumber + ".png";
+    }).attr('width', function(m) {
+      return m.dimensions.width - 2 * imageMargin;
+    }).attr('height', function(m) {
+      return m.dimensions.height - 2 * imageMargin;
+    }).attr('transform', "translate(" + imageMargin + ", " + imageMargin + ")");
+    return getLayer('module-background-layer').selectAll('.module-background').classed('wired', function(m) {
+      return m.terminals.some(function(t) {
+        return t.wires.length > 0;
+      });
+    });
   };
 
   notifyMachineConfigurationSubscribers = function() {
