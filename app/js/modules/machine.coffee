@@ -60,11 +60,17 @@ getLayer = (layerName) ->
   MachineConfiguration.wires = configuration.wires
   MachineConfiguration.modules = configuration.modules ? MachineHardware.modules
   MachineConfiguration.terminals = configuration.terminals ? MachineHardware.terminals
+
+  {wires, modules, terminals} = MachineConfiguration
+  terminal.wires = [] for terminal in terminals
+  for wire in wires
+    terminal.wires.push wire for terminal in wire.terminals
+
   notifyMachineConfigurationSubscribers()
 
   imageMargin = 10
   modules = getLayer('module-background-layer').selectAll('.module-background')
-    .data(MachineConfiguration.modules, getIdentifier)
+    .data(modules, getIdentifier)
   modules.exit().remove()
   moduleGroups = modules.enter()
     .append('g')
@@ -82,6 +88,8 @@ getLayer = (layerName) ->
     .attr('height', (m) -> m.dimensions.height - 2 * imageMargin)
     .attr('transform', "translate(#{imageMargin}, #{imageMargin})")
 
+  getLayer('module-background-layer').selectAll('.module-background')
+    .classed('wired', (m) -> m.terminals.some((t) -> t.wires.length > 0))
 
 # This calls the storage interface
 notifyMachineConfigurationSubscribers = ->

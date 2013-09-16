@@ -16,6 +16,18 @@
       fill: #FFF0F0;
       stroke: black;
     }
+
+    image {
+      transition: opacity 0.25s;
+      -moz-transition: opacity 0.25s;
+      -webkit-transition: opacity 0.25s;
+
+      opacity: 0.25;
+    }
+
+    &.wired image {
+      opacity: 0.75;
+    }
   }
 
   .terminal-position {
