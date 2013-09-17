@@ -476,6 +476,11 @@ arctan2 = (x, y) -> Math.atan2(x, y) * 180 / Math.PI
 hexd = do (hexdigits='0123456789abcdef') ->
   (n) -> hexdigits[n]
 
-localx = (gx) -> (gx - machineViewElement.getBoundingClientRect().left)
-localy = (gy) -> (gy - machineViewElement.getBoundingClientRect().top)
-localEvent = (e) -> [localx(e.clientX), localy(e.clientY)]
+localEvent = (e) ->
+  [x, y] = [e.clientX, e.clientY]
+  bounds = machineViewElement.getBoundingClientRect()
+  x -= bounds.left
+  y -= bounds.top
+  x /= bounds.width / 900
+  y /= bounds.height / 1000
+  [x, y]
