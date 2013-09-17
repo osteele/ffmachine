@@ -30,8 +30,11 @@
         .panel-body {{machine.description}}
 
       .panel.panel-default(ng-show="wires.length")
-        .panel-heading Wires
-        .panel-body
+        .panel-heading(ng-click="showWires = !showWires")
+          i.icon-collapse(ng-show="showWires")
+          i.icon-expand(ng-hide="showWires")
+          | &nbsp;Wires
+        .panel-body(ng-show="showWires")
           table.table.table-condensed.table-striped#wire-list
             tr(ng-repeat="wire in wires | orderBy:'identifier'",
                 ng-class="{hover: wire == highlightWire, success: wire.changed}",
