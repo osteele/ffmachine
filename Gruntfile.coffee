@@ -1,14 +1,15 @@
 module.exports = (grunt) ->
   grunt.initConfig
 
-    options:
-      build_directory: 'build'
-      release_directory: 'release'
+    directories:
+      dev: 'build'
+      build: 'build'
+      release: 'release'
 
     context:
       release:
-        options:
-          build_directory: '<%= options.release_directory %>'
+        directories:
+          build: '<%= directories.release %>'
         coffee:
           options:
             sourceMap: false
@@ -23,14 +24,14 @@ module.exports = (grunt) ->
     coffee:
       app:
         files:
-          '<%= options.build_directory %>/js/app.js': ['app/js/**/*.coffee', '!app/js/modules/*.coffee']
+          '<%= directories.build %>/js/app.js': ['app/js/**/*.coffee', '!app/js/modules/*.coffee']
         options:
           join: true
       modules:
         expand: true
         cwd: 'app/js/modules'
         src: '**/*.coffee'
-        dest: '<%= options.build_directory %>'
+        dest: '<%= directories.build %>'
         ext: '.js'
       options:
         sourceMap: true
@@ -45,23 +46,24 @@ module.exports = (grunt) ->
     connect:
       server:
         options:
-          base: '<%= options.build_directory %>'
+          base: '<%= directories.build %>'
+          directory: '<%= directories.build %>'
 
     githubPages:
       target:
-        src: '<%= options.release_directory %>'
+        src: '<%= directories.release %>'
 
     clean:
-      debug: '<%= options.build_directory %>'
-      context: 'build'
-      release: '<%= options.release_directory %>/*'
+      dev: '<%= directories.dev %>'
+      release: '<%= directories.release %>/*'
+      target: '<%= directories.build %>/*'
 
     copy:
       app:
         expand: true
         cwd: 'app'
         dest: 'build'
-        src: ['**/*', '!**/*.{coffee,jade,png,scss}']
+        src: ['**/*', '!**/*.{coffee,jade,scss,png,jpg,gif}']
         filter: 'isFile'
 
     imagemin:
@@ -69,15 +71,16 @@ module.exports = (grunt) ->
         expand: true
         cwd: 'app'
         src: '**/*.{png,jpg,gif}'
-        dest: '<%= options.build_directory %>'
+        dest: '<%= directories.build %>'
 
     jade:
       app:
         expand: true
         cwd: 'app'
         src: '**/*.jade'
-        dest: '<%= options.build_directory %>'
+        dest: '<%= directories.build %>'
         ext: '.html'
+        filter: 'isFile'
       options:
         pretty: true
 
@@ -85,7 +88,7 @@ module.exports = (grunt) ->
       app:
         expand: true
         cwd: 'app'
-        dest: '<%= options.build_directory %>'
+        dest: '<%= directories.build %>'
         src: ['css/**.scss']
         ext: '.css'
         filter: 'isFile'
@@ -96,8 +99,8 @@ module.exports = (grunt) ->
       options:
         livereload: true
       copy:
-        files: ['app/**/*', '!app/**/*.{coffee,jade,png,scss}']
-        tasks: ['copy']
+        files: ['app/**/*', '!app/**/*.{coffee,jade,scss}']
+        tasks: ['copy', 'imagemin']
       gruntfile:
         files: 'Gruntfile.coffee'
         tasks: ['coffeelint:gruntfile']
@@ -123,7 +126,7 @@ module.exports = (grunt) ->
     copyContext grunt.config.get(['context', context])
     return
 
-  grunt.registerTask 'build', ['clean:context', 'coffee', 'copy', 'jade', 'sass', 'imagemin']
+  grunt.registerTask 'build', ['clean:target', 'coffee', 'copy', 'jade', 'sass', 'imagemin']
   grunt.registerTask 'build:release', ['context:release', 'coffeelint', 'build']
   grunt.registerTask 'deploy', ['build:release', 'githubPages:target']
   grunt.registerTask 'default', ['build', 'connect', 'watch']

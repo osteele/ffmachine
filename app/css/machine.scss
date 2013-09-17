@@ -10,6 +10,20 @@
   height: 1000px;
 }
 
+@media all and (max-height: 1200px) {
+  .ffmachine {
+    -webkit-transform: scale(0.9, 0.7);
+    -webkit-transform-origin: 0 0;
+  }
+}
+
+@media all and (max-width: 1000px) {
+  .ffmachine {
+    -webkit-transform: scale(0.5, 0.5);
+    -webkit-transform-origin: 0 0;
+  }
+}
+
 .ffmachine svg {
   .module-background {
     rect {
