@@ -1,5 +1,5 @@
 (function() {
-  var Knobs, MachineConfiguration, Simulator, VoltageHistoryLength, addWire, animateWires, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getIdentifier, getLayer, getWireView, hexd, knobAngle, knoboffset, localEvent, localx, localy, machineViewElement, mod360, mouseDownAddWire, notifyMachineConfigurationSubscribers, pickColor, releaseKnob, sin, svgSelection, updateCircuitView, updateVoltageStates, wireColor, wireEndpoints, wireIsReversed, wireLength, wirePath,
+  var Knobs, MachineConfiguration, Simulator, VoltageHistoryLength, addWire, animateWires, arctan2, closestEndIndex, cmerge, cos, createLayer, deleteWire, dragKnob, dragWireEnd, drawKnob, drawKnobs, endpointsToColor, endpointsToPath, findNearest, getIdentifier, getLayer, getWireView, hexd, knobAngle, knoboffset, localEvent, machineViewElement, mod360, mouseDownAddWire, notifyMachineConfigurationSubscribers, pickColor, releaseKnob, sin, svgSelection, updateCircuitView, updateVoltageStates, wireColor, wireEndpoints, wireIsReversed, wireLength, wirePath,
     __slice = [].slice;
 
   Knobs = [[100, 252, 288, '#f0f0f0'], [100, 382, 0, '#f0f0f0'], [1700, 252, 292, '#202020'], [1700, 382, 0, '#202020']];
@@ -592,16 +592,15 @@
     };
   })('0123456789abcdef');
 
-  localx = function(gx) {
-    return gx - machineViewElement.getBoundingClientRect().left;
-  };
-
-  localy = function(gy) {
-    return gy - machineViewElement.getBoundingClientRect().top;
-  };
-
   localEvent = function(e) {
-    return [localx(e.clientX), localy(e.clientY)];
+    var bounds, x, y, _ref;
+    _ref = [e.clientX, e.clientY], x = _ref[0], y = _ref[1];
+    bounds = machineViewElement.getBoundingClientRect();
+    x -= bounds.left;
+    y -= bounds.top;
+    x /= bounds.width / 900;
+    y /= bounds.height / 1000;
+    return [x, y];
   };
 
 }).call(this);
