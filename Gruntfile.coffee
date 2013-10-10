@@ -105,7 +105,7 @@ module.exports = (grunt) ->
         files: 'Gruntfile.coffee'
         tasks: ['coffeelint:gruntfile']
       jade:
-        files: ['app/**/*.jade']
+        files: ['app/**/*.{jade,md}']
         tasks: ['jade']
       sass:
         files: ['app/**/*.scss']

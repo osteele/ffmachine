@@ -1,6 +1,6 @@
 controllers = angular.module 'FFMachine.controllers', []
 
-controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angularFireAuth) ->
+controllers.controller 'MachineListCtrl', ($scope, $location, $window, angularFire, angularFireAuth) ->
   $scope.layout = 'grid'
   $scope.machines = []
 
@@ -26,6 +26,9 @@ controllers.controller 'MachineListCtrl', ($scope, $location, angularFire, angul
     (k for k, m of $scope.machines when m == machine)[0]
 
   $scope.machine_key = getMachineKey
+
+  $scope.info = ->
+    $window.open 'info.html', 'info'
 
   $scope.duplicateMachine = (machine) ->
     user = $scope.user
