@@ -39,7 +39,7 @@
 
   controllers = angular.module('FFMachine.controllers', []);
 
-  controllers.controller('MachineListCtrl', function($scope, $location, angularFire, angularFireAuth) {
+  controllers.controller('MachineListCtrl', function($scope, $location, $window, angularFire, angularFireAuth) {
     var getMachineKey;
     $scope.layout = 'grid';
     $scope.machines = [];
@@ -89,6 +89,9 @@
       })())[0];
     };
     $scope.machine_key = getMachineKey;
+    $scope.info = function() {
+      return $window.open('info.html', 'info');
+    };
     $scope.duplicateMachine = function(machine) {
       var access, copy, k, m, message_prefix, name, name_index, now, user;
       user = $scope.user;
